@@ -4,6 +4,7 @@
 	//过滤器里面添加了该4项，但是对于该contentType是不需要该四项
 	//所以要覆盖掉，注意：过滤器定义几项就覆盖几项，不能少也不能多
 	//全部设置为空值或0  modify by limao
+
 	//response.setHeader("Cache-Control", null);
 	//response.setHeader("Pragma", null);
  	//response.setDateHeader("Expires", 0);
