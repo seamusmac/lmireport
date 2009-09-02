@@ -31,47 +31,76 @@
  */
 
 package it.businesslogic.ireport;
-import be.savat.components.PagesFrame;
 import it.businesslogic.ireport.compiler.ErrorsCollector;
 import it.businesslogic.ireport.compiler.ExtendedJRJdtCompiler;
-import it.businesslogic.ireport.gui.*;
-import it.businesslogic.ireport.gui.MainFrame;
-import it.businesslogic.ireport.gui.locale.TimeZoneWrapper;
-import it.businesslogic.ireport.gui.logpane.*;
-import it.businesslogic.ireport.connection.*;
-import it.businesslogic.ireport.gui.queryexecuters.QueryExecuterDef;
-import it.businesslogic.ireport.util.*;
 import it.businesslogic.ireport.compiler.xml.SourceLocation;
 import it.businesslogic.ireport.compiler.xml.SourceTraceDigester;
+import it.businesslogic.ireport.connection.JRDataSourceProviderConnection;
+import it.businesslogic.ireport.connection.JRHibernateConnection;
+import it.businesslogic.ireport.gui.JReportFrame;
+import it.businesslogic.ireport.gui.MainFrame;
+import it.businesslogic.ireport.gui.locale.TimeZoneWrapper;
+import it.businesslogic.ireport.gui.logpane.LogTextArea;
+import it.businesslogic.ireport.gui.logpane.ProblemItem;
+import it.businesslogic.ireport.gui.queryexecuters.QueryExecuterDef;
+import it.businesslogic.ireport.util.I18n;
+import it.businesslogic.ireport.util.Misc;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilterOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import javax.persistence.EntityManager;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.Vector;
+
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.xml.parsers.ParserConfigurationException;
 
-import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.JRDataSource;
+import net.sf.jasperreports.engine.JREmptyDataSource;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JRExporterParameter;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.design.JRJdtCompiler;
 import net.sf.jasperreports.engine.design.JRValidationException;
 import net.sf.jasperreports.engine.design.JRValidationFault;
 import net.sf.jasperreports.engine.design.JasperDesign;
-import net.sf.jasperreports.engine.query.JRJpaQueryExecuterFactory;
+import net.sf.jasperreports.engine.export.JExcelApiExporterParameter;
+import net.sf.jasperreports.engine.export.JRCsvExporterParameter;
+import net.sf.jasperreports.engine.export.JRExportProgressMonitor;
+import net.sf.jasperreports.engine.export.JRHtmlExporterParameter;
+import net.sf.jasperreports.engine.export.JRPdfExporterParameter;
+import net.sf.jasperreports.engine.export.JRXlsExporterParameter;
+import net.sf.jasperreports.engine.util.JRProperties;
 import net.sf.jasperreports.engine.util.JRSaver;
 import net.sf.jasperreports.engine.util.JRSwapFile;
-import net.sf.jasperreports.olap.JRMondrianQueryExecuterFactory;
-import net.sf.jasperreports.engine.export.*;
-import net.sf.jasperreports.engine.query.JRHibernateQueryExecuterFactory;
-import net.sf.jasperreports.engine.util.JRProperties;
 import net.sf.jasperreports.engine.xml.JRXmlDigesterFactory;
 import net.sf.jasperreports.engine.xml.JRXmlLoader;
 import net.sf.jasperreports.view.JasperViewer;
-import org.hibernate.Transaction;
-import org.hibernate.classic.Session;
+
 import org.xml.sax.SAXException;
+
+import be.savat.components.PagesFrame;
 
 /**
  * Please note that this class is totally different from the old IReportCompiler.class
@@ -185,13 +214,13 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
 
       PrintStream out = System.out;
       PrintStream err = System.err;
-      
+
       try {
-          
-      
+
+
       SourceTraceDigester digester = null;
       ErrorsCollector errorsCollector = new ErrorsCollector();
-      
+
       File f_report_title = new File(this.getJrf().getReport().getFilename());
       constTabTitle = " [" + f_report_title.getName() + "]";
 
@@ -229,7 +258,7 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
       boolean compilation_ok = true;
       long start = System.currentTimeMillis();
       // Redirect output stream....
-      
+
       if (myPrintStream == null)
          myPrintStream  =new PrintStream(new FilteredStream(new ByteArrayOutputStream()));
 
@@ -315,12 +344,12 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
 
        try{
             Thread.currentThread().setContextClassLoader(new URLClassLoader(new URL[]{new URL("file://"+reportDirectory)},  reportClassLoader));
-       
+
        } catch (MalformedURLException mue){
             mue.printStackTrace();
        }
-       
-       
+
+
 
        /******************/
 
@@ -469,7 +498,7 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
          	net.sf.jasperreports.engine.util.JRProperties.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_KEEP_JAVA_FILE, true);
          }
 
-         
+
          //System.setProperty("jasper.reports.compile.temp", "C:\\");
          // Compile report....
          javaFile = this.jrf.getReport().getName()+".java";
@@ -492,8 +521,8 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
              getLogTextArea().logOnConsole(
                     I18n.getString("messages.unsavedChanges", "The report still has unsaved changes"),
                 JOptionPane.WARNING_MESSAGE);
-        }  
-         
+        }
+
          getLogTextArea().logOnConsole("<font face=\"SansSerif\" size=\"3\" color=\"#000000\"><img align=\"right\" src=\""+  img_url_comp  +"\"> &nbsp;" +
                          I18n.getFormattedString("iReportCompiler.compilingToFile", "Compiling to file... {0} -> {1}",
                                 new Object[]{fileName, javaFile}) + "</font>",true);
@@ -521,7 +550,7 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
             String compiler_name  = I18n.getString("iReportCompiler.defaultCompiler", "JasperReports default compiler");
             String compiler_code = mainFrame.getProperties().getProperty("DefaultCompiler");
 
-            JRJdtCompiler jdtCompiler = null; 
+            JRJdtCompiler jdtCompiler = null;
             if (this.getProperties().get(COMPILER) != null)
             {
                 //System.setProperty("jasper.reports.compiler.class", ""+this.getProperties().get(COMPILER) );
@@ -539,14 +568,14 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                 else if (compiler_code.equals("2"))
                 {
                     //System.setProperty("jasper.reports.compiler.class","net.sf.jasperreports.engine.design.JRJdtCompiler"  );
-                    
+
                     //net.sf.jasperreports.engine.util.JRProperties.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_CLASS, "net.sf.jasperreports.engine.design.JRJdtCompiler" ); //"net.sf.jasperreports.engine.design.JRJdtCompiler"
                     net.sf.jasperreports.engine.util.JRProperties.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_CLASS, "it.businesslogic.ireport.compiler.ExtendedJRJdtCompiler" );
                     compiler_name = I18n.getString("iReportCompiler.jdtCompiler", "JDT Compiler");
                     //Thread.currentThread().setContextClassLoader( reportClassLoader );
                     //ClassLoader cl = getClassLoader();
                     //System.out.println(  Thread.getC );
-                
+
                     jdtCompiler = new ExtendedJRJdtCompiler();
                 }
                 else if (compiler_code.equals("3"))
@@ -566,10 +595,10 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
             {
                  //System.setProperty("jasper.reports.compiler.class","" );
                  //net.sf.jasperreports.engine.util.JRProperties.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_CLASS, "" );
-                
+
                  //Force to use the iReport compiler....
                  net.sf.jasperreports.engine.util.JRProperties.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_CLASS, "it.businesslogic.ireport.compiler.ExtendedJRJdtCompiler" );
-                 
+
                  //Thread.currentThread().setContextClassLoader( reportClassLoader );
                  //ClassLoader cl = getClassLoader();
                  //System.out.println(  cl );
@@ -579,42 +608,42 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
 
            // getLogTextArea().logOnConsole("<font face=\"SansSerif\"  size=\"3\" color=\"#000000\"><b>Using compiler "+ compiler_name  + " (" + System.getProperty("jasper.reports.compiler.class","" ) +")</b></font>",true);
             start = System.currentTimeMillis();
-            
+
             digester = IReportCompiler.createDigester();
             JasperDesign jd = IReportCompiler.loadJasperDesign( new FileInputStream(srcFileName) , digester);
-            
+
             if (jdtCompiler != null)
             {
                 ((ExtendedJRJdtCompiler)jdtCompiler).setDigester(digester);
                 ((ExtendedJRJdtCompiler)jdtCompiler).setErrorHandler(errorsCollector);
-                
+
                 JasperReport finalJR = jdtCompiler.compileReport( jd  );
-                
+
                 if (errorsCollector.getProblemItems().size() > 0 || finalJR == null)
                 {
-                   
+
                     throw new JRException("");
                 }
                 JRSaver.saveObject(finalJR,  fileName);
-                
+
                 //System.out.println("Report saved..." + finalJR + " " + errorsCollector.getProblemItems().size());
             }
             else
             {
                 JasperCompileManager.compileReportToFile(jd, fileName);
             }
-            
+
             if (errorsCollector != null)
             {
                     getJrf().setReportProblems( errorsCollector.getProblemItems() );
                     MainFrame.getMainInstance().getLogPane().getProblemsPanel().updateProblemsList();
             }
-            
+
          }
          catch (JRValidationException e)
          {
              compilation_ok = false;
-             
+
                 for (Iterator it = e.getFaults().iterator(); it.hasNext();)
 		{
 			JRValidationFault fault = (JRValidationFault) it.next();
@@ -623,26 +652,26 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                         if (sl == null)
                         {
                             errorsCollector.getProblemItems().add(new ProblemItem(ProblemItem.WARNING, fault.getMessage(), sl, null) );
-                        }   
+                        }
                         else
                         {
                             errorsCollector.getProblemItems().add(new ProblemItem(ProblemItem.WARNING, fault.getMessage(), sl, sl.getXPath()) );
                             System.out.println(fault + " " + fault.getMessage() + "\nLine: " + sl.getLineNumber() + ", Column: " + sl.getColumnNumber()  + " JRXML Element: " + sl.getXPath() );
                         }
-                        
+
                         //
                 }
                 getJrf().setReportProblems( errorsCollector.getProblemItems() );
                 MainFrame.getMainInstance().getLogPane().getProblemsPanel().updateProblemsList();
-                
+
                 StringWriter sw = new StringWriter(0);
                 e.printStackTrace(new PrintWriter(sw));
                 System.out.println("\n\n\n");
                 myPrintStream.flush();
                 parseException( outputBuffer.toString()+sw.getBuffer()+"", null);
-                
-                
-            
+
+
+
          } catch (JRException jrex)
          {
              if (errorsCollector != null && errorsCollector.getProblemItems() != null)
@@ -650,12 +679,12 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                 getJrf().setReportProblems( errorsCollector.getProblemItems() );
                 MainFrame.getMainInstance().getLogPane().getProblemsPanel().updateProblemsList();
              }
-             
+
              compilation_ok = false;
              getLogTextArea().logOnConsole("<font face=\"SansSerif\"  size=\"3\" color=\"#CC0000\"><b>" +
                          I18n.getFormattedString("iReportCompiler.errorsCompiling", "Errors compiling {0}!",
                                 new Object[]{fileName}) + "</b></font>",true);
-                         
+
                                 /*
             //1. load the java file
             Vector source = new Vector();
@@ -675,7 +704,7 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                // No file readed....
             }
             //2. write exception in a string
-                                 
+
                                  */
             StringWriter sw = new StringWriter(0);
             jrex.printStackTrace(new PrintWriter(sw));
@@ -738,7 +767,7 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
          getLogTextArea().logOnConsole("<font face=\"SansSerif\"  size=\"3\" color=\"#0000CC\"><b>" +
                          I18n.getFormattedString("iReportCompiler.compilationRunningTime", "Compilation running time: {0,number}!",
                                 new Object[]{new Long(System.currentTimeMillis() - start)}) + "</b></font><hr>",true);
-                                
+
          if (errorsCollector != null && errorsCollector.getProblemItems().size() > 0)
          {
                     try {
@@ -975,9 +1004,9 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                }
                else
                {
-                   if (connection instanceof JRHibernateConnection)
+            	   if (connection instanceof JRHibernateConnection)
                    {
-                       Session session = null;
+              /*         Session session = null;
                        Transaction transaction = null;
                        System.out.println();
                        getLogTextArea().logOnConsole(
@@ -997,9 +1026,9 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                        {
                             if (transaction != null) try {  transaction.rollback(); } catch (Exception ex) { }
                             if (transaction != null) try {  session.close(); } catch (Exception ex) { }
-                       }
+                       }*/
                    }
-                   else if (connection instanceof EJBQLConnection)
+            	   /*else if (connection instanceof EJBQLConnection)
                    {
                        EntityManager em = null;
                        try {
@@ -1046,7 +1075,7 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                                                    "Closing Mondrian connection") );
                             ((MondrianConnection)connection).closeMondrianConnection();
                        }
-                   }
+                   }*/
                    else // Query Executor mode...
                    {
                        //Thread.currentThread().setContextClassLoader( reportClassLoader );
@@ -1093,7 +1122,7 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
          net.sf.jasperreports.view.JRViewer jrv = null;
          net.sf.jasperreports.engine.JRExporter exporter=null;
 
-         
+
          getLogTextArea().logOnConsole(outputBuffer.toString());
          outputBuffer = new StringBuffer();
 
@@ -1147,73 +1176,73 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                   {
                       exporter.setParameter( JRPdfExporterParameter.PERMISSIONS, new Integer( this.getMainFrame().getProperties().getProperty("PDF_PERMISSIONS")));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty( JRPdfExporterParameter.PROPERTY_COMPRESSED) != null &&
                       this.getMainFrame().getProperties().getProperty( JRPdfExporterParameter.PROPERTY_COMPRESSED).length() > 0)
                   {
                        JRProperties.setProperty(JRPdfExporterParameter.PROPERTY_COMPRESSED,  this.getMainFrame().getProperties().getProperty(JRPdfExporterParameter.PROPERTY_COMPRESSED));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty( JRPdfExporterParameter.PROPERTY_CREATE_BATCH_MODE_BOOKMARKS) != null &&
                       this.getMainFrame().getProperties().getProperty( JRPdfExporterParameter.PROPERTY_CREATE_BATCH_MODE_BOOKMARKS).length() > 0)
                   {
                        JRProperties.setProperty(JRPdfExporterParameter.PROPERTY_CREATE_BATCH_MODE_BOOKMARKS,  this.getMainFrame().getProperties().getProperty(JRPdfExporterParameter.PROPERTY_CREATE_BATCH_MODE_BOOKMARKS));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty( JRPdfExporterParameter.PROPERTY_PDF_VERSION) != null &&
                       this.getMainFrame().getProperties().getProperty( JRPdfExporterParameter.PROPERTY_PDF_VERSION).length() > 0)
                   {
                        JRProperties.setProperty(JRPdfExporterParameter.PROPERTY_PDF_VERSION,  this.getMainFrame().getProperties().getProperty(JRPdfExporterParameter.PROPERTY_PDF_VERSION));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty( "METADATA_TITLE") != null &&
                       this.getMainFrame().getProperties().getProperty( "METADATA_TITLE").length() > 0)
                   {
                       exporter.setParameter( JRPdfExporterParameter.METADATA_TITLE, this.getMainFrame().getProperties().getProperty("METADATA_TITLE"));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty( "METADATA_AUTHOR") != null &&
                       this.getMainFrame().getProperties().getProperty( "METADATA_AUTHOR").length() > 0)
                   {
                       exporter.setParameter( JRPdfExporterParameter.METADATA_AUTHOR, this.getMainFrame().getProperties().getProperty("METADATA_AUTHOR"));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty( "METADATA_SUBJECT") != null &&
                       this.getMainFrame().getProperties().getProperty( "METADATA_SUBJECT").length() > 0)
                   {
                       exporter.setParameter( JRPdfExporterParameter.METADATA_SUBJECT, this.getMainFrame().getProperties().getProperty("METADATA_SUBJECT"));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty( "METADATA_KEYWORDS") != null &&
                       this.getMainFrame().getProperties().getProperty( "METADATA_KEYWORDS").length() > 0)
                   {
                       exporter.setParameter( JRPdfExporterParameter.METADATA_KEYWORDS, this.getMainFrame().getProperties().getProperty("METADATA_KEYWORDS"));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty( "METADATA_CREATOR") != null &&
                       this.getMainFrame().getProperties().getProperty( "METADATA_CREATOR").length() > 0)
                   {
                       exporter.setParameter( JRPdfExporterParameter.METADATA_CREATOR, this.getMainFrame().getProperties().getProperty("METADATA_CREATOR"));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty( JRPdfExporterParameter.PROPERTY_FORCE_LINEBREAK_POLICY) != null &&
                       this.getMainFrame().getProperties().getProperty( JRPdfExporterParameter.PROPERTY_FORCE_LINEBREAK_POLICY).length() > 0)
                   {
                        JRProperties.setProperty(JRPdfExporterParameter.PROPERTY_FORCE_LINEBREAK_POLICY,  this.getMainFrame().getProperties().getProperty(JRPdfExporterParameter.PROPERTY_FORCE_LINEBREAK_POLICY));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty( JRPdfExporterParameter.PROPERTY_FORCE_SVG_SHAPES) != null &&
                       this.getMainFrame().getProperties().getProperty( JRPdfExporterParameter.PROPERTY_FORCE_SVG_SHAPES).length() > 0)
                   {
                        JRProperties.setProperty(JRPdfExporterParameter.PROPERTY_FORCE_SVG_SHAPES,  this.getMainFrame().getProperties().getProperty(JRPdfExporterParameter.PROPERTY_FORCE_SVG_SHAPES));
                   }
-                          
+
                   if (this.getMainFrame().getProperties().getProperty( JRPdfExporterParameter.PROPERTY_PDF_JAVASCRIPT) != null &&
                       this.getMainFrame().getProperties().getProperty( JRPdfExporterParameter.PROPERTY_PDF_JAVASCRIPT).length() > 0)
                   {
                        JRProperties.setProperty(JRPdfExporterParameter.PROPERTY_PDF_JAVASCRIPT,  this.getMainFrame().getProperties().getProperty(JRPdfExporterParameter.PROPERTY_PDF_JAVASCRIPT));
-                  }        
-                          
+                  }
+
                   fileName = Misc.changeFileExtension(fileName,"pdf");
                   exportingMessage = I18n.getFormattedString("iReportCompiler.exportingMessage.pdf", "Exporting pdf to file (using iText)...  {0}!",  new Object[]{fileName});
                   viewer_program = mainFrame.getProperties().getProperty("ExternalPDFViewer");
@@ -1227,7 +1256,7 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                       //exporter.setParameter( JRCsvExporterParameter.FIELD_DELIMITER, this.getMainFrame().getProperties().getProperty("CSV_FIELD_DELIMITER") );
                       JRProperties.setProperty(JRCsvExporterParameter.PROPERTY_FIELD_DELIMITER,  this.getMainFrame().getProperties().getProperty("CSV_FIELD_DELIMITER"));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty(JRCsvExporterParameter.PROPERTY_RECORD_DELIMITER) != null &&
                       this.getMainFrame().getProperties().getProperty( JRCsvExporterParameter.PROPERTY_RECORD_DELIMITER).length() > 0)
                   {
@@ -1244,7 +1273,7 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                   exporter = new  net.sf.jasperreports.engine.export.JRHtmlExporter();
 
                   if (this.getMainFrame().getProperties().getProperty("HTML_IMAGES_DIR_NAME") != null)
-                  { 
+                  {
                       exporter.setParameter( JRHtmlExporterParameter.IMAGES_DIR_NAME, this.getMainFrame().getProperties().getProperty("HTML_IMAGES_DIR_NAME") );
                   }
                   if (this.getMainFrame().getProperties().getProperty("HTML_IS_OUTPUT_IMAGES_TO_DIR") != null)
@@ -1258,36 +1287,36 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                   if (this.getMainFrame().getProperties().getProperty("HTML_HTML_FOOTER") != null)
                   { exporter.setParameter( JRHtmlExporterParameter.HTML_FOOTER, this.getMainFrame().getProperties().getProperty("HTML_HTML_FOOTER") ); }
                   if (this.getMainFrame().getProperties().getProperty("HTML_IS_REMOVE_EMPTY_SPACE_BETWEEN_ROWS") != null)
-                  { 
+                  {
                       //exporter.setParameter( JRHtmlExporterParameter.IS_REMOVE_EMPTY_SPACE_BETWEEN_ROWS, new Boolean(this.getMainFrame().getProperties().getProperty("HTML_IS_REMOVE_EMPTY_SPACE_BETWEEN_ROWS")));
                       JRProperties.setProperty(JRHtmlExporterParameter.PROPERTY_REMOVE_EMPTY_SPACE_BETWEEN_ROWS,  this.getMainFrame().getProperties().getProperty("HTML_IS_REMOVE_EMPTY_SPACE_BETWEEN_ROWS"));
                   }
                   if (this.getMainFrame().getProperties().getProperty("HTML_IS_WHITE_PAGE_BACKGROUND") != null)
-                  { 
+                  {
                       //exporter.setParameter( JRHtmlExporterParameter.IS_WHITE_PAGE_BACKGROUND, new Boolean(this.getMainFrame().getProperties().getProperty("HTML_IS_WHITE_PAGE_BACKGROUND")) );
                       JRProperties.setProperty(JRHtmlExporterParameter.PROPERTY_WHITE_PAGE_BACKGROUND,  this.getMainFrame().getProperties().getProperty("HTML_IS_WHITE_PAGE_BACKGROUND"));
                   }
                   if (this.getMainFrame().getProperties().getProperty("HTML_IS_USING_IMAGES_TO_ALIGN") != null)
-                  { 
+                  {
                       //exporter.setParameter( JRHtmlExporterParameter.IS_USING_IMAGES_TO_ALIGN, new Boolean(this.getMainFrame().getProperties().getProperty("HTML_IS_USING_IMAGES_TO_ALIGN")) );
                       JRProperties.setProperty(JRHtmlExporterParameter.PROPERTY_USING_IMAGES_TO_ALIGN,  this.getMainFrame().getProperties().getProperty("HTML_IS_USING_IMAGES_TO_ALIGN"));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty(JRHtmlExporterParameter.PROPERTY_WRAP_BREAK_WORD) != null &&
                       this.getMainFrame().getProperties().getProperty(JRHtmlExporterParameter.PROPERTY_WRAP_BREAK_WORD).length() > 0)
-                  { 
+                  {
                       //exporter.setParameter( JRHtmlExporterParameter.IS_USING_IMAGES_TO_ALIGN, new Boolean(this.getMainFrame().getProperties().getProperty("HTML_IS_USING_IMAGES_TO_ALIGN")) );
                       JRProperties.setProperty(JRHtmlExporterParameter.PROPERTY_WRAP_BREAK_WORD,  this.getMainFrame().getProperties().getProperty(JRHtmlExporterParameter.PROPERTY_WRAP_BREAK_WORD));
                   }
                   if (this.getMainFrame().getProperties().getProperty(JRHtmlExporterParameter.PROPERTY_SIZE_UNIT) != null &&
                       this.getMainFrame().getProperties().getProperty(JRHtmlExporterParameter.PROPERTY_SIZE_UNIT).length() > 0)
-                  { 
+                  {
                       //exporter.setParameter( JRHtmlExporterParameter.IS_USING_IMAGES_TO_ALIGN, new Boolean(this.getMainFrame().getProperties().getProperty("HTML_IS_USING_IMAGES_TO_ALIGN")) );
                       JRProperties.setProperty(JRHtmlExporterParameter.PROPERTY_SIZE_UNIT,  this.getMainFrame().getProperties().getProperty(JRHtmlExporterParameter.PROPERTY_SIZE_UNIT));
                   }
                   if (this.getMainFrame().getProperties().getProperty(JRHtmlExporterParameter.PROPERTY_FRAMES_AS_NESTED_TABLES) != null &&
                       this.getMainFrame().getProperties().getProperty(JRHtmlExporterParameter.PROPERTY_FRAMES_AS_NESTED_TABLES).length() > 0)
-                  { 
+                  {
                       //exporter.setParameter( JRHtmlExporterParameter.IS_USING_IMAGES_TO_ALIGN, new Boolean(this.getMainFrame().getProperties().getProperty("HTML_IS_USING_IMAGES_TO_ALIGN")) );
                       JRProperties.setProperty(JRHtmlExporterParameter.PROPERTY_FRAMES_AS_NESTED_TABLES,  this.getMainFrame().getProperties().getProperty(JRHtmlExporterParameter.PROPERTY_FRAMES_AS_NESTED_TABLES));
                   }
@@ -1310,82 +1339,82 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                       exporter = new  net.sf.jasperreports.engine.export.JExcelApiExporter();
                       exportingMessage = I18n.getFormattedString("iReportCompiler.exportingMessage.xls2", "Exporting xls to file (using JExcelApi)... {0}!",  new Object[]{fileName});
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty("XLS_IS_ONE_PAGE_PER_SHEET") != null)
-                  { 
+                  {
                       //exporter.setParameter( JRXlsExporterParameter.IS_ONE_PAGE_PER_SHEET, new Boolean( this.getMainFrame().getProperties().getProperty("XLS_IS_ONE_PAGE_PER_SHEET")) );
                       JRProperties.setProperty(JRXlsExporterParameter.PROPERTY_ONE_PAGE_PER_SHEET,  this.getMainFrame().getProperties().getProperty("XLS_IS_ONE_PAGE_PER_SHEET"));
                   }
                   if (this.getMainFrame().getProperties().getProperty("XLS_IS_REMOVE_EMPTY_SPACE_BETWEEN_ROWS") != null)
-                  { 
+                  {
                       //exporter.setParameter( JRXlsExporterParameter.IS_REMOVE_EMPTY_SPACE_BETWEEN_ROWS, new Boolean(this.getMainFrame().getProperties().getProperty("XLS_IS_REMOVE_EMPTY_SPACE_BETWEEN_ROWS")));
                       JRProperties.setProperty(JRXlsExporterParameter.PROPERTY_REMOVE_EMPTY_SPACE_BETWEEN_ROWS,  this.getMainFrame().getProperties().getProperty("XLS_IS_REMOVE_EMPTY_SPACE_BETWEEN_ROWS"));
                   }
                   if (this.getMainFrame().getProperties().getProperty("XLS_IS_REMOVE_EMPTY_SPACE_BETWEEN_COLUMNS") != null)
-                  { 
+                  {
                       //exporter.setParameter( JRXlsExporterParameter.IS_REMOVE_EMPTY_SPACE_BETWEEN_ROWS, new Boolean(this.getMainFrame().getProperties().getProperty("XLS_IS_REMOVE_EMPTY_SPACE_BETWEEN_ROWS")));
                       JRProperties.setProperty(JRXlsExporterParameter.PROPERTY_REMOVE_EMPTY_SPACE_BETWEEN_COLUMNS,  this.getMainFrame().getProperties().getProperty("XLS_IS_REMOVE_EMPTY_SPACE_BETWEEN_COLUMNS"));
                   }
                   if (this.getMainFrame().getProperties().getProperty("XLS_IS_WHITE_PAGE_BACKGROUND") != null)
-                  { 
+                  {
                       //exporter.setParameter( JRXlsExporterParameter.IS_WHITE_PAGE_BACKGROUND, new Boolean(this.getMainFrame().getProperties().getProperty("XLS_IS_WHITE_PAGE_BACKGROUND")) );
                       JRProperties.setProperty(JRXlsExporterParameter.PROPERTY_WHITE_PAGE_BACKGROUND,  this.getMainFrame().getProperties().getProperty("XLS_IS_WHITE_PAGE_BACKGROUND"));
                   }
 //                  if (this.getMainFrame().getProperties().getProperty("XLS_IS_AUTO_DETECT_CELL_TYPE") != null)
-//                  { 
+//                  {
 //                      //exporter.setParameter( JRXlsExporterParameter.IS_DETECT_CELL_TYPE, new Boolean(this.getMainFrame().getProperties().getProperty("XLS_IS_DETECT_CELL_TYPE")) );
 //                      JRProperties.setProperty(JRXlsExporterParameter.PROPERTY_DETECT_CELL_TYPE,  this.getMainFrame().getProperties().getProperty("XLS_IS_DETECT_CELL_TYPE"));
 //                  }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_DETECT_CELL_TYPE) != null &&
                       this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_DETECT_CELL_TYPE).length() > 0)
-                  { 
+                  {
                       //exporter.setParameter( JRHtmlExporterParameter.IS_USING_IMAGES_TO_ALIGN, new Boolean(this.getMainFrame().getProperties().getProperty("HTML_IS_USING_IMAGES_TO_ALIGN")) );
                       JRProperties.setProperty(JExcelApiExporterParameter.PROPERTY_DETECT_CELL_TYPE,  this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_DETECT_CELL_TYPE));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_CREATE_CUSTOM_PALETTE) != null &&
                       this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_CREATE_CUSTOM_PALETTE).length() > 0)
-                  { 
+                  {
                       //exporter.setParameter( JRHtmlExporterParameter.IS_USING_IMAGES_TO_ALIGN, new Boolean(this.getMainFrame().getProperties().getProperty("HTML_IS_USING_IMAGES_TO_ALIGN")) );
                       JRProperties.setProperty(JExcelApiExporterParameter.PROPERTY_CREATE_CUSTOM_PALETTE,  this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_CREATE_CUSTOM_PALETTE));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_FONT_SIZE_FIX_ENABLED) != null &&
                       this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_FONT_SIZE_FIX_ENABLED).length() > 0)
-                  { 
+                  {
                       //exporter.setParameter( JRHtmlExporterParameter.IS_USING_IMAGES_TO_ALIGN, new Boolean(this.getMainFrame().getProperties().getProperty("HTML_IS_USING_IMAGES_TO_ALIGN")) );
                       JRProperties.setProperty(JExcelApiExporterParameter.PROPERTY_FONT_SIZE_FIX_ENABLED,  this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_FONT_SIZE_FIX_ENABLED));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_MAXIMUM_ROWS_PER_SHEET) != null &&
                       this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_MAXIMUM_ROWS_PER_SHEET).length() > 0)
-                  { 
+                  {
                       //exporter.setParameter( JRHtmlExporterParameter.IS_USING_IMAGES_TO_ALIGN, new Boolean(this.getMainFrame().getProperties().getProperty("HTML_IS_USING_IMAGES_TO_ALIGN")) );
                       JRProperties.setProperty(JExcelApiExporterParameter.PROPERTY_MAXIMUM_ROWS_PER_SHEET,  this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_MAXIMUM_ROWS_PER_SHEET));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_IGNORE_GRAPHICS) != null &&
                       this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_IGNORE_GRAPHICS).length() > 0)
-                  { 
+                  {
                       //exporter.setParameter( JRHtmlExporterParameter.IS_USING_IMAGES_TO_ALIGN, new Boolean(this.getMainFrame().getProperties().getProperty("HTML_IS_USING_IMAGES_TO_ALIGN")) );
                       JRProperties.setProperty(JExcelApiExporterParameter.PROPERTY_IGNORE_GRAPHICS,  this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_IGNORE_GRAPHICS));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_COLLAPSE_ROW_SPAN) != null &&
                       this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_COLLAPSE_ROW_SPAN).length() > 0)
-                  { 
+                  {
                       //exporter.setParameter( JRHtmlExporterParameter.IS_USING_IMAGES_TO_ALIGN, new Boolean(this.getMainFrame().getProperties().getProperty("HTML_IS_USING_IMAGES_TO_ALIGN")) );
                       JRProperties.setProperty(JExcelApiExporterParameter.PROPERTY_COLLAPSE_ROW_SPAN,  this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_COLLAPSE_ROW_SPAN));
                   }
-                  
+
                   if (this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_IGNORE_CELL_BORDER) != null &&
                       this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_IGNORE_CELL_BORDER).length() > 0)
-                  { 
+                  {
                       //exporter.setParameter( JRHtmlExporterParameter.IS_USING_IMAGES_TO_ALIGN, new Boolean(this.getMainFrame().getProperties().getProperty("HTML_IS_USING_IMAGES_TO_ALIGN")) );
                       JRProperties.setProperty(JExcelApiExporterParameter.PROPERTY_IGNORE_CELL_BORDER,  this.getMainFrame().getProperties().getProperty(JExcelApiExporterParameter.PROPERTY_IGNORE_CELL_BORDER));
                   }
-                  
+
                   fileName = Misc.changeFileExtension(fileName,"xls");
                   viewer_program = Misc.nvl( mainFrame.getProperties().getProperty("ExternalXLSViewer"), "");
 
@@ -1409,15 +1438,15 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                   exporter = new  it.businesslogic.ireport.export.JRTxtExporter();
 
                   if (this.getMainFrame().getProperties().getProperty("TXT_PAGE_ROWS") != null)
-                  { 
+                  {
                       exporter.setParameter( it.businesslogic.ireport.export.JRTxtExporterParameter.PAGE_ROWS, this.getMainFrame().getProperties().getProperty("TXT_PAGE_ROWS") );
                   }
                   if (this.getMainFrame().getProperties().getProperty("TXT_PAGE_COLUMNS") != null)
-                  { 
+                  {
                       exporter.setParameter( it.businesslogic.ireport.export.JRTxtExporterParameter.PAGE_COLUMNS, this.getMainFrame().getProperties().getProperty("TXT_PAGE_COLUMNS") );
                   }
                   if (this.getMainFrame().getProperties().getProperty("TXT_ADD_FORM_FEED") != null)
-                  { 
+                  {
                       exporter.setParameter( it.businesslogic.ireport.export.JRTxtExporterParameter.ADD_FORM_FEED, new Boolean(this.getMainFrame().getProperties().getProperty("TXT_ADD_FORM_FEED")));
                   }
 
@@ -1488,14 +1517,14 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                   exporter.setParameter(JRExporterParameter.OUTPUT_FILE_NAME,fileName);
                   exporter.setParameter(JRExporterParameter.JASPER_PRINT,print);
                   exporter.setParameter(JRExporterParameter.PROGRESS_MONITOR, this);
-                  
+
                   String reportEncoding = Misc.nvl( mainFrame.getProperties().getProperty("CHARACTER_ENCODING"),"");
                   if (reportEncoding.trim().length() > 0)
                   {
                       //exporter.setParameter(JRExporterParameter.CHARACTER_ENCODING, reportEncoding);
                       JRProperties.setProperty(JRExporterParameter.PROPERTY_CHARACTER_ENCODING,  reportEncoding);
                   }
-                  
+
                   String offsetX = Misc.nvl( mainFrame.getProperties().getProperty("OFFSET_X"),"");
                   if (offsetX.trim().length() > 0)
                   {
@@ -1503,7 +1532,7 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                           exporter.setParameter(JRExporterParameter.OFFSET_X, new Integer(offsetX));
                       } catch (Exception ex) {}
                   }
-                  
+
                   String offsetY = Misc.nvl( mainFrame.getProperties().getProperty("OFFSET_Y"),"");
                   if (offsetY.trim().length() > 0)
                   {
@@ -1511,8 +1540,8 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                           exporter.setParameter(JRExporterParameter.OFFSET_Y,new Integer( offsetY));
                       } catch (Exception ex) {}
                   }
-                  
-                  
+
+
                   exporter.exportReport();
                   getLogTextArea().logOnConsole(outputBuffer.toString());
             	  outputBuffer = new StringBuffer();
@@ -1553,14 +1582,14 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                       JasperViewer jasperViewer = new JasperViewer(print,false);
                       jasperViewer.setTitle("iReport JasperViewer");
                       jasperViewer.setVisible(true);
-                      
+
                   }
                   //net.sf.jasperreports.view.JasperViewer.viewReport( print, false);
                }
             } catch (Throwable ex2)
             {
 
-                
+
                getLogTextArea().logOnConsole(
                        I18n.getFormattedString("iReportCompiler.errorExportingPrint",
                                                    "Error exporting print... {0}\n",
@@ -1639,10 +1668,10 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
      {
       System.gc();
       System.setOut(out);
-      System.setErr(err);   
+      System.setErr(err);
       System.gc();
      }
-      
+
    }
 
 
@@ -1982,8 +2011,8 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
       getLogTextArea().logOnConsole(outString,true);
       //getLogTextArea().logOnConsole( "<a href=\"http://problem\">*****<hr><font face=\"Courier New\" size=\"3\">"+ exception +"</a>", true);
       outputBuffer = new StringBuffer();
-      
-     
+
+
    }
 
    public javax.swing.JComponent searchButton(javax.swing.JComponent root, String text)
@@ -2115,11 +2144,11 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
       }
     }
     //End FF
-    
+
     public static JasperDesign loadJasperDesign(InputStream fileStream, SourceTraceDigester digester) throws JRException
 	{
 		JRXmlLoader xmlLoader = new JRXmlLoader(digester);
-		
+
 		try
 		{
 			JasperDesign jasperDesign = xmlLoader.loadXML(fileStream);

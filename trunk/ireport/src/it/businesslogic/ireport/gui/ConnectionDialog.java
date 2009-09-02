@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,41 +25,52 @@
  *
  *
  * ConnectionDialog.java
- * 
+ *
  * Created on 9 maggio 2003, 17.25
  *
  */
 
 package it.businesslogic.ireport.gui;
 
+import it.businesslogic.ireport.IReportConnection;
+import it.businesslogic.ireport.connection.DriverPool;
+import it.businesslogic.ireport.connection.EJBQLConnection;
+import it.businesslogic.ireport.connection.JDBCConnection;
+import it.businesslogic.ireport.connection.JRCSVDataSourceConnection;
 import it.businesslogic.ireport.connection.JRCsvDataSourceInspector;
+import it.businesslogic.ireport.connection.JRCustomConnection;
+import it.businesslogic.ireport.connection.JRCustomDataSourceConnection;
+import it.businesslogic.ireport.connection.JRDataSourceProviderConnection;
+import it.businesslogic.ireport.connection.JREmptyDatasourceConnection;
 import it.businesslogic.ireport.connection.JRHibernateConnection;
-import it.businesslogic.ireport.data.olap.CustomHTTPAuthenticator;
+import it.businesslogic.ireport.connection.JRSpringLoadedHibernateConnection;
+import it.businesslogic.ireport.connection.JRXMLADataSourceConnection;
+import it.businesslogic.ireport.connection.JRXMLDataSourceConnection;
+import it.businesslogic.ireport.connection.JavaBeanDataSourceConnection;
+import it.businesslogic.ireport.connection.MondrianConnection;
+import it.businesslogic.ireport.connection.QueryExecuterConnection;
 import it.businesslogic.ireport.gui.locale.LocaleSelectorDialog;
 import it.businesslogic.ireport.gui.locale.TimeZoneDialog;
 import it.businesslogic.ireport.gui.sheet.Tag;
-import it.businesslogic.ireport.util.*;
-import it.businesslogic.ireport.*;
-import it.businesslogic.ireport.connection.*;
+import it.businesslogic.ireport.util.I18n;
+import it.businesslogic.ireport.util.Misc;
 
 import java.awt.Component;
 import java.io.File;
-import java.net.Authenticator;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.Vector;
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
 
-import rex.metadata.*;
-import rex.graphics.datasourcetree.elements.*;
+import javax.swing.DefaultListModel;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+
+import rex.graphics.datasourcetree.elements.DataSourceTreeElement;
 
 /**
  *
@@ -67,24 +78,24 @@ import rex.graphics.datasourcetree.elements.*;
  */
 public class ConnectionDialog extends javax.swing.JDialog {
     /** Creates new form JRParameterDialog */
-    
+
     private boolean init = false;
     private Locale tmpXMLLocale = null;
     private TimeZone tmpXMLTimeZone = null;
-    
-    
-       
+
+
+
      public ConnectionDialog(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);
         initAll();
      }
-     
+
     public ConnectionDialog(java.awt.Frame parent, boolean modal) {
-        
+
         super(parent, modal);
         initAll();
     }
-        
+
     public void initAll()
     {
         initComponents();
@@ -93,29 +104,29 @@ public class ConnectionDialog extends javax.swing.JDialog {
         this.pack();
         Misc.centerFrame(this);
         init = true;
-                
+
         jComboBoxConnectionType.addItem(new Tag("0", I18n.getString("connectionType.jdbc", "Database JDBC connection")  )); // Type 0
         jComboBoxConnectionType.addItem(new Tag("1", I18n.getString("connectionType.xml", "XML file datasource"))); // Type 1
         jComboBoxConnectionType.addItem(new Tag("2", I18n.getString("connectionType.javabeans", "JavaBeans set datasource"))); // Type 2
-        jComboBoxConnectionType.addItem(new Tag("3", I18n.getString("connectionType.customDataSource", "Custom JRDataSource"))); // Type 3        
-        jComboBoxConnectionType.addItem(new Tag("4", I18n.getString("connectionType.csv", "File CSV datasource"))); // Type 4        
-        jComboBoxConnectionType.addItem(new Tag("5", I18n.getString("connectionType.datasourceProvider", "JRDataSourceProvider"))); // Type 5 
-        jComboBoxConnectionType.addItem(new Tag("6", I18n.getString("connectionType.hibernate", "Hibernate connection"))); // Type 6 
-        jComboBoxConnectionType.addItem(new Tag("9", I18n.getString("connectionType.hibernateSpring", "Spring loaded Hibernate connection"))); // Type 6 
-        jComboBoxConnectionType.addItem(new Tag("7", I18n.getString("connectionType.ejbql", "EJBQL connection"))); // Type 7 
-        jComboBoxConnectionType.addItem(new Tag("8", I18n.getString("connectionType.olap", "Mondrian OLAP connection"))); // Type 8 
-        jComboBoxConnectionType.addItem(new Tag("10", I18n.getString("connectionType.queryExecuter", "Query Executer mode"))); // Type 10 
-        jComboBoxConnectionType.addItem(new Tag("11", I18n.getString("connectionType.emptyDataSource", "Empty data source"))); // Type 11 
-        jComboBoxConnectionType.addItem(new Tag("12", I18n.getString("connectionType.customIReportConnection", "Custom iReport connection"))); // Type 12 
-        /**   
+        jComboBoxConnectionType.addItem(new Tag("3", I18n.getString("connectionType.customDataSource", "Custom JRDataSource"))); // Type 3
+        jComboBoxConnectionType.addItem(new Tag("4", I18n.getString("connectionType.csv", "File CSV datasource"))); // Type 4
+        jComboBoxConnectionType.addItem(new Tag("5", I18n.getString("connectionType.datasourceProvider", "JRDataSourceProvider"))); // Type 5
+        jComboBoxConnectionType.addItem(new Tag("6", I18n.getString("connectionType.hibernate", "Hibernate connection"))); // Type 6
+        jComboBoxConnectionType.addItem(new Tag("9", I18n.getString("connectionType.hibernateSpring", "Spring loaded Hibernate connection"))); // Type 6
+        jComboBoxConnectionType.addItem(new Tag("7", I18n.getString("connectionType.ejbql", "EJBQL connection"))); // Type 7
+        jComboBoxConnectionType.addItem(new Tag("8", I18n.getString("connectionType.olap", "Mondrian OLAP connection"))); // Type 8
+        jComboBoxConnectionType.addItem(new Tag("10", I18n.getString("connectionType.queryExecuter", "Query Executer mode"))); // Type 10
+        jComboBoxConnectionType.addItem(new Tag("11", I18n.getString("connectionType.emptyDataSource", "Empty data source"))); // Type 11
+        jComboBoxConnectionType.addItem(new Tag("12", I18n.getString("connectionType.customIReportConnection", "Custom iReport connection"))); // Type 12
+        /**
          * Copyright (C) 2005, 2006 CINCOM SYSTEMS, INC.
          * All Rights Reserved
          * www.cincom.com
          *
          */
         /* Adding XMLA Server Connection Type */
-        jComboBoxConnectionType.addItem(new Tag("13", I18n.getString("connectionType.xmlaServer", "XMLA Server"))); // Type 13 
-        
+        jComboBoxConnectionType.addItem(new Tag("13", I18n.getString("connectionType.xmlaServer", "XMLA Server"))); // Type 13
+
         jComboBoxJDBCDriver.addItem("com.mysql.jdbc.Driver");
         jComboBoxJDBCDriver.addItem("org.gjt.mm.mysql.Driver");
         jComboBoxJDBCDriver.addItem("com.internetcds.jdbc.tds.Driver");
@@ -132,7 +143,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
 	jComboBoxJDBCDriver.addItem("org.postgresql.Driver");
 	jComboBoxJDBCDriver.addItem("org.hsqldb.jdbcDriver");
 	jComboBoxJDBCDriver.addItem("COM.cloudscape.JDBCDriver");
-        
+
         Vector conns = MainFrame.getMainInstance().getConnections();
         for (int i=0; i<conns.size(); ++i)
         {
@@ -142,29 +153,29 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 jComboBoxMondrianJdbc.addItem( con.getName() );
             }
         }
-        
+
         if (jComboBoxMondrianJdbc.getItemCount() > 0)
         {
             jComboBoxMondrianJdbc.setSelectedIndex(0);
         }
-        
+
         // All languages, countries and time zones....
-        
+
         init = false;
-        
+
         jComboBoxConnectionType.setSelectedIndex(0);
         //System.out.println(jListCVSColumns);
         jListCVSColumns.setModel( new DefaultListModel());
         jTextFieldCVSDateFormat.setText( new SimpleDateFormat().toPattern());
-        
-        
+
+
         javax.swing.KeyStroke escape =  javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0, false);
         javax.swing.Action escapeAction = new javax.swing.AbstractAction() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 jButtonCancelActionPerformed(e);
             }
         };
-       
+
         getRootPane().getInputMap(javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW).put(escape, "ESCAPE");
         getRootPane().getActionMap().put("ESCAPE", escapeAction);
 
@@ -2002,9 +2013,9 @@ public class ConnectionDialog extends javax.swing.JDialog {
             {
                 lsd.setReportTimeZoneId( tmpXMLTimeZone.getID() );
             }
-            
+
             lsd.setVisible(true);
-            
+
             if (lsd.getDialogResult() == JOptionPane.OK_OPTION)
             {
                 if (lsd.getReportTimeZoneId() == null)
@@ -2015,7 +2026,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 else
                 {
                     tmpXMLTimeZone = TimeZone.getTimeZone( lsd.getReportTimeZoneId() );
-                    jTextFieldXMLTimeZoneValue.setText( tmpXMLTimeZone.getDisplayName( I18n.getCurrentLocale()) ); 
+                    jTextFieldXMLTimeZoneValue.setText( tmpXMLTimeZone.getDisplayName( I18n.getCurrentLocale()) );
                 }
             }
     }//GEN-LAST:event_jButtonXMLDatePattern1jButtonXMLDatePatternjButton2ActionPerformed11
@@ -2027,17 +2038,17 @@ public class ConnectionDialog extends javax.swing.JDialog {
             {
                 lsd.setSelectedLocale( this.tmpXMLLocale );
             }
-            
+
             lsd.setVisible(true);
-            
+
             if (lsd.getDialogResult() == JOptionPane.OK_OPTION)
             {
                 tmpXMLLocale = lsd.getSelectedLocale();
-                jTextFieldXMLLocaleValue.setText( 
+                jTextFieldXMLLocaleValue.setText(
                         (tmpXMLLocale == null) ? I18n.getString("timezone.default","Default") :
-                        tmpXMLLocale.getDisplayName( I18n.getCurrentLocale()) ); 
+                        tmpXMLLocale.getDisplayName( I18n.getCurrentLocale()) );
             }
-        
+
     }//GEN-LAST:event_jButtonXMLDatePatternjButton2ActionPerformed11
 
     private void jButtonXMLDatePatternjButton2ActionPerformed1(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonXMLDatePatternjButton2ActionPerformed1
@@ -2048,28 +2059,28 @@ public class ConnectionDialog extends javax.swing.JDialog {
             {
                 fpd.setPattern( jTextFieldXMLNumberPattern.getText() );
             }
-            
+
             fpd.setVisible(true);
-            
+
             if (fpd.getDialogResult() == JOptionPane.OK_OPTION)
             {
                 jTextFieldXMLNumberPattern.setText( fpd.getPattern() );
             }
-        
-        
+
+
     }//GEN-LAST:event_jButtonXMLDatePatternjButton2ActionPerformed1
 
     private void jButton2ActionPerformed1(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed1
-            
+
             FieldPatternDialog fpd = new FieldPatternDialog(this, true);
             fpd.setOnlyDate(true);
             if (jTextFieldXMLDatePattern.getText().length() >0)
             {
                 fpd.setPattern( jTextFieldXMLDatePattern.getText() );
             }
-            
+
             fpd.setVisible(true);
-            
+
             if (fpd.getDialogResult() == JOptionPane.OK_OPTION)
             {
                 jTextFieldXMLDatePattern.setText( fpd.getPattern() );
@@ -2079,14 +2090,14 @@ public class ConnectionDialog extends javax.swing.JDialog {
     private void jButtonGetXMLAMetadataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonGetXMLAMetadataActionPerformed
         jComboBoxXMLADatasource.removeActionListener(dsListener);
         jComboBoxXMLACatalog.removeActionListener(catListener);
-        
-        String urlstr = this.jTextFieldXMLAUrl.getText().trim();
-        
-        Authenticator.setDefault(new CustomHTTPAuthenticator( jTextFieldUsername1.getText(), new String(jTextFieldPassword1.getPassword()) ));
 
-        
+        String urlstr = this.jTextFieldXMLAUrl.getText().trim();
+
+        //Authenticator.setDefault(new CustomHTTPAuthenticator( jTextFieldUsername1.getText(), new String(jTextFieldPassword1.getPassword()) ));
+
+
         rex.metadata.ServerMetadata smd = new rex.metadata.ServerMetadata(urlstr,(Component)getParent());
-       
+
         if (smd.isValidUrl() == false) {
             JOptionPane.showMessageDialog((Component)getParent(),
                     I18n.getString("messages.connectionDialog.xmla.invalidUrl","Unable to connect to XMLA server.") ,"",JOptionPane.INFORMATION_MESSAGE);
@@ -2094,7 +2105,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
         }
         this.jComboBoxXMLADatasource.removeAllItems();
         this.jComboBoxXMLACatalog.removeAllItems();
-        this.jComboBoxXMLACube.removeAllItems(); 
+        this.jComboBoxXMLACube.removeAllItems();
         rex.graphics.datasourcetree.elements.DataSourceTreeElement dste[] = smd.discoverDataSources();
         if (dste == null) {
             JOptionPane.showMessageDialog((Component)getParent(),
@@ -2117,10 +2128,10 @@ public class ConnectionDialog extends javax.swing.JDialog {
         if(cubes ==null || cubes.length==0){
             return;
         }
-         this.jComboBoxXMLACube.removeAllItems(); 
+         this.jComboBoxXMLACube.removeAllItems();
          for(int i=0;i<cubes.length; i++){
              this.jComboBoxXMLACube.addItem(((rex.graphics.datasourcetree.elements.CubeElement)cubes[i]).toString());
-         }       
+         }
         jComboBoxXMLADatasource.addActionListener(dsListener);
         jComboBoxXMLACatalog.addActionListener(catListener);
     }//GEN-LAST:event_jButtonGetXMLAMetadataActionPerformed
@@ -2128,7 +2139,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
     private void jTableCustomPropertiesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTableCustomPropertiesMouseClicked
 
        jButtonRemoveProp.setEnabled( jTableCustomProperties.getSelectedRow() >= 0 );
-        
+
     }//GEN-LAST:event_jTableCustomPropertiesMouseClicked
 
     private void jButtonRemovePropActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonRemovePropActionPerformed
@@ -2143,28 +2154,28 @@ public class ConnectionDialog extends javax.swing.JDialog {
     private void jButtonAddPropActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAddPropActionPerformed
 
         ((DefaultTableModel)jTableCustomProperties.getModel()).addRow(new Object[]{"name","value"});
-        
+
     }//GEN-LAST:event_jButtonAddPropActionPerformed
 
     private void jRadioButtonXML_connectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButtonXML_connectionActionPerformed
 
         XMLDataSourceCheckBoxesChanged();
-        
+
     }//GEN-LAST:event_jRadioButtonXML_connectionActionPerformed
 
-    
+
     public void XMLDataSourceCheckBoxesChanged()
-    {  
+    {
         jTextFieldRecordPath.setEnabled( jRadioButtonXML_datasource.isSelected()  );
-        jLabelXMLRecordPath.setEnabled( jRadioButtonXML_datasource.isSelected()  );   
+        jLabelXMLRecordPath.setEnabled( jRadioButtonXML_datasource.isSelected()  );
     }
     private void jButtonBrowseCatalogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonBrowseCatalogActionPerformed
-            
+
             String fileName = "";
 	    javax.swing.JFileChooser jfc = new javax.swing.JFileChooser( MainFrame.getMainInstance().getCurrentDirectory());
-	    
+
 	    jfc.setDialogTitle("Select file....");
-	    
+
 	    jfc.addChoosableFileFilter( new javax.swing.filechooser.FileFilter() {
 		    public boolean accept(java.io.File file) {
 			    String filename = file.getName();
@@ -2174,17 +2185,17 @@ public class ConnectionDialog extends javax.swing.JDialog {
 			    return "XML *.xml";
 		    }
 	    });
-	    
+
 	    jfc.setMultiSelectionEnabled(false);
 	    jfc.setDialogType( javax.swing.JFileChooser.OPEN_DIALOG);
 	    if  (jfc.showOpenDialog( this) == javax.swing.JOptionPane.OK_OPTION) {
-		    java.io.File file = jfc.getSelectedFile();		
+		    java.io.File file = jfc.getSelectedFile();
                     try {
                         jTextFieldCatalogURI.setText( file.toURI() + "");
                     } catch (Exception ex){}
-	    }        
-        
-        
+	    }
+
+
     }//GEN-LAST:event_jButtonBrowseCatalogActionPerformed
 
     private void jListCVSColumnsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jListCVSColumnsValueChanged
@@ -2199,7 +2210,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
             jButtonModifyParameter.setEnabled(false);
             jButtonDeleteParameter.setEnabled(false);
         }
-        
+
     }//GEN-LAST:event_jListCVSColumnsValueChanged
 
     private void jListCVSColumnsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jListCVSColumnsMouseClicked
@@ -2208,7 +2219,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
             {
                 jButtonModifyParameterActionPerformed1(null);
             }
-        
+
     }//GEN-LAST:event_jListCVSColumnsMouseClicked
 
     private void jCheckBoxCVSDateFormatActionPerformed1(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxCVSDateFormatActionPerformed1
@@ -2219,24 +2230,24 @@ public class ConnectionDialog extends javax.swing.JDialog {
 
         try {
             JRCsvDataSourceInspector ds = new JRCsvDataSourceInspector(new File( jTextFieldCSVFilename.getText()));
-        
+
             if (jRadioButtonCVSSeparatorComma.isSelected()) ds.setFieldDelimiter(',');
             if (jRadioButtonCVSSeparatorTab.isSelected()) ds.setFieldDelimiter('\t');
             if (jRadioButtonCVSSeparatorSpace.isSelected()) ds.setFieldDelimiter(' ');
             if (jRadioButtonCVSSeparatorSemicolon.isSelected()) ds.setFieldDelimiter(';');
             if (jRadioButtonCVSSeparatorNewLine.isSelected()) ds.setFieldDelimiter('\n');
             if (jRadioButtonCVSSeparatorOther.isSelected()) ds.setFieldDelimiter((jTextFieldCVSSeparatorText.getText()+" ").charAt(0));
-            
+
             if (jRadioButtonCVSSeparatorComma1.isSelected()) ds.setRecordDelimiter(",");
             if (jRadioButtonCVSSeparatorTab1.isSelected()) ds.setRecordDelimiter("\t");
             if (jRadioButtonCVSSeparatorSpace1.isSelected()) ds.setRecordDelimiter(" ");
             if (jRadioButtonCVSSeparatorSemicolon1.isSelected()) ds.setRecordDelimiter(";");
             if (jRadioButtonCVSSeparatorNewLine1.isSelected()) ds.setRecordDelimiter("\n");
             if (jRadioButtonCVSSeparatorOther1.isSelected()) ds.setRecordDelimiter(jTextFieldCVSSeparatorText1.getText());
-            
+
             DefaultListModel dlm = (DefaultListModel)jListCVSColumns.getModel();
             dlm.removeAllElements();
-            
+
             Vector names = ds.getColumnNames();
             for (int i=0; i < names.size(); ++i )
             {
@@ -2244,21 +2255,21 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 if (fname.length() > 0)
                   dlm.addElement(fname);
             }
-            
+
             if (names.size() > 0)
             {
                 jListCVSColumns.setSelectedIndex(0);
             }
-        
+
         } catch (Exception ex)
         {
             JOptionPane.showMessageDialog(this,ex.getMessage(), I18n.getString("message.title.exception","Exception"), JOptionPane.ERROR_MESSAGE);
         }
-        
+
     }//GEN-LAST:event_jButtonNewParameterActionPerformed11
 
     private void jButtonDeleteParameterActionPerformed1(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonDeleteParameterActionPerformed1
-        
+
         // Get the selected connection...
         DefaultListModel dlm = (DefaultListModel)jListCVSColumns.getModel();
         Object[] values = jListCVSColumns.getSelectedValues();
@@ -2270,16 +2281,16 @@ public class ConnectionDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_jButtonDeleteParameterActionPerformed1
 
     private void jButtonModifyParameterActionPerformed1(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonModifyParameterActionPerformed1
-        
+
         int index = jListCVSColumns.getSelectedIndex();
-        
+
         if (index < 0) return;
-        
+
         DefaultListModel dlm = (DefaultListModel)jListCVSColumns.getModel();
-        String oldName = (String)dlm.getElementAt(index); 
-        
+        String oldName = (String)dlm.getElementAt(index);
+
         String name = JOptionPane.showInputDialog(this, I18n.getString("connectionDialog.input.columnName","Column name" ), oldName);
-        
+
         if (name != null)
         {
             dlm.setElementAt(name, index);
@@ -2287,15 +2298,15 @@ public class ConnectionDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_jButtonModifyParameterActionPerformed1
 
     private void jButtonNewParameterActionPerformed1(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonNewParameterActionPerformed1
-        
+
         DefaultListModel dlm = (DefaultListModel)jListCVSColumns.getModel();
         String name = JOptionPane.showInputDialog(this, I18n.getString("connectionDialog.input.columnName","Column name" ), "COLUMN_" + dlm.getSize());
-        
+
         if (name != null)
         {
             dlm.addElement(name);
         }
-        
+
         if (dlm.size() == 1)
         {
             jListCVSColumns.setSelectedIndex(0);
@@ -2303,7 +2314,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_jButtonNewParameterActionPerformed1
 
     private void jTextFieldCVSSeparatorText1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldCVSSeparatorText1ActionPerformed
-    
+
         if (this.jTextFieldCVSSeparatorText1.getText().length() > 0)
         this.jRadioButtonCVSSeparatorOther1.setSelected(true);
     }//GEN-LAST:event_jTextFieldCVSSeparatorText1ActionPerformed
@@ -2312,40 +2323,40 @@ public class ConnectionDialog extends javax.swing.JDialog {
 
         if (this.jTextFieldCVSSeparatorText.getText().length() > 0)
         this.jRadioButtonCVSSeparatorOther.setSelected(true);
-        
+
     }//GEN-LAST:event_jTextFieldCVSSeparatorTextActionPerformed
 
     private void jButtonCVSDateFormatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCVSDateFormatActionPerformed
 
             FieldPatternDialog fpd = new FieldPatternDialog(this, true);
             fpd.setOnlyDate(true);
-            
+
             fpd.setVisible(true);
             if (fpd.getDialogResult() == JOptionPane.OK_OPTION)
             {
                 jTextFieldCVSDateFormat.setText( fpd.getPattern() );
             }
-        
+
     }//GEN-LAST:event_jButtonCVSDateFormatActionPerformed
 
     private void jCheckBoxCVSDateFormatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxCVSDateFormatActionPerformed
-        
+
         jTextFieldCVSDateFormat.setEnabled( this.jCheckBoxCVSDateFormat.isSelected());
         jButtonCVSDateFormat.setEnabled(  this.jCheckBoxCVSDateFormat.isSelected() );
-        
+
         if (!this.jCheckBoxCVSDateFormat.isSelected())
         {
             jTextFieldCVSDateFormat.setText( new SimpleDateFormat().toPattern());
         }
-        
+
     }//GEN-LAST:event_jCheckBoxCVSDateFormatActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         String fileName = "";
 	    javax.swing.JFileChooser jfc = new javax.swing.JFileChooser( MainFrame.getMainInstance().getCurrentDirectory());
-	    
+
 	    jfc.setDialogTitle("Select XML file....");
-	    
+
 	    jfc.addChoosableFileFilter( new javax.swing.filechooser.FileFilter() {
 		    public boolean accept(java.io.File file) {
 			    String filename = file.getName();
@@ -2355,25 +2366,25 @@ public class ConnectionDialog extends javax.swing.JDialog {
 			    return "XML *.xml";
 		    }
 	    });
-	    
+
 	    jfc.setMultiSelectionEnabled(false);
 	    jfc.setDialogType( javax.swing.JFileChooser.OPEN_DIALOG);
 	    if  (jfc.showOpenDialog( this) == javax.swing.JOptionPane.OK_OPTION) {
-		    java.io.File file = jfc.getSelectedFile();		
+		    java.io.File file = jfc.getSelectedFile();
                     try {
                         jTextFieldXMLFile.setText( file.getAbsolutePath() );
                     } catch (Exception ex){}
-	    }        
-        
-        
+	    }
+
+
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButtonCSVFilenameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCSVFilenameActionPerformed
             String fileName = "";
 	    javax.swing.JFileChooser jfc = new javax.swing.JFileChooser( MainFrame.getMainInstance().getCurrentDirectory());
-	    
+
 	    jfc.setDialogTitle("Select CSV file....");
-	    
+
 	    jfc.addChoosableFileFilter( new javax.swing.filechooser.FileFilter() {
 		    public boolean accept(java.io.File file) {
 			    String filename = file.getName();
@@ -2383,18 +2394,18 @@ public class ConnectionDialog extends javax.swing.JDialog {
 			    return "CSV *.csv";
 		    }
 	    });
-	    
+
 	    jfc.setMultiSelectionEnabled(false);
 	    jfc.setDialogType( javax.swing.JFileChooser.OPEN_DIALOG);
 	    if  (jfc.showOpenDialog( this) == javax.swing.JOptionPane.OK_OPTION) {
-		    java.io.File file = jfc.getSelectedFile();		
+		    java.io.File file = jfc.getSelectedFile();
                     try {
                         jTextFieldCSVFilename.setText( file.getAbsolutePath() );
                     } catch (Exception ex){}
-	    }        
-        
-        
-        
+	    }
+
+
+
     }//GEN-LAST:event_jButtonCSVFilenameActionPerformed
 
     private void jComboBoxJDBCDriverActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxJDBCDriverActionPerformed
@@ -2408,14 +2419,14 @@ public class ConnectionDialog extends javax.swing.JDialog {
 
     private void jButtonOK1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonOK1ActionPerformed
         //java.awt.Frame parent = Misc.frameFromComponent(this);
-        // 
+        //
         MainFrame.getMainInstance().getReportClassLoader().rescanLibDirectory();
-        
+
         int selectedConnectionType = Integer.parseInt( ""+ ((Tag)jComboBoxConnectionType.getSelectedItem()).getValue() );
-        
+
         if (selectedConnectionType == 0)
         {
-            
+
             // Try the java connection...
             Connection conn = null;
             Statement stmt = null;
@@ -2426,16 +2437,16 @@ public class ConnectionDialog extends javax.swing.JDialog {
                     {
                     	DriverPool.registerDriver( (String)jComboBoxJDBCDriver.getSelectedItem(), this.getClass().getClassLoader() );
                     }
-                    
+
                     java.sql.Driver driver = DriverPool.getDriver( this.jTextFieldJDBCUrl.getText() );
-                    
+
                     java.util.Properties connectProps = new java.util.Properties();
                     connectProps.setProperty("user", this.jTextFieldUsername.getText());
                     connectProps.setProperty("password", this.jTextFieldPassword.getText());
-                    
-                    conn = driver.connect( this.jTextFieldJDBCUrl.getText(), connectProps); 
+
+                    conn = driver.connect( this.jTextFieldJDBCUrl.getText(), connectProps);
 				stmt = conn.createStatement();
-                                
+
 			}catch (NoClassDefFoundError ex)
                         {
                                 JOptionPane.showMessageDialog((Component)getParent(),
@@ -2443,8 +2454,8 @@ public class ConnectionDialog extends javax.swing.JDialog {
                                         "{0}\nNoClassDefFoundError!!\nCheck your classpath!\n{1}",
                                         new Object[]{"", ""+ex.getMessage()}),
                                         I18n.getString("message.title.exception","Exception"),JOptionPane.ERROR_MESSAGE);
-                                return;					
-                        } 
+                                return;
+                        }
                         catch (ClassNotFoundException ex)
                         {
                                 JOptionPane.showMessageDialog((Component)getParent(),
@@ -2452,8 +2463,8 @@ public class ConnectionDialog extends javax.swing.JDialog {
                                         "{0}\nClassNotFoundError!\nMsg: {1}\nPossible not found class: {2}\nCheck your classpath!",
                                         new Object[]{"", ""+ex.getMessage(), "" + jComboBoxJDBCDriver.getSelectedItem()}),
                                         I18n.getString("message.title.exception","Exception"),JOptionPane.ERROR_MESSAGE);
-                                return;				
-                        } 
+                                return;
+                        }
                         catch (java.sql.SQLException ex)
                         {
                                 JOptionPane.showMessageDialog((Component)getParent(),
@@ -2461,8 +2472,8 @@ public class ConnectionDialog extends javax.swing.JDialog {
                                         "{0}\nSQL problems: {1}\n{2}",
                                         new Object[]{"", ""+ex.getMessage(), "" + this.jTextFieldJDBCUrl.getText()}),
                                         I18n.getString("message.title.exception","Exception"),JOptionPane.ERROR_MESSAGE);
-                                return;					
-                        } 
+                                return;
+                        }
                         catch (Exception ex)
 			{
 			JOptionPane.showMessageDialog(MainFrame.getMainInstance(),
@@ -2470,7 +2481,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
                                 "{0}\nGeneral problem: {1}\nPlease check your username and password. The DBMS is running?!",
                                 new Object[]{"", ""+ex.getMessage()}),
                                 I18n.getString("message.title.exception","Exception"),JOptionPane.ERROR_MESSAGE);
-                                return;									
+                                return;
 			} finally {
                 // Clean up
                 if( stmt!=null ) try{ stmt.close(); } catch(Exception e) { /* anyone really care? */ }
@@ -2482,18 +2493,18 @@ public class ConnectionDialog extends javax.swing.JDialog {
         else if (selectedConnectionType == 1)
         {
             String xml_file = jTextFieldXMLFile.getText().trim();
-            
+
             try {
-                
+
                 java.io.File f = new java.io.File(xml_file);
                 if (!f.exists())
                 {
                     JOptionPane.showMessageDialog((Component)getParent(),
                             I18n.getFormattedString("messages.connectionDialog.fileNotFound","File {0} not found", new Object[]{xml_file}),
                             I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
-                    return;	
+                    return;
                 }
-                
+
                 JOptionPane.showMessageDialog((Component)getParent(),I18n.getString("messages.connectionDialog.connectionTestSuccessful","Connection test successful!"),"",JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
@@ -2501,17 +2512,17 @@ public class ConnectionDialog extends javax.swing.JDialog {
             {
                 JOptionPane.showMessageDialog((Component)getParent(),ex.getMessage(),I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
 		ex.printStackTrace();
-                return;	
+                return;
             }
 
         }
         else if (selectedConnectionType == 3)
         {
-        	
-        	
+
+
             try {
                 Object obj = Class.forName((String)jTextFieldJRCustomDataSourceFactoryClass.getText().trim(), true, MainFrame.getMainInstance().getReportClassLoader()).newInstance();
-                obj.getClass().getMethod( (String)jTextFieldJRCustomDataSourceMethod.getText().trim(), new Class[0]).invoke(obj,new Object[0]);                
+                obj.getClass().getMethod( (String)jTextFieldJRCustomDataSourceMethod.getText().trim(), new Class[0]).invoke(obj,new Object[0]);
             }catch (NoClassDefFoundError ex)
             {
                     JOptionPane.showMessageDialog((Component)getParent(),
@@ -2519,8 +2530,8 @@ public class ConnectionDialog extends javax.swing.JDialog {
                             "{0}\nNoClassDefFoundError!!\nCheck your classpath!\n{1}",
                             new Object[]{"", ""+ex.getMessage()}),
                             I18n.getString("message.title.exception","Exception"),JOptionPane.ERROR_MESSAGE);
-                    return;					
-            } 
+                    return;
+            }
             catch (ClassNotFoundException ex)
             {
                     JOptionPane.showMessageDialog((Component)getParent(),
@@ -2528,18 +2539,18 @@ public class ConnectionDialog extends javax.swing.JDialog {
                             "{0}\nClassNotFoundError!\nMsg: {1}\nPossible not found class: {2}\nCheck your classpath!",
                             new Object[]{"", ""+ex.getMessage(), "" + jTextFieldJRCustomDataSourceFactoryClass.getText().trim()}),
                             I18n.getString("message.title.exception","Exception"),JOptionPane.ERROR_MESSAGE);
-                    return;				
-            } 
+                    return;
+            }
             catch (Exception ex)
             {
-            	
-            	
+
+
             JOptionPane.showMessageDialog(MainFrame.getMainInstance(),
                     I18n.getFormattedString("messages.connection.generalError",
                     "{0}\nGeneral problem: {1}\nPlease check your username and password. The DBMS is running?!",
                     new Object[]{"", ""+ex.getMessage()}),
                     I18n.getString("message.title.exception","Exception"),JOptionPane.ERROR_MESSAGE);
-                    return;									
+                    return;
             }
             JOptionPane.showMessageDialog((Component)getParent(),I18n.getString("messages.connectionDialog.connectionTestSuccessful","Connection test successful!"),"",JOptionPane.INFORMATION_MESSAGE);
 	    return;
@@ -2548,8 +2559,8 @@ public class ConnectionDialog extends javax.swing.JDialog {
         {
             try {
                 Object obj = Class.forName((String)jTextFieldJBSetFactoryClass.getText().trim(), true, MainFrame.getMainInstance().getReportClassLoader()).newInstance();
-                Object ret_obj = obj.getClass().getMethod( (String)jTextFieldJBSetMethodToCall.getText().trim(), new Class[0]).invoke(null,new Object[0]);                
-            
+                Object ret_obj = obj.getClass().getMethod( (String)jTextFieldJBSetMethodToCall.getText().trim(), new Class[0]).invoke(null,new Object[0]);
+
                 if (ret_obj != null && !jRadioButtonJBSetArray.isSelected() && (ret_obj instanceof  java.util.Collection))
                 {
                     JOptionPane.showMessageDialog((Component)getParent(),I18n.getString("messages.connectionDialog.connectionTestSuccessful","Connection test successful!"),"",JOptionPane.INFORMATION_MESSAGE);
@@ -2563,7 +2574,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
                     JOptionPane.showMessageDialog((Component)getParent(),I18n.getString("messages.connectionDialog.notValidValueReturned",
                             "The method don't return a valid Array or java.util.Collection!\n"),I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
                 }
-                
+
             }catch (NoClassDefFoundError ex)
             {
                     JOptionPane.showMessageDialog((Component)getParent(),
@@ -2571,8 +2582,8 @@ public class ConnectionDialog extends javax.swing.JDialog {
                             "{0}\nNoClassDefFoundError!!\nCheck your classpath!\n{1}",
                             new Object[]{"", ""+ex.getMessage()}),
                             I18n.getString("message.title.exception","Exception"),JOptionPane.ERROR_MESSAGE);
-                    return;					
-            } 
+                    return;
+            }
             catch (ClassNotFoundException ex)
             {
                     JOptionPane.showMessageDialog((Component)getParent(),
@@ -2580,28 +2591,28 @@ public class ConnectionDialog extends javax.swing.JDialog {
                             "{0}\nClassNotFoundError!\nMsg: {1}\nPossible not found class: {2}\nCheck your classpath!",
                             new Object[]{"", ""+ex.getMessage(), "" + jTextFieldJBSetFactoryClass.getText().trim()}),
                             I18n.getString("message.title.exception","Exception"),JOptionPane.ERROR_MESSAGE);
-                    return;				
-            } 
+                    return;
+            }
             catch (Exception ex)
             {
             	ex.printStackTrace();
-            	
+
                     JOptionPane.showMessageDialog(MainFrame.getMainInstance(),
                     I18n.getFormattedString("messages.connection.generalError",
                     "{0}\nGeneral problem: {1}\nPlease check your username and password. The DBMS is running?!",
                     new Object[]{"", ""+ex.getMessage()}),
                     I18n.getString("message.title.exception","Exception"),JOptionPane.ERROR_MESSAGE);
-                    return;									
+                    return;
             }
-            
+
 	    return;
         }
         else if (selectedConnectionType == 4)
         {
             String csv_file = jTextFieldCSVFilename.getText().trim();
-            
+
             try {
-                
+
                 JRCSVDataSourceConnection con = new JRCSVDataSourceConnection();
                 java.io.File f = new java.io.File(csv_file);
                 if (!f.exists())
@@ -2609,42 +2620,42 @@ public class ConnectionDialog extends javax.swing.JDialog {
                     JOptionPane.showMessageDialog((Component)getParent(),
                          I18n.getFormattedString("messages.connectionDialog.fileNotFound","File {0} not found", new Object[]{csv_file}),
                          I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
-                    return;	
+                    return;
                 }
-                
+
                 con.setFilename( csv_file );
                 if (con.getJRDataSource() != null)
                 {
                     JOptionPane.showMessageDialog((Component)getParent(),I18n.getString("messages.connectionDialog.connectionTestSuccessful","Connection test successful!"),"",JOptionPane.INFORMATION_MESSAGE);
                     return;
                 }
-                
+
             }
             catch (Exception ex)
             {
                 JOptionPane.showMessageDialog((Component)getParent(),ex.getMessage(),I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
 		ex.printStackTrace();
-                return;	
+                return;
             }
-            
+
 	    return;
         }
         else if (selectedConnectionType == 5)
         {
             try {
-                
+
                 Object obj = Class.forName((String)jTextFieldJRDataSourceProvider.getText().trim(), true, MainFrame.getMainInstance().getReportClassLoader()).newInstance();
                 if (!(obj instanceof net.sf.jasperreports.engine.JRDataSourceProvider))
                 {
                     JOptionPane.showMessageDialog((Component)getParent(),I18n.getFormattedString("messages.connectionDialog.invalidJRDataSourceProvider","\"{0}\" is not a subclass of\nnet.sf.jasperreports.engine.JRDataSourceProvider.", new Object[]{jTextFieldJRDataSourceProvider.getText()}),I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
-                    return;	
+                    return;
                 }
                 else
                 {
                     JOptionPane.showMessageDialog((Component)getParent(),I18n.getString("messages.connectionDialog.connectionTestSuccessful","Connection test successful!"),"",JOptionPane.INFORMATION_MESSAGE);
                     return;
                 }
-                
+
             } catch (NoClassDefFoundError ex)
             {
                     JOptionPane.showMessageDialog((Component)getParent(),
@@ -2652,8 +2663,8 @@ public class ConnectionDialog extends javax.swing.JDialog {
                             "{0}\nNoClassDefFoundError!!\nCheck your classpath!\n{1}",
                             new Object[]{"", ""+ex.getMessage()}),
                             I18n.getString("message.title.exception","Exception"),JOptionPane.ERROR_MESSAGE);
-                    return;					
-            } 
+                    return;
+            }
             catch (ClassNotFoundException ex)
             {
                     JOptionPane.showMessageDialog((Component)getParent(),
@@ -2661,8 +2672,8 @@ public class ConnectionDialog extends javax.swing.JDialog {
                             "{0}\nClassNotFoundError!\nMsg: {1}\nPossible not found class: {2}\nCheck your classpath!",
                             new Object[]{"", ""+ex.getMessage(), "" + jTextFieldJBSetFactoryClass.getText().trim()}),
                             I18n.getString("message.title.exception","Exception"),JOptionPane.ERROR_MESSAGE);
-                    return;				
-            } 
+                    return;
+            }
             catch (Exception ex)
             {
             JOptionPane.showMessageDialog(MainFrame.getMainInstance(),
@@ -2670,10 +2681,10 @@ public class ConnectionDialog extends javax.swing.JDialog {
                     "{0}\nGeneral problem: {1}\nPlease check your username and password. The DBMS is running?!",
                     new Object[]{"", ""+ex.getMessage()}),
                     I18n.getString("message.title.exception","Exception"),JOptionPane.ERROR_MESSAGE);
-                    return;									
+                    return;
             }
         }
-        else if (selectedConnectionType == 6)
+       /* else if (selectedConnectionType == 6)
         {
             try {
                 SwingUtilities.invokeLater( new Runnable()
@@ -2692,8 +2703,8 @@ public class ConnectionDialog extends javax.swing.JDialog {
                         {
                             ex.printStackTrace();
                             JOptionPane.showMessageDialog((Component)getParent(),ex.getMessage(),I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
-                            return;					
-                        } 
+                            return;
+                        }
                         finally
                         {
 
@@ -2710,7 +2721,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 {
                     public void run()
                     {
-                        
+
                         Thread.currentThread().setContextClassLoader( MainFrame.getMainInstance().getReportClassLoader() );
                         SessionFactory hb_sessionFactory = null;
                         try {
@@ -2729,13 +2740,13 @@ public class ConnectionDialog extends javax.swing.JDialog {
                         {
                             ex.printStackTrace();
                             JOptionPane.showMessageDialog((Component)getParent(),ex.getMessage(),I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
-                            return;					
-                        } 
+                            return;
+                        }
                         finally
                         {
 
                         }
-                        
+
                     }
                 });
             } catch (Exception ex)
@@ -2748,15 +2759,15 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 {
                     public void run()
                     {
-                        
-                        
+
+
                         Thread.currentThread().setContextClassLoader( MainFrame.getMainInstance().getReportClassLoader() );
                         try {
 
                               MondrianConnection  iReportConn = new MondrianConnection();
                               iReportConn.getProperties().put(MondrianConnection.CATALOG_URI, jTextFieldCatalogURI.getText().trim());
                               iReportConn.getProperties().put(MondrianConnection.CONNECTION_NAME, jComboBoxMondrianJdbc.getSelectedItem()+"");
-            
+
 
                               iReportConn.getMondrianConnection();
                               iReportConn.closeMondrianConnection();
@@ -2766,8 +2777,8 @@ public class ConnectionDialog extends javax.swing.JDialog {
                         {
                             ex.printStackTrace();
                             JOptionPane.showMessageDialog((Component)getParent(),ex.getMessage(),I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
-                            return;					
-                        } 
+                            return;
+                        }
                         finally
                         {
 
@@ -2783,19 +2794,19 @@ public class ConnectionDialog extends javax.swing.JDialog {
         		JRSpringLoadedHibernateConnection iReportConn = new JRSpringLoadedHibernateConnection();
         		iReportConn.setSessionFactoryBeanId(jTextFieldSLHSessionFactory.getText().trim());
         		iReportConn.setSpringConfig(jTextFieldSLHSpringConfig.getText().trim());
- 
+
         		SessionFactory sf = iReportConn.getSessionFactory();
         		if (sf == null) {
         			JOptionPane.showMessageDialog((Component)getParent(),I18n.getString("messages.connectionDialog.noSessionFactoryReturned","No session factory returned.  Check your session factory bean id against the spring configuration."),I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
-            		
+
         		}
         		JOptionPane.showMessageDialog((Component)getParent(),I18n.getString("messages.connectionDialog.hibernateConnectionTestSuccessful","iReport successfully created a Hibernate session factory from your Spring configuration."),"",JOptionPane.INFORMATION_MESSAGE);
         	} catch (Exception e) {
         		e.printStackTrace();
         		JOptionPane.showMessageDialog((Component)getParent(),e.getMessage(), I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
-        		
+
         	}
-        }
+        }*/
         else if (selectedConnectionType == 10)
         {
             JOptionPane.showMessageDialog((Component)getParent(),I18n.getString("messages.connectionDialog.connectionTestSuccessful","Connection test successful!"),"",JOptionPane.INFORMATION_MESSAGE);
@@ -2808,15 +2819,15 @@ public class ConnectionDialog extends javax.swing.JDialog {
         }
         else if (selectedConnectionType == 13)
         {
-            /**   
+            /**
              * Copyright (C) 2005, 2006 CINCOM SYSTEMS, INC.
              * All Rights Reserved
              * www.cincom.com
              *
              */
             String urlstr = this.jTextFieldXMLAUrl.getText().trim();
-            Authenticator.setDefault(new CustomHTTPAuthenticator( jTextFieldUsername1.getText(), new String(jTextFieldPassword1.getPassword()) ));
-        
+            //Authenticator.setDefault(new CustomHTTPAuthenticator( jTextFieldUsername1.getText(), new String(jTextFieldPassword1.getPassword()) ));
+
                 String dataSource = (String)this.jComboBoxXMLADatasource.getSelectedItem();
                 String catalog = (String)this.jComboBoxXMLACatalog.getSelectedItem();
                 rex.metadata.ServerMetadata smd = new rex.metadata.ServerMetadata(urlstr,(Component)getParent());
@@ -2847,7 +2858,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
                         JOptionPane.showMessageDialog((Component)getParent(),
                             I18n.getFormattedString("messages.connectionDialog.connectionXMLATestFailed.NoDatasourceFound","Connection test failed! Datasource {0} not found.", new Object[]{dataSource+""} ),
                             "",JOptionPane.INFORMATION_MESSAGE);
-                        return;                        
+                        return;
                     }
                     if (catalog != null && catalog.length() > 0) {
                         found = false;
@@ -2856,7 +2867,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
                             JOptionPane.showMessageDialog((Component)getParent(),
                                 I18n.getString("messages.connectionDialog.connectionXMLATestFailed.NoCatalogs","Connection test failed! No catalogs found in datasource."),
                                 "",JOptionPane.INFORMATION_MESSAGE);
-                            return;                                                    
+                            return;
                         }
                         intI = 0;
                         while (!found && intI < cats.length) {
@@ -2872,7 +2883,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
                             JOptionPane.showMessageDialog((Component)getParent(),
                                 I18n.getFormattedString("messages.connectionDialog.connectionXMLATestFailed.NoCatalogFound","Connection test failed! Catalog {0} not found in datasource.", new Object[]{catalog+""} ),
                                 "",JOptionPane.INFORMATION_MESSAGE);
-                            return;                                                                                
+                            return;
                         }
                     }
                     else {
@@ -2890,19 +2901,19 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 }
                 JOptionPane.showMessageDialog((Component)getParent(),
                         I18n.getString("messages.connectionDialog.connectionXMLATestSuccessful","Connection test successful! Catalog found in datasource on xmla server."),
-                        "",JOptionPane.INFORMATION_MESSAGE);                    
+                        "",JOptionPane.INFORMATION_MESSAGE);
                 /* end of modification */
-                
+
 //            } catch (Exception ex)
 //            {}
         }
-        else 
+        else
         {
             // try to perform a test...
             try {
                 IReportConnection connection = createConnection(selectedConnectionType);
                 if (connection == null) throw new Exception(I18n.getString("messages.connectionDialog.connectionTestError","unable to instance the connecion class to test!"));
-            
+
                 connection.test();
                 JOptionPane.showMessageDialog((Component)getParent(),I18n.getString("messages.connectionDialog.connectionTestSuccessful","Connection test successful!"),"",JOptionPane.INFORMATION_MESSAGE);
             } catch (Throwable e) {
@@ -2910,24 +2921,24 @@ public class ConnectionDialog extends javax.swing.JDialog {
         	JOptionPane.showMessageDialog((Component)getParent(),e.getMessage(), I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
             }
         }
-        
-        
+
+
     }//GEN-LAST:event_jButtonOK1ActionPerformed
 
     private void jButtonWizardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonWizardActionPerformed
-          
+
         if (jComboBoxJDBCDriver.getSelectedIndex() < 0) return;
         String driver = ""+jComboBoxJDBCDriver.getSelectedItem();
         driver = driver.trim();
         if (driver.equals("")) return;
-        
+
         String server = jTextFieldServerAddress.getText().trim();
         if( server.length()==0 ) {
             server = "localhost";
         }
-        
+
         String databaseName = jTextFieldDBName.getText().trim();
-        
+
         if (driver.equalsIgnoreCase("org.gjt.mm.mysql.Driver")) {
             String url = "jdbc:mysql://" + server + "/";
             if ( databaseName.length()>0 )
@@ -2998,7 +3009,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 url += databaseName;
             else
                 url += "MYDATABASE";
-            
+
             url += ":informixserver=SERVERNAME";
             jTextFieldJDBCUrl.setText(url);
         }
@@ -3057,7 +3068,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
             else
                 url += "MYDATABASE";
             jTextFieldJDBCUrl.setText(url);
-        } 
+        }
         else if (driver.equalsIgnoreCase("net.sourceforge.jtds.jdbc.Driver"))
         {
             String url = "jdbc:jtds:sqlserver://" +
@@ -3076,7 +3087,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
         if (init) return;
         jPanelConnectionRoot.removeAll();
         int selectedConnectionType = Integer.parseInt( ""+ ((Tag)jComboBoxConnectionType.getSelectedItem()).getValue() );
-        
+
         if (selectedConnectionType == 0)
         {
             jPanelConnectionRoot.add("Center", jPanelJDBC);
@@ -3133,8 +3144,8 @@ public class ConnectionDialog extends javax.swing.JDialog {
         {
             jPanelConnectionRoot.add("Center", jPanelXMLA);
         }
-        
-        
+
+
         jPanelConnectionRoot.updateUI();
     }//GEN-LAST:event_jComboBoxConnectionTypeActionPerformed
 
@@ -3153,22 +3164,22 @@ public class ConnectionDialog extends javax.swing.JDialog {
             return;
         }
         int selectedConnectionType = Integer.parseInt( ""+ ((Tag)jComboBoxConnectionType.getSelectedItem()).getValue() );
-        
+
         iReportConnection = createConnection( selectedConnectionType);
         if (iReportConnection == null) return;
-        
+
         setVisible(false);
         this.setDialogResult( javax.swing.JOptionPane.OK_OPTION);
         dispose();
     }//GEN-LAST:event_jButtonOKActionPerformed
-    
+
     /** Closes the dialog */
     private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
         setVisible(false);
         this.setDialogResult( javax.swing.JOptionPane.CLOSED_OPTION);
         dispose();
     }//GEN-LAST:event_closeDialog
-    
+
     /** Getter for property dialogResult.
      * @return Value of property dialogResult.
      *
@@ -3176,7 +3187,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
     public int getDialogResult() {
         return dialogResult;
     }
-    
+
     /** Setter for property dialogResult.
      * @param dialogResult New value of property dialogResult.
      *
@@ -3184,7 +3195,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
     public void setDialogResult(int dialogResult) {
         this.dialogResult = dialogResult;
     }
-    
+
     /** Getter for property iReportConnection.
      * @return Value of property iReportConnection.
      *
@@ -3192,14 +3203,14 @@ public class ConnectionDialog extends javax.swing.JDialog {
     public it.businesslogic.ireport.IReportConnection getIReportConnection() {
         return iReportConnection;
     }
-    
+
     /** Setter for property iReportConnection.
      * @param iReportConnection New value of property iReportConnection.
      *
      */
     public void setIReportConnection(it.businesslogic.ireport.IReportConnection iReportConnection) {
         this.iReportConnection = iReportConnection;
-        
+
         this.jTextFieldName.setText( iReportConnection.getName());
         if (iReportConnection instanceof JDBCConnection)
         {
@@ -3212,7 +3223,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
             this.jTextFieldUsername.setText( con.getUsername());
             if (con.isSavePassword())
                 this.jTextFieldPassword.setText( con.getPassword());
-            else 
+            else
                 this.jTextFieldPassword.setText( "");
             this.jCheckBoxSavePassword.setSelected( con.isSavePassword());
         }
@@ -3246,7 +3257,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
             JRCSVDataSourceConnection con = (JRCSVDataSourceConnection)iReportConnection;
             Misc.setComboboxSelectedTagValue(jComboBoxConnectionType, "4");
             this.jTextFieldCSVFilename.setText( con.getFilename() );
-            
+
             if (con.getCustomDateFormat().length() > 0)
             {
                 this.jCheckBoxCVSDateFormat.setSelected(true);
@@ -3254,9 +3265,9 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 this.jTextFieldCVSDateFormat.setEnabled(true);
                 this.jButtonCVSDateFormat.setEnabled(true);
             }
-            
+
             this.jCheckBoxCVSFirstRowAsHeader.setSelected( con.isUseFirstRowAsHeader() );
-            
+
             String fieldSeparator = con.getFieldDelimiter();
             if (fieldSeparator.equals(",")) this.jRadioButtonCVSSeparatorComma.setSelected(true);
             else if (fieldSeparator.equals("\t")) this.jRadioButtonCVSSeparatorTab.setSelected(true);
@@ -3267,7 +3278,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 this.jRadioButtonCVSSeparatorOther.setSelected(true);
                 this.jTextFieldCVSSeparatorText.setText(fieldSeparator);
             }
-            
+
             String rowSeparator = con.getRecordDelimiter();
             if (rowSeparator.equals(",")) this.jRadioButtonCVSSeparatorComma1.setSelected(true);
             else if (rowSeparator.equals("\t")) this.jRadioButtonCVSSeparatorTab1.setSelected(true);
@@ -3278,32 +3289,32 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 this.jRadioButtonCVSSeparatorOther1.setSelected(true);
                 this.jTextFieldCVSSeparatorText1.setText(rowSeparator);
             }
-            
+
             DefaultListModel dlm = (DefaultListModel)this.jListCVSColumns.getModel();
 
             for (int i=0; i< con.getColumnNames().size(); ++i)
             {
                 dlm.addElement(con.getColumnNames().elementAt(i)+"" );
             }
-            
+
             if (dlm.size() > 0)
             {
                 jListCVSColumns.setSelectedIndex(0);
             }
-            
+
         }
         else if (iReportConnection instanceof JRXMLDataSourceConnection)
         {
             JRXMLDataSourceConnection con = (JRXMLDataSourceConnection)iReportConnection;
             Misc.setComboboxSelectedTagValue(jComboBoxConnectionType, "1");
             this.jTextFieldXMLFile.setText( con.getFilename() );
-            this.jTextFieldRecordPath.setText( con.getSelectExpression() );     
+            this.jTextFieldRecordPath.setText( con.getSelectExpression() );
             this.jRadioButtonXML_connection.setSelected( con.isUseConnection() );
             this.jRadioButtonXML_datasource.setSelected( !con.isUseConnection() );
-            
+
             this.jTextFieldXMLDatePattern.setText( Misc.nvl(con.getDatePattern() ,"") );
             this.jTextFieldXMLNumberPattern.setText( Misc.nvl(con.getNumberPattern() ,"") );
-            
+
             this.tmpXMLLocale = con.getLocale();
             if (this.tmpXMLLocale != null )
             {
@@ -3313,7 +3324,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
             {
                 jTextFieldXMLLocaleValue.setText( I18n.getString("timezone.default","Default") );
             }
-            
+
             this.tmpXMLTimeZone = con.getTimeZone();
             if (this.tmpXMLLocale != null)
             {
@@ -3323,21 +3334,21 @@ public class ConnectionDialog extends javax.swing.JDialog {
             {
                 jTextFieldXMLTimeZoneValue.setText( I18n.getString("timezone.default","Default") );
             }
-            
-            
+
+
             XMLDataSourceCheckBoxesChanged();
         }
          else if (iReportConnection instanceof JRDataSourceProviderConnection)
         {
             JRDataSourceProviderConnection con = (JRDataSourceProviderConnection)iReportConnection;
             Misc.setComboboxSelectedTagValue(jComboBoxConnectionType, "5");
-            this.jTextFieldJRDataSourceProvider.setText( it.businesslogic.ireport.util.Misc.nvl(con.getProperties().get("JRDataSourceProvider"), "") );            
+            this.jTextFieldJRDataSourceProvider.setText( it.businesslogic.ireport.util.Misc.nvl(con.getProperties().get("JRDataSourceProvider"), "") );
         }
         else if (iReportConnection instanceof JRSpringLoadedHibernateConnection) {
-         	
+
          	Misc.setComboboxSelectedTagValue(jComboBoxConnectionType, "9");
-         	this.jTextFieldSLHSpringConfig.setText( ((JRSpringLoadedHibernateConnection)iReportConnection).getSpringConfig() );
-         	this.jTextFieldSLHSessionFactory.setText( ((JRSpringLoadedHibernateConnection)iReportConnection).getSessionFactoryBeanId() );
+         	//this.jTextFieldSLHSpringConfig.setText( ((JRSpringLoadedHibernateConnection)iReportConnection).getSpringConfig() );
+         	//this.jTextFieldSLHSessionFactory.setText( ((JRSpringLoadedHibernateConnection)iReportConnection).getSessionFactoryBeanId() );
         }
         else if (iReportConnection instanceof JRHibernateConnection)
         {
@@ -3347,14 +3358,14 @@ public class ConnectionDialog extends javax.swing.JDialog {
         {
             EJBQLConnection con = (EJBQLConnection)iReportConnection;
             Misc.setComboboxSelectedTagValue(jComboBoxConnectionType, "7");
-            this.jTextFieldPersistanceUnit.setText( it.businesslogic.ireport.util.Misc.nvl(con.getProperties().get("PersistenceUnit"), "") );            
+            this.jTextFieldPersistanceUnit.setText( it.businesslogic.ireport.util.Misc.nvl(con.getProperties().get("PersistenceUnit"), "") );
         }
         else if (iReportConnection instanceof MondrianConnection)
         {
             MondrianConnection con = (MondrianConnection)iReportConnection;
             Misc.setComboboxSelectedTagValue(jComboBoxConnectionType, "8");
-            this.jTextFieldCatalogURI.setText( it.businesslogic.ireport.util.Misc.nvl(con.getProperties().get(MondrianConnection.CATALOG_URI), "") );            
-            jComboBoxMondrianJdbc.setSelectedItem( con.getConnectionName() );
+            this.jTextFieldCatalogURI.setText( it.businesslogic.ireport.util.Misc.nvl(con.getProperties().get(MondrianConnection.CATALOG_URI), "") );
+           // jComboBoxMondrianJdbc.setSelectedItem( con.getConnectionName() );
         }
         else if (iReportConnection instanceof QueryExecuterConnection)
         {
@@ -3388,7 +3399,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
         }
         else if (iReportConnection instanceof JRXMLADataSourceConnection)
         {
-            /**   
+            /**
              * Copyright (C) 2005, 2006 CINCOM SYSTEMS, INC.
              * All Rights Reserved
              * www.cincom.com
@@ -3397,23 +3408,23 @@ public class ConnectionDialog extends javax.swing.JDialog {
             JRXMLADataSourceConnection con = (JRXMLADataSourceConnection)iReportConnection;
             //this.jComboBoxConnectionType.setSelectedIndex(9); // referencing XMLA Server
             Misc.setComboboxSelectedTagValue(jComboBoxConnectionType, "13");
-            this.jTextFieldXMLAUrl.setText( con.getUrl() );  
+            this.jTextFieldXMLAUrl.setText( con.getUrl() );
             this.jComboBoxXMLADatasource.removeAllItems();
-            this.jComboBoxXMLADatasource.addItem(con.getDatasource());
+            //this.jComboBoxXMLADatasource.addItem(con.getDatasource());
             this.jComboBoxXMLACatalog.removeAllItems();
-            this.jComboBoxXMLACatalog.addItem(con.getCatalog());
+            //this.jComboBoxXMLACatalog.addItem(con.getCatalog());
             this.jComboBoxXMLACube.removeAllItems();
-            this.jComboBoxXMLACube.addItem(con.getCube());
-            
-            this.jTextFieldUsername1.setText( con.getUsername());
-            if (con.isSavePassword())
-                this.jTextFieldPassword1.setText( con.getPassword());
-            else 
-                this.jTextFieldPassword1.setText( "");
-            this.jCheckBoxSavePassword1.setSelected( con.isSavePassword());
+           // this.jComboBoxXMLACube.addItem(con.getCube());
+
+            //this.jTextFieldUsername1.setText( con.getUsername());
+            //if (con.isSavePassword())
+             //   this.jTextFieldPassword1.setText( con.getPassword());
+           // else
+           //     this.jTextFieldPassword1.setText( "");
+           // this.jCheckBoxSavePassword1.setSelected( con.isSavePassword());
         }
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroupBeansSetType;
@@ -3587,10 +3598,10 @@ public class ConnectionDialog extends javax.swing.JDialog {
     private javax.swing.JTextPane jTextPane2;
     // End of variables declaration//GEN-END:variables
 
-    private int dialogResult;    
-    
+    private int dialogResult;
+
     private IReportConnection iReportConnection;
-    
+
     public void applyI18n(){
                 // Start autogenerated code ----------------------
                 jCheckBoxCVSDateFormat.setText(I18n.getString("connectionDialog.checkBoxCVSDateFormat","Use custom date format"));
@@ -3650,28 +3661,28 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 jLabel9.setText(I18n.getString("connectionDialog.label9","XML file"));
                 jLabelXMLRecordPath.setText(I18n.getString("connectionDialog.labelXMLRecordPath","Select Expression"));
                 // End autogenerated code ----------------------
-                
+
                 jLabelXMLAUrl.setText(I18n.getString("connectionDialog.labelXMLAUrl","Url of XML/A server"));
                 jButtonGetXMLAMetadata.setText(I18n.getString("connectionDialog.buttonGetXMLAMetadata","Get metadata"));
                 jLabelXMLADatasource.setText(I18n.getString("connectionDialog.labelXMLADatasource","Datasource"));
                 jLabelXMLACatalog.setText(I18n.getString("connectionDialog.labelXMLACatalog","Catalog"));
                 jLabelXMLACube.setText(I18n.getString("connectionDialog.labelXMLACube","Cube"));
-                
+
                 jTabbedPane1.setTitleAt(0,I18n.getString("connectionDialog.tab.Columns","Columns") );
                 jTabbedPane1.setTitleAt(0,I18n.getString("connectionDialog.tab.Separators","Separators") );
-                
+
                 ((javax.swing.border.TitledBorder)jPanel2.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("connectionDialog.panelBorder.jdbcUrlWizard","JDBC URL Wizard") );
                 ((javax.swing.border.TitledBorder)jPanel8.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("connectionDialog.panelBorder.ColumnNames","Column names") );
                 ((javax.swing.border.TitledBorder)jPanel6.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("connectionDialog.panelBorder.Other","Other") );
                 ((javax.swing.border.TitledBorder)jPanel4.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("connectionDialog.panelBorder.FieldSeparatorChat","Field separator (char)") );
                 ((javax.swing.border.TitledBorder)jPanel5.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("connectionDialog.panelBorder.RowSeparator","Row separator") );
-                
+
                 jTableCustomProperties.getColumn("Name").setHeaderValue( I18n.getString("connectionDialog.tablecolumn.Name","Name") );
                 jTableCustomProperties.getColumn("Value").setHeaderValue( I18n.getString("connectionDialog.tablecolumn.Value","Value") );
-                
+
                 jButtonAddProp.setText(I18n.getString("connectionDialog.buttonAddProp","Add"));
                 jButtonRemoveProp.setText(I18n.getString("connectionDialog.buttonRemoveProp","Remove"));
-                
+
                 setTitle(I18n.getString("connectionDialog.title","Connections properties"));
                 jButtonCancel.setMnemonic(I18n.getString("connectionDialog.buttonCancelMnemonic","c").charAt(0));
                 jButtonOK.setMnemonic(I18n.getString("connectionDialog.buttonOKMnemonic","o").charAt(0));
@@ -3679,12 +3690,12 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 I18n.getString("connectionDialog.textPane1","Press the test button.\\n\\niReport will look in the classpath for a valid hibernate configuration.");
                 I18n.getString("connectionDialog.textPane2","iReport will search for persistence.xml files within the META-INF directory of any CLASSPATH element");
                 I18n.getString("connectionDialog.textArea1","ATTENTION! Passwords are stored in clear text. If you dont specify a password now, iReport will ask you for one only when required and will not save it.");
-                
+
                 jTextFieldXMLTimeZoneValue.setText( I18n.getString("timezone.default","Default") );
                 jTextFieldXMLLocaleValue.setText( I18n.getString("timezone.default","Default") );
-                
+
                 ((javax.swing.border.TitledBorder)jPanel3.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("connectionDialog.borderXMLLocaleTimeZone","Locale / Time zone") );
-                
+
                 jLabelXMLLocale.setText( I18n.getString("connectionDialog.labelXMLLocale","Locale") );
                 jLabelXMLTimeZone.setText( I18n.getString("connectionDialog.labelXMLTimeZone","Time zone") );
                 jLabelXMLDatePattern.setText( I18n.getString("connectionDialog.labelXMLDatePattern","Date pattern") );
@@ -3694,12 +3705,12 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 jButtonXMLLocale.setText( I18n.getString("connectionDialog.buttonXMLLocale","Select...") );
                 jButtonXMLTimeZone.setText( I18n.getString("connectionDialog.buttonXMLTimeZone","Select...") );
     }
-    
-    
+
+
     public IReportConnection createConnection(int selectedConnectionType)
     {
         IReportConnection irConn = null;
-        
+
         if (selectedConnectionType == 0) {
             irConn = new JDBCConnection();
             irConn.setName( this.jTextFieldName.getText().trim() );
@@ -3719,7 +3730,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
                         javax.swing.JOptionPane.WARNING_MESSAGE );
                 return null;
             }
-            
+
             if (this.jTextFieldJDBCUrl.getText().trim().length() == 0) {
                 javax.swing.JOptionPane.showMessageDialog(this,
                         I18n.getString("messages.connectionDialog.jdbc.invalidUrl","Please insert a valid JDBC URL!"),
@@ -3750,37 +3761,37 @@ public class ConnectionDialog extends javax.swing.JDialog {
             ((JRCustomDataSourceConnection)irConn).setMethodToCall( this.jTextFieldJRCustomDataSourceMethod.getText().trim() );
         }
         else if (selectedConnectionType == 4) {
-            
+
             irConn = new JRCSVDataSourceConnection();
             irConn.setName( this.jTextFieldName.getText().trim() );
             ((JRCSVDataSourceConnection)irConn).setFilename( this.jTextFieldCSVFilename.getText().trim() );
-            
+
             if (jRadioButtonCVSSeparatorComma.isSelected()) ((JRCSVDataSourceConnection)irConn).setFieldDelimiter(",");
             if (jRadioButtonCVSSeparatorTab.isSelected()) ((JRCSVDataSourceConnection)irConn).setFieldDelimiter("\t");
             if (jRadioButtonCVSSeparatorSpace.isSelected()) ((JRCSVDataSourceConnection)irConn).setFieldDelimiter(" ");
             if (jRadioButtonCVSSeparatorSemicolon.isSelected()) ((JRCSVDataSourceConnection)irConn).setFieldDelimiter(";");
             if (jRadioButtonCVSSeparatorNewLine.isSelected()) ((JRCSVDataSourceConnection)irConn).setFieldDelimiter("\n");
             if (jRadioButtonCVSSeparatorOther.isSelected()) ((JRCSVDataSourceConnection)irConn).setFieldDelimiter(jTextFieldCVSSeparatorText.getText());
-            
+
             if (jRadioButtonCVSSeparatorComma1.isSelected()) ((JRCSVDataSourceConnection)irConn).setRecordDelimiter(",");
             if (jRadioButtonCVSSeparatorTab1.isSelected()) ((JRCSVDataSourceConnection)irConn).setRecordDelimiter("\t");
             if (jRadioButtonCVSSeparatorSpace1.isSelected()) ((JRCSVDataSourceConnection)irConn).setRecordDelimiter(" ");
             if (jRadioButtonCVSSeparatorSemicolon1.isSelected()) ((JRCSVDataSourceConnection)irConn).setRecordDelimiter(";");
             if (jRadioButtonCVSSeparatorNewLine1.isSelected()) ((JRCSVDataSourceConnection)irConn).setRecordDelimiter("\n");
             if (jRadioButtonCVSSeparatorOther1.isSelected()) ((JRCSVDataSourceConnection)irConn).setRecordDelimiter(jTextFieldCVSSeparatorText1.getText());
-            
+
             ((JRCSVDataSourceConnection)irConn).setCustomDateFormat( jCheckBoxCVSDateFormat.isSelected() ?  jTextFieldCVSDateFormat.getText() : "");
             ((JRCSVDataSourceConnection)irConn).setUseFirstRowAsHeader( jCheckBoxCVSFirstRowAsHeader.isSelected() );
-            
+
             DefaultListModel dlm = (DefaultListModel)this.jListCVSColumns.getModel();
             Vector columnsNames = new Vector();
             for (int k=0; k< dlm.size(); ++k)
             {
                 columnsNames.add(dlm.elementAt(k)+"");
             }
-            
+
             ((JRCSVDataSourceConnection)irConn).setColumnNames( columnsNames );
-            
+
             if (columnsNames.size() == 0)
             {
                 if (JOptionPane.showConfirmDialog(this,I18n.getString("messages.connectionDialog.notAllColumnsDefined","You have not defined any column for your CSV file. Continue anyway?"),"",JOptionPane.INFORMATION_MESSAGE) != JOptionPane.OK_OPTION)
@@ -3793,7 +3804,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 if (JOptionPane.showConfirmDialog(this,I18n.getString("messages.connectionDialog.duplicatedDelimiter","Field delimiter char is the same as the record delimiter. Continue anyway?"),"",JOptionPane.INFORMATION_MESSAGE) != JOptionPane.OK_OPTION)
                 {
                     return null;
-                } 
+                }
             }
         }
         else if (selectedConnectionType == 1) {
@@ -3802,7 +3813,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
             ((JRXMLDataSourceConnection)irConn).setFilename( this.jTextFieldXMLFile.getText().trim() );
             ((JRXMLDataSourceConnection)irConn).setSelectExpression( this.jTextFieldRecordPath.getText().trim() );
             ((JRXMLDataSourceConnection)irConn).setUseConnection( jRadioButtonXML_connection.isSelected() );
-            
+
             ((JRXMLDataSourceConnection)irConn).setDatePattern( jTextFieldXMLDatePattern.getText());
             ((JRXMLDataSourceConnection)irConn).setNumberPattern( jTextFieldXMLNumberPattern.getText());
             ((JRXMLDataSourceConnection)irConn).setLocale( this.tmpXMLLocale );
@@ -3826,32 +3837,32 @@ public class ConnectionDialog extends javax.swing.JDialog {
             }
         }
         else if (selectedConnectionType == 8) {
-            
+
             if (this.jComboBoxMondrianJdbc.getSelectedIndex() < 0) {
                 javax.swing.JOptionPane.showMessageDialog(this,
                         I18n.getString("messages.connectionDialog.setJDBCConnection","You have to choose a JDBC connection in order to configure the Mondrian OLAP connection.\nIf JDBC connection are not yet available, please create one before creating this connection."),
                         I18n.getString("messages.connectionDialog.setJDBCConnectionCaption","Invalid JDBC connection!"),javax.swing.JOptionPane.WARNING_MESSAGE );
                 return null;
             }
-            
+
             if (this.jTextFieldCatalogURI.getText().trim().length() == 0) {
                 javax.swing.JOptionPane.showMessageDialog(this,
                         I18n.getString("messages.connectionDialog.setCatalogUri","Please set the Catalog URI"),
                         I18n.getString("messages.connectionDialog.setCatalogUriCaption","Invalid URI!"),javax.swing.JOptionPane.WARNING_MESSAGE );
                 return null;
             }
-            
+
             irConn = new MondrianConnection();
             irConn.setName( this.jTextFieldName.getText().trim() );
             irConn.getProperties().put(MondrianConnection.CATALOG_URI, jTextFieldCatalogURI.getText().trim());
             irConn.getProperties().put(MondrianConnection.CONNECTION_NAME, jComboBoxMondrianJdbc.getSelectedItem()+"");
-            
+
         }
         else if (selectedConnectionType == 9) {
             irConn = new JRSpringLoadedHibernateConnection();
             irConn.setName( this.jTextFieldName.getText().trim() );
-            ((JRSpringLoadedHibernateConnection)irConn).setSessionFactoryBeanId(jTextFieldSLHSessionFactory.getText());
-            ((JRSpringLoadedHibernateConnection)irConn).setSpringConfig(jTextFieldSLHSpringConfig.getText());
+            //((JRSpringLoadedHibernateConnection)irConn).setSessionFactoryBeanId(jTextFieldSLHSessionFactory.getText());
+            //((JRSpringLoadedHibernateConnection)irConn).setSpringConfig(jTextFieldSLHSpringConfig.getText());
         }
         else if (selectedConnectionType == 10) {
             irConn = new QueryExecuterConnection();
@@ -3879,7 +3890,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
         }
         else if (selectedConnectionType == 13) {
 
-            /**   
+            /**
              * Copyright (C) 2005, 2006 CINCOM SYSTEMS, INC.
              * All Rights Reserved
              * www.cincom.com
@@ -3887,62 +3898,62 @@ public class ConnectionDialog extends javax.swing.JDialog {
              */
             irConn = new JRXMLADataSourceConnection();
             irConn.setName( this.jTextFieldName.getText().trim() );
-            
+
             if (this.jTextFieldXMLAUrl.getText().trim().length() == 0) {
                 javax.swing.JOptionPane.showMessageDialog(this,
                         I18n.getString("messages.connectionDialog.xmla.invalidURL","Please specify a valid server URL"),
                         I18n.getString("messages.connectionDialog.xmla.invalidProperty","Invalid property!"),javax.swing.JOptionPane.WARNING_MESSAGE );
                 return null;
             }
-            
+
             ((JRXMLADataSourceConnection)irConn).setUrl( this.jTextFieldXMLAUrl.getText().trim());
-            
+
             if (this.jComboBoxXMLADatasource.getSelectedIndex() < 0) {
                 javax.swing.JOptionPane.showMessageDialog(this,
                         I18n.getString("messages.connectionDialog.xmla.invalidDatasource","Please specify a valid Datasource"),
                         I18n.getString("messages.connectionDialog.setJDBCConnectionCaption","Invalid JDBC connection!"),javax.swing.JOptionPane.WARNING_MESSAGE );
                 return null;
             }
-            
-            ((JRXMLADataSourceConnection)irConn).setDatasource( 
-                    ((String)this.jComboBoxXMLADatasource.getSelectedItem()).trim());
-            
+
+            //((JRXMLADataSourceConnection)irConn).setDatasource(
+            //        ((String)this.jComboBoxXMLADatasource.getSelectedItem()).trim());
+
             if (this.jComboBoxXMLACatalog.getSelectedIndex() < 0) {
                 javax.swing.JOptionPane.showMessageDialog(this,
                         I18n.getString("messages.connectionDialog.xmla.invalidCatalog","Please specify a valid Catalog"),
                         I18n.getString("messages.connectionDialog.setJDBCConnectionCaption","Invalid JDBC connection!"),javax.swing.JOptionPane.WARNING_MESSAGE );
                 return null;
             }
-            
-            ((JRXMLADataSourceConnection)irConn).setCatalog( 
-                    ((String)this.jComboBoxXMLACatalog.getSelectedItem()).trim());
-           
+
+           // ((JRXMLADataSourceConnection)irConn).setCatalog(
+           //         ((String)this.jComboBoxXMLACatalog.getSelectedItem()).trim());
+
             if (this.jComboBoxXMLACube.getSelectedIndex() < 0) {
                 javax.swing.JOptionPane.showMessageDialog(this,
                         I18n.getString("messages.connectionDialog.xmla.invalidCube","Please specify a valid Cube"),
                         I18n.getString("messages.connectionDialog.setJDBCConnectionCaption","Invalid JDBC connection!"),javax.swing.JOptionPane.WARNING_MESSAGE );
                 return null;
             }
-            
-            ((JRXMLADataSourceConnection)irConn).setCube( 
-                    ((String)this.jComboBoxXMLACube.getSelectedItem()).trim());
-            
-            ((JRXMLADataSourceConnection)irConn).setUsername( this.jTextFieldUsername1.getText().trim() );
-            if (jCheckBoxSavePassword1.isSelected())
-                ((JRXMLADataSourceConnection)irConn).setPassword( this.jTextFieldPassword1.getText());
-            else
-                ((JRXMLADataSourceConnection)irConn).setPassword("");
-            ((JRXMLADataSourceConnection)irConn).setSavePassword( jCheckBoxSavePassword1.isSelected() );
-            
+
+            //((JRXMLADataSourceConnection)irConn).setCube(
+             //       ((String)this.jComboBoxXMLACube.getSelectedItem()).trim());
+
+            //((JRXMLADataSourceConnection)irConn).setUsername( this.jTextFieldUsername1.getText().trim() );
+            //if (jCheckBoxSavePassword1.isSelected())
+            //    ((JRXMLADataSourceConnection)irConn).setPassword( this.jTextFieldPassword1.getText());
+           // else
+           //     ((JRXMLADataSourceConnection)irConn).setPassword("");
+           // ((JRXMLADataSourceConnection)irConn).setSavePassword( jCheckBoxSavePassword1.isSelected() );
+
             /* end of modification */
         }
-                 
+
         return irConn;
     }
-    
-    
-    
-    /**   
+
+
+
+    /**
      * Copyright (C) 2005, 2006 CINCOM SYSTEMS, INC.
      * All Rights Reserved
      * www.cincom.com
@@ -3955,16 +3966,16 @@ public class ConnectionDialog extends javax.swing.JDialog {
             }
     }
     jComboBoxCatListener catListener=new jComboBoxCatListener();
-    
+
     private class jComboBoxdsListener implements java.awt.event.ActionListener
     {
         public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jComboBoxDatasourceActionPerformed(evt);
             }
-    }    
+    }
     jComboBoxdsListener dsListener=new jComboBoxdsListener();
-    
-    private void jComboBoxDatasourceActionPerformed(java.awt.event.ActionEvent evt) {                                                    
+
+    private void jComboBoxDatasourceActionPerformed(java.awt.event.ActionEvent evt) {
 
             jComboBoxXMLACatalog.removeActionListener(catListener);
             if (this.jComboBoxXMLADatasource.getItemCount() == 0 || this.jComboBoxXMLADatasource.getSelectedIndex() == -1) {
@@ -3980,14 +3991,14 @@ public class ConnectionDialog extends javax.swing.JDialog {
 
             this.jComboBoxXMLACatalog.removeAllItems();
             this.jComboBoxXMLACube.removeAllItems();
-          
+
             DataSourceTreeElement dste[] = smd.discoverDataSources();
-            
+
             if (dste == null || dste.length == 0) {
                 JOptionPane.showMessageDialog((Component)getParent(),
                         I18n.getString("messages.connectionDialog.xmla.noDatasource","No Datasources found."),"",JOptionPane.INFORMATION_MESSAGE);
                 return;
-            } 
+            }
             //filling catalogs
             boolean found = false;
             int intI = 0;
@@ -4005,15 +4016,15 @@ public class ConnectionDialog extends javax.swing.JDialog {
             rex.graphics.datasourcetree.elements.DataSourceTreeElement catalogs[] = dste[intI].getChildren();
             if (catalogs == null || catalogs.length == 0) {
                 JOptionPane.showMessageDialog((Component)getParent(),
-                        I18n.getString("messages.connectionDialog.xmla.noCatalogs","No catalogs found for selected datasource."),"",JOptionPane.INFORMATION_MESSAGE);            
+                        I18n.getString("messages.connectionDialog.xmla.noCatalogs","No catalogs found for selected datasource."),"",JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
             this.jComboBoxXMLACatalog.removeAllItems();
-   
+
             for (intI = 0;intI<catalogs.length;intI++){
-                this.jComboBoxXMLACatalog.addItem(((rex.graphics.datasourcetree.elements.CatalogElement)catalogs[intI]).toString());            
+                this.jComboBoxXMLACatalog.addItem(((rex.graphics.datasourcetree.elements.CatalogElement)catalogs[intI]).toString());
             }
-        
+
             found = false;
              intI= 0;
             while (!found && intI < catalogs.length) {
@@ -4023,7 +4034,7 @@ public class ConnectionDialog extends javax.swing.JDialog {
                 else{
                     intI++;
                 }
-            }    
+            }
             if (!found) {
              return;
             }
@@ -4033,17 +4044,17 @@ public class ConnectionDialog extends javax.swing.JDialog {
             }
             this.jComboBoxXMLACube.removeAllItems();
             for (intI = 0;intI<cubes.length;intI++){
-                this.jComboBoxXMLACube.addItem(((rex.graphics.datasourcetree.elements.CubeElement)cubes[intI]).toString());           
-            }     
+                this.jComboBoxXMLACube.addItem(((rex.graphics.datasourcetree.elements.CubeElement)cubes[intI]).toString());
+            }
             jComboBoxXMLACatalog.addActionListener(catListener);
-            
+
         }
-    
-    
-    private void jComboBoxCatActionPerformed(java.awt.event.ActionEvent evt) {                                             
-      
+
+
+    private void jComboBoxCatActionPerformed(java.awt.event.ActionEvent evt) {
+
         jComboBoxXMLADatasource.removeActionListener(dsListener);
-         
+
        if (this.jComboBoxXMLACatalog.getItemCount() == 0 || this.jComboBoxXMLACatalog.getSelectedIndex() == -1 ) {
             return;
        }
@@ -4054,9 +4065,9 @@ public class ConnectionDialog extends javax.swing.JDialog {
                     I18n.getString("messages.connectionDialog.xmla.invalidUrl","Unable to connect to XMLA server."),"",JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
+
         this.jComboBoxXMLACube.removeAllItems();
-        
+
         rex.graphics.datasourcetree.elements.DataSourceTreeElement dste[] = smd.discoverDataSources();
         if (dste == null || dste.length == 0) {
             JOptionPane.showMessageDialog((Component)getParent(),
@@ -4107,8 +4118,8 @@ public class ConnectionDialog extends javax.swing.JDialog {
         this.jComboBoxXMLACube.removeAllItems();
         for (intI = 0;intI<cubes.length;intI++){
             this.jComboBoxXMLACube.addItem(((rex.graphics.datasourcetree.elements.CubeElement)cubes[intI]).toString());
-        }   
+        }
         jComboBoxXMLADatasource.addActionListener(dsListener);
-        
-    }  
+
+    }
 }

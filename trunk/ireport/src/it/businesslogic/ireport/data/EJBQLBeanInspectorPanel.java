@@ -29,56 +29,50 @@
 
 package it.businesslogic.ireport.data;
 
-import it.businesslogic.ireport.JRField;
-import it.businesslogic.ireport.data.ejbql.EJBQLFieldsReader;
-import it.businesslogic.ireport.gui.MainFrame;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
 
 /**
  *
  * @author gtoffoli
  */
 public class EJBQLBeanInspectorPanel extends BeanInspectorPanel {
-    
+
     /** Creates a new instance of EJBQLBeanInspectorPanel */
     public EJBQLBeanInspectorPanel() {
         super();
-        
+
     }
-    
+
     /**
      * Ad hoc queryChanged method for EJBQL queries....
      */
-    public void queryChanged(String newQuery) {
-    
+   /* public void queryChanged(String newQuery) {
+
         lastExecution++;
         int thisExecution = lastExecution;
         // Execute a thread to perform the query change...
-        
+
         String error_msg = "";
         lastExecution++;
-            
+
         int in = lastExecution;
-            
+
         getReportQueryDialog().getJLabelStatusSQL().setText("Executing EJBQL query....");
         /////////////////////////////
-            
+
         try {
         Thread.currentThread().setContextClassLoader( MainFrame.getMainInstance().getReportClassLoader());
         } catch (Exception ex)
         {
             ex.printStackTrace();
         }
-            
+
         if (in < lastExecution) return; //Abort, new execution requested
-        
+
         EJBQLFieldsReader ejbqlFR = new EJBQLFieldsReader(newQuery, getReportQueryDialog().getSubDataset().getParameters());
-            
+
             try {
                 Vector fields = ejbqlFR.readFields();
-                
+
                 List columns = new ArrayList();
                 for (int i=0; i<fields.size(); ++i)
                 {
@@ -91,20 +85,20 @@ public class EJBQLBeanInspectorPanel extends BeanInspectorPanel {
                     v = new Vector();
                     v.add( ejbqlFR.getSingleClassName() );
                 }
-                
+
                 System.out.println("Single class name: " + ejbqlFR.getSingleClassName());
-                
+
                 setBeanExplorerFromWorker(v,true,false);
                 setColumnsFromWorker(columns);
-                
+
             } catch (Exception ex)
             {
                 ex.printStackTrace();
                 setBeanExplorerFromWorker(null,true,false);
                 setColumnErrorFromWork( "Error: " +  ex.getMessage() );
             }
-        
+
         getReportQueryDialog().getJLabelStatusSQL().setText("Ready");
-    }
-    
+    }*/
+
 }

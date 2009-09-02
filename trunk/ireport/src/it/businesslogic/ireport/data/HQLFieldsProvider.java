@@ -32,10 +32,10 @@ package it.businesslogic.ireport.data;
 import it.businesslogic.ireport.FieldsProvider;
 import it.businesslogic.ireport.FieldsProviderEditor;
 import it.businesslogic.ireport.IReportConnection;
-import it.businesslogic.ireport.gui.MainFrame;
 import it.businesslogic.ireport.gui.ReportQueryDialog;
-import java.awt.Component;
+
 import java.util.Map;
+
 import net.sf.jasperreports.engine.JRDataset;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRField;
@@ -45,24 +45,24 @@ import net.sf.jasperreports.engine.JRField;
  * @author gtoffoli
  */
 public class HQLFieldsProvider implements FieldsProvider {
-    
+
     private BeanInspectorPanel bip = null;
-    
+
     /** Creates a new instance of SQLFieldsProvider */
     public HQLFieldsProvider() {
     }
 
     /**
-     * Returns true if the provider supports the {@link #getFields(IReportConnection,JRDataset,Map) getFields} 
+     * Returns true if the provider supports the {@link #getFields(IReportConnection,JRDataset,Map) getFields}
      * operation. By returning true in this method the data source provider indicates
      * that it is able to introspect the data source and discover the available fields.
-     * 
+     *
      * @return true if the getFields() operation is supported.
      */
     public boolean supportsGetFieldsOperation() {
         return false;
     }
-    
+
     public JRField[] getFields(IReportConnection con, JRDataset reportDataset, Map parameters) throws JRException, UnsupportedOperationException {
         return null;
     }
@@ -84,8 +84,8 @@ public class HQLFieldsProvider implements FieldsProvider {
     }
 
     public FieldsProviderEditor getEditorComponent(ReportQueryDialog reportQueryDialog) {
-        
-        if (bip == null)
+
+      /*  if (bip == null)
         {
             bip = new BeanInspectorPanel();
             bip.setReportQueryDialog(reportQueryDialog);
@@ -93,8 +93,8 @@ public class HQLFieldsProvider implements FieldsProvider {
             {
                 bip.setJTableFields( reportQueryDialog.getFieldsTable() );
             }
-        }
+        }*/
         return bip;
     }
-    
+
 }

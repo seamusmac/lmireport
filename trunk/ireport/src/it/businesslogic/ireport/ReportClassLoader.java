@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,7 +25,7 @@
  *
  *
  * ReportClassLoader.java
- * 
+ *
  * Created on 24 maggio 2004, 12.56
  *
  */
@@ -40,11 +40,12 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.StringTokenizer;
+import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.*;
 
 /**
  * This special class loader is used when running a report.
@@ -54,40 +55,40 @@ import java.util.*;
  * @author  Administrator
  */
 public class ReportClassLoader extends java.lang.ClassLoader {
-        
+
     /** scanned class path */
     private ArrayList fPathItems;
-    
+
     /** scanned class path */
     private ArrayList fPathChachedItems;
     private HashMap cachedClasses;
-    
+
     /** default excluded paths */
 
     /**
-     * Constructs a ReloadableTestClassLoader. It tokenizes the value of 
-     * <code>reportPath</code> and adds it and any sub-paths to a list.  
+     * Constructs a ReloadableTestClassLoader. It tokenizes the value of
+     * <code>reportPath</code> and adds it and any sub-paths to a list.
      * Paths are searched for tests.  All other classes are loaded
      * by parent loaders, to which this classloader always delegates.
-     * 
-     * This ClassLoader never looks into or knows about the system classpath.  
-     * It should always refer to a path of repositories (jars or dirs) 
-     * <em>not</em> on the system classpath (as retrieved via  
+     *
+     * This ClassLoader never looks into or knows about the system classpath.
+     * It should always refer to a path of repositories (jars or dirs)
+     * <em>not</em> on the system classpath (as retrieved via
      * <code>reportPath</code>).
-     * 
+     *
      * @param classPath to scan and use for finding and reloading classes
      */
     public ReportClassLoader() {
         super( ReportClassLoader.class.getClassLoader() );
         setup();
     }
-    
+
      public ReportClassLoader(ClassLoader parent) {
-         
+
         super(parent);
         setup();
      }
-     
+
      private void setup()
      {
         fPathItems = new ArrayList();
@@ -95,7 +96,7 @@ public class ReportClassLoader extends java.lang.ClassLoader {
         cachedClasses = new HashMap();
         rescanLibDirectory();
      }
-    
+
     /**
      *  Add to search paths list as no relodable jar/zip all new .jar,.zip not already in classpath
      */
@@ -104,13 +105,16 @@ public class ReportClassLoader extends java.lang.ClassLoader {
         try {
             rescanAdditionalClasspath();
         } catch (Exception ex) {}
-        
+
         if (it.businesslogic.ireport.gui.MainFrame.getMainInstance() == null) return;
         // Looking for jars or zip in lib directory not in classpath...
         String irHome = it.businesslogic.ireport.gui.MainFrame.getMainInstance().IREPORT_HOME_DIR;
-	if (irHome == null) irHome = System.getProperty("ireport.home",".");
-	File lib_dir = new File(irHome,"lib");     
+		if (irHome == null) irHome = System.getProperty("ireport.home",".");
+		System.out.println("IREPORTHOME:"+irHome);
+		File lib_dir = new File(irHome,"lib");
+		System.out.println("LIB_DIR£º"+lib_dir.getPath());
         String classpath = it.businesslogic.ireport.util.Misc.nvl(System.getProperty("java.class.path"),"");
+       System.out.println("CLASSPATH:"+classpath);
         if (!lib_dir.exists())
         {
             System.out.println("Cannot find lib in iReport home  directory ("+it.businesslogic.ireport.gui.MainFrame.getMainInstance().IREPORT_HOME_DIR+")");
@@ -124,7 +128,7 @@ public class ReportClassLoader extends java.lang.ClassLoader {
         {
             if (!new_libs[i].getName().toLowerCase().endsWith("jar") &&
                 !new_libs[i].getName().toLowerCase().endsWith("zip")) continue;
-            
+
             if (classpath.indexOf( new_libs[i].getName()) < 0)
             {
                 try {
@@ -143,18 +147,18 @@ public class ReportClassLoader extends java.lang.ClassLoader {
             }
         }
     }
-    
+
     public java.util.List getCachedItems()
     {
         return fPathChachedItems;
     }
-    
+
     public void clearCache()
     {
         cachedClasses.clear();
         //System.out.println("Cached classes " + cachedClasses);
     }
-    
+
     /**
      *  Add to search paths list as no relodable jar/zip all new .jar,.zip not already in classpath
      */
@@ -168,20 +172,21 @@ public class ReportClassLoader extends java.lang.ClassLoader {
             File f = new File( cp.elementAt(i) + "" );
             if (!f.exists()) continue;
             try {
+            	System.out.println("ALL----dynamically " + f.getCanonicalPath() + " to ireport class path");
                 if (!fPathChachedItems.contains(f.getCanonicalPath()))
                 {
-                      //System.out.println("Added dynamically " + f.getCanonicalPath() + " to ireport class path");
+                      System.out.println("Added dynamically " + f.getCanonicalPath() + " to ireport class path");
                       fPathChachedItems.add(f.getCanonicalPath());
                 }
             } catch (Exception ex)
             {
                 System.out.println("Invalid path: " + f);
             }
-                   
-            
+
+
         }
     }
-        
+
     /**
      *  Add a dir or a file (i.e. a jar or a zip) to the search path
      */
@@ -192,7 +197,7 @@ public class ReportClassLoader extends java.lang.ClassLoader {
           fPathChachedItems.add(path);
         }
     }
-    
+
     public void setRelodablePaths(String classPath)
     {
        scanPath(classPath);
@@ -215,7 +220,7 @@ public class ReportClassLoader extends java.lang.ClassLoader {
         /*
         for (int i = 0; i < fPathChachedItems.size(); i++) {
             String path = (String) fPathChachedItems.get(i);
-            
+
             if (isJar(path))
             {
                 InputStream is = getInputStreamFromJar(path, name);
@@ -244,12 +249,12 @@ public class ReportClassLoader extends java.lang.ClassLoader {
                 }
             }
         }
-        
+
         // Else try to load from reloadable paths...
         for (int i = 0; i < fPathItems.size(); i++) {
-            
+
             String path = (String) fPathItems.get(i);
-            
+
             if (isJar(path))
             {
                 InputStream is = getInputStreamFromJar(path, name);
@@ -277,17 +282,17 @@ public class ReportClassLoader extends java.lang.ClassLoader {
                 }
             }
         }
-        
+
         return ClassLoader.getSystemResource(name);
          **/
     }
 
     public InputStream getResourceAsStream(String name) {
-        
+
         // We have to try to solve the name...
         for (int i = 0; i < fPathChachedItems.size(); i++) {
             String path = (String) fPathChachedItems.get(i);
-            
+
             if (isJar(path))
             {
                 InputStream is = getInputStreamFromJar(path, name);
@@ -305,12 +310,12 @@ public class ReportClassLoader extends java.lang.ClassLoader {
                 }
             }
         }
-        
+
         // Else try to load from reloadable paths...
         for (int i = 0; i < fPathItems.size(); i++) {
-            
+
             String path = (String) fPathItems.get(i);
-            
+
             if (isJar(path))
             {
                 InputStream is = getInputStreamFromJar(path, name);
@@ -328,10 +333,10 @@ public class ReportClassLoader extends java.lang.ClassLoader {
                 }
             }
         }
-        
+
         return ClassLoader.getSystemResourceAsStream(name);
     }
-    
+
        private InputStream getInputStreamFromJar(String archive_path, String fileName) {
         ZipFile zipFile = null;
         InputStream stream = null;
@@ -347,7 +352,7 @@ public class ReportClassLoader extends java.lang.ClassLoader {
             //io.printStackTrace();
             return null;
         }
-        
+
         //System.out.println("Ricerca entry" + fileName );
         ZipEntry entry = zipFile.getEntry(fileName);
         if (entry == null)
@@ -360,10 +365,10 @@ public class ReportClassLoader extends java.lang.ClassLoader {
         } catch (IOException e) {
         } finally {
         }
-        
+
         return null;
     }
-    
+
 
     public synchronized Class findClass(String name) throws ClassNotFoundException {
 
@@ -378,36 +383,36 @@ public class ReportClassLoader extends java.lang.ClassLoader {
         {
             c =  loadClassData(name);
         }
-        
-       
+
+
         return c;
         /*
         if (cachedClasses.containsKey( name ))
         {
             return (Class)cachedClasses.get(name);
         }
-        
+
         return defineClass(name, b, 0, b.length);
         */
     }
-    
-    // From here down is all code copied and pasted from JUnit's 
+
+    // From here down is all code copied and pasted from JUnit's
     // TestCaseClassLoader
     private Class loadClassData(String className)
         throws ClassNotFoundException {
-        
+
         // 1. Look for cached class...
-        
-        // if we can't find the cached class, looking first in no relodable paths...    
-        
+
+        // if we can't find the cached class, looking first in no relodable paths...
+
         byte[] data = null;
-        
+
         if (!cachedClasses.containsKey(className))
         {
-            
+
             for (int i = 0; i < fPathChachedItems.size(); i++) {
-            
-            
+
+
                 String path = (String) fPathChachedItems.get(i);
                 String fileName = className.replace('.', File.separatorChar) + ".class";
 
@@ -423,16 +428,16 @@ public class ReportClassLoader extends java.lang.ClassLoader {
                 {
                     Class c = defineClass(className, data, 0, data.length);
                     cachedClasses.put(className,c);
-                    
+
                     return c;
                 }
             }
         }
-        else 
+        else
         {
             return (Class)cachedClasses.get(className);
         }
-        
+
         // Else try to load from reloadable paths...
         for (int i = 0; i < fPathItems.size(); i++) {
 
@@ -500,7 +505,7 @@ public class ReportClassLoader extends java.lang.ClassLoader {
             //io.printStackTrace();
             return null;
         }
-        
+
         //System.out.println("Ricerca entry" + fileName );
         ZipEntry entry = zipFile.getEntry(fileName);
         if (entry == null)
@@ -531,67 +536,67 @@ public class ReportClassLoader extends java.lang.ClassLoader {
         //System.out.println("Class not found really!");
         return null;
     }
-    
-    
+
+
     public Enumeration findResources(String name) {
         // We have to try to solve the name...
         Vector urls = new Vector();
-        
+
         URL[] pathUrls = new URL[fPathChachedItems.size() + fPathItems.size()];
-        
+
         for (int i = 0; i < fPathChachedItems.size(); i++) {
             String path = (String) fPathChachedItems.get(i);
             try {
                 pathUrls[i] = (new File(path)).toURL();
             } catch (Exception ex)
-            {  
+            {
             }
         }
-        
+
         for (int i = 0; i < fPathItems.size(); i++) {
             String path = (String) fPathItems.get(i);
             try {
                 pathUrls[i + fPathChachedItems.size()] = (new File(path)).toURL();
             } catch (Exception ex)
-            {  
+            {
             }
         }
-        
+
         URLClassLoader urlCl = new URLClassLoader(pathUrls, null);
         try {
             return urlCl.findResources(name);
         } catch (Exception ex)
         {
-            
+
         }
-        
+
         return new Vector().elements();
-        
+
     }
-    
+
     public URL findResource(String name) {
 
         if (name.startsWith("/")) name = name.substring(1);
         URL[] pathUrls = new URL[fPathChachedItems.size() + fPathItems.size()];
-        
+
         for (int i = 0; i < fPathChachedItems.size(); i++) {
             String path = (String) fPathChachedItems.get(i);
             try {
                 pathUrls[i] = (new File(path)).toURL();
             } catch (Exception ex)
-            {  
+            {
             }
         }
-        
+
         for (int i = 0; i < fPathItems.size(); i++) {
             String path = (String) fPathItems.get(i);
             try {
                 pathUrls[i + fPathChachedItems.size()] = (new File(path)).toURL();
             } catch (Exception ex)
-            {  
+            {
             }
         }
-        
+
         URLClassLoader urlCl = new URLClassLoader(pathUrls, null);
         try {
             URL url = urlCl.findResource(name);
@@ -601,8 +606,8 @@ public class ReportClassLoader extends java.lang.ClassLoader {
         {
             ex.printStackTrace();
         }
-        
+
         return ClassLoader.getSystemResource(name);
-        
+
     }
 }

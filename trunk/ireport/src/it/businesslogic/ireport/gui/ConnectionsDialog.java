@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,7 +25,7 @@
  *
  *
  * ConnectionsDialog.java
- * 
+ *
  * Created on 7 maggio 2003, 23.43
  *
  */
@@ -33,23 +33,32 @@
 package it.businesslogic.ireport.gui;
 
 import it.businesslogic.ireport.IReportConnection;
-import javax.swing.table.*;
-import javax.swing.*;
-import javax.swing.event.*;
-import it.businesslogic.ireport.*;
+import it.businesslogic.ireport.Report;
+import it.businesslogic.ireport.util.I18n;
 import it.businesslogic.ireport.util.Misc;
 
-import java.util.*;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Vector;
+
+import javax.swing.DefaultListSelectionModel;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.table.DefaultTableModel;
 
 import org.apache.xerces.parsers.DOMParser;
-import org.w3c.dom.*;
-import org.xml.sax.SAXException;
-import it.businesslogic.ireport.util.I18n;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 /**
  *
  * @author  Administrator
  */
+// LIMAO : 数据库连接面板 modify by li.mao since 3.0 [2009-9-2 下午02:38:21]
+
 public class ConnectionsDialog extends javax.swing.JDialog {
 
     /** Creates new form ValuesDialog */
@@ -103,19 +112,19 @@ public class ConnectionsDialog extends javax.swing.JDialog {
             IReportConnection con = (IReportConnection)e.nextElement();
             dtm.addRow( new Object[]{con, con.getDescription(), new Boolean(default_irc == con) });
         }
-        
-        
+
+
         javax.swing.KeyStroke escape =  javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0, false);
         javax.swing.Action escapeAction = new javax.swing.AbstractAction() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 setVisible(false);
             }
         };
-       
+
         getRootPane().getInputMap(javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW).put(escape, "ESCAPE");
         getRootPane().getActionMap().put("ESCAPE", escapeAction);
 
-        
+
 
         //to make the default button ...
         //this.getRootPane().setDefaultButton(this.jButtonOK);
@@ -333,8 +342,8 @@ public class ConnectionsDialog extends javax.swing.JDialog {
                         I18n.getString("messages.connectionsDialog.noConnectionToExport" ,"No connections to export"),
                         "",JOptionPane.INFORMATION_MESSAGE);
                 return;
-            }    
-        
+            }
+
             JFileChooser jfc = new JFileChooser();
             jfc.setFileFilter( new javax.swing.filechooser.FileFilter() {
 		    public boolean accept(java.io.File file) {
@@ -356,7 +365,7 @@ public class ConnectionsDialog extends javax.swing.JDialog {
                         fileName += ".xml";
                     }
                     f = new java.io.File(f.getParent(), fileName);
-                    
+
                     if (f.exists())
                     {
                         if (JOptionPane.showConfirmDialog(this,
@@ -366,7 +375,7 @@ public class ConnectionsDialog extends javax.swing.JDialog {
                             return;
                         }
                     }
-                    
+
                     java.io.PrintWriter pw = new java.io.PrintWriter( new java.io.OutputStreamWriter( new java.io.FileOutputStream( f  ), "UTF8" )); //UTF8
                     pw.print("<?xml version=\"1.0\"?>");
                     pw.println("<!-- iReport connections -->");
@@ -374,22 +383,22 @@ public class ConnectionsDialog extends javax.swing.JDialog {
 
                     Enumeration con_enum = MainFrame.getMainInstance().getConnections().elements();
                     int i = 0;
-                    
+
                     while (con_enum.hasMoreElements())
                     {
                         i++;
                         IReportConnection con = (IReportConnection)con_enum.nextElement();
                         con.save(pw);
                     }
-                    
+
                     pw.println("</iReportConnectionSet>");
 
                     pw.close();
-                    
+
                     JOptionPane.showMessageDialog(MainFrame.getMainInstance(),
                             I18n.getFormattedString("messages.connectionsDialog.connectionsExported" ,"{0,number,integer} connection(s) succesfully exported.", new Object[]{new Integer(i)}),
                             "",JOptionPane.INFORMATION_MESSAGE);
-                    
+
                 } catch (Exception ex)
                 {
                     JOptionPane.showMessageDialog(MainFrame.getMainInstance(),
@@ -397,15 +406,15 @@ public class ConnectionsDialog extends javax.swing.JDialog {
                             );
                     ex.printStackTrace();
                 }
-                    
+
 	    }
-        
-        
+
+
     }//GEN-LAST:event_jButtonExportActionPerformed
 
     private void jButtonImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonImportActionPerformed
 
-        
+
             JFileChooser jfc = new JFileChooser();
             jfc.setMultiSelectionEnabled(false);
             jfc.setFileFilter( new javax.swing.filechooser.FileFilter() {
@@ -414,7 +423,7 @@ public class ConnectionsDialog extends javax.swing.JDialog {
 			    return (filename.endsWith(".xml") || file.isDirectory()) ;
 		    }
 		    public String getDescription() {
-			    return "iReport connection/datasource definition (*.xml)";
+			    return "iReport 连接/数据源 定义文件 (*.xml)";
 		    }
 	    });
 
@@ -432,12 +441,12 @@ public class ConnectionsDialog extends javax.swing.JDialog {
                             MainFrame.getMainInstance().getConnections().addElement(con);
                         }
                         MainFrame.getMainInstance().saveiReportConfiguration();
-                        
+
                         JOptionPane.showMessageDialog(MainFrame.getMainInstance(),
                                 I18n.getFormattedString("messages.connectionsDialog.connectionsImported" ,"{0,number,integer} connection(s) succesfully imported.", new Object[]{new Integer(i)}),
                                 "",JOptionPane.INFORMATION_MESSAGE);
                     }
-	    }        
+	    }
     }//GEN-LAST:event_jButtonImportActionPerformed
 
     private void jTableParametersMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTableParametersMouseClicked
@@ -490,7 +499,7 @@ public class ConnectionsDialog extends javax.swing.JDialog {
                 ((DefaultTableModel)jTableParameters.getModel()).removeRow(jTableParameters.getSelectedRow());
                 jTableParameters.updateUI();
             }
-            
+
             MainFrame.getMainInstance().saveiReportConfiguration();
         }
 
@@ -531,7 +540,7 @@ public class ConnectionsDialog extends javax.swing.JDialog {
                     jTableParameters.getModel().setValueAt(new Boolean(false) ,i, 2);
                 }
             }
-            
+
             MainFrame.getMainInstance().getConnections().setElementAt(con,
             MainFrame.getMainInstance().getConnections().indexOf(irc));
             MainFrame.getMainInstance().setActiveConnection(con);
@@ -541,21 +550,21 @@ public class ConnectionsDialog extends javax.swing.JDialog {
 
     private void jButtonNewParameterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonNewParameterActionPerformed
         java.awt.Frame parent = Misc.frameFromComponent(this);
-        
-        
+
+
         //ConnectionDialog cd = new ConnectionDialog(parent,false);
-        it.businesslogic.ireport.connection.gui.ConnectionDialog cd = 
+        it.businesslogic.ireport.connection.gui.ConnectionDialog cd =
                     new it.businesslogic.ireport.connection.gui.ConnectionDialog(this, true);
-        
+
         cd.setVisible(true);
 
         if (cd.getDialogResult() == JOptionPane.OK_OPTION)
         {
-            
+
             IReportConnection con = cd.getIReportConnection();
             DefaultTableModel dtm = (DefaultTableModel)jTableParameters.getModel();
             dtm.addRow( new Object[]{con, con.getDescription(), new Boolean(true) });
-            
+
             for (int i=0; i<jTableParameters.getRowCount(); ++i)
             {
                 if (i != dtm.getRowCount()-1)
@@ -563,12 +572,12 @@ public class ConnectionsDialog extends javax.swing.JDialog {
                     jTableParameters.getModel().setValueAt(new Boolean(false) ,i, 2);
                 }
             }
-            
+
             MainFrame.getMainInstance().getConnections().addElement(con);
             MainFrame.getMainInstance().setActiveConnection(con);
             MainFrame.getMainInstance().saveiReportConfiguration();
         }
-         
+
     }//GEN-LAST:event_jButtonNewParameterActionPerformed
 
     /** Closes the dialog */
@@ -622,7 +631,7 @@ public class ConnectionsDialog extends javax.swing.JDialog {
        updateConnections();
         super.setVisible(visible);
     }
-       
+
     /**
      * Load a set of connections from a file. The connection are renamed if already present
      * in the connection list. See getAvailableConnectionName() for details about the new name.
@@ -667,17 +676,17 @@ public class ConnectionsDialog extends javax.swing.JDialog {
                                 hm.put( parameterName,Report.readPCDATA(child_child));
                             }
                         }
-                        
+
                         // If the name exists, rename it as "name (2)"
                         connectionName = getAvailableConnectionName(connectionName);
-                        
+
                         try {
                             IReportConnection con = (IReportConnection) Class.forName(connectionClass).newInstance();
                             con.loadProperties(hm);
                             con.setName(connectionName);
                             v.addElement( con );
                         } catch (Exception ex) {
-                                
+
                             JOptionPane.showMessageDialog(MainFrame.getMainInstance(),
                                 I18n.getFormattedString("messages.connectionsDialog.errorLoadingConnection" ,"Error loading  {0}", new Object[]{connectionName}),
                                 I18n.getString("message.title.error","Error"), JOptionPane.ERROR_MESSAGE);
@@ -694,10 +703,10 @@ public class ConnectionsDialog extends javax.swing.JDialog {
 
          return v;
      }
-    
+
      // If the name exists, rename it as "name (2)"
      /**
-      * This method take a proposed connection name. Check for duplicates names. If the 
+      * This method take a proposed connection name. Check for duplicates names. If the
       * proposed name is already present, the name "proposed (2)" is checked and so
       * on up to when a valid name is found....
       */
@@ -705,12 +714,12 @@ public class ConnectionsDialog extends javax.swing.JDialog {
      {
         return getAvailableConnectionName(proposedConnectionName, 0);
      }
-     
+
      private static String getAvailableConnectionName(String proposedConnectionName, int testNumber)
      {
         String name = proposedConnectionName;
         if (testNumber != 0) name += " (" + testNumber + ")";
-        
+
         Enumeration con_enum = MainFrame.getMainInstance().getConnections().elements();
         while (con_enum.hasMoreElements())
         {

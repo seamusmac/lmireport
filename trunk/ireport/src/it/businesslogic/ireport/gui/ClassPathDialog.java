@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,16 +25,18 @@
  *
  *
  * ClassPathDialog.java
- * 
+ *
  * Created on 22 aprile 2005, 18.05
  *
  */
 
 package it.businesslogic.ireport.gui;
 
-import javax.swing.DefaultListModel;
-import java.util.*;
 import it.businesslogic.ireport.util.I18n;
+
+import java.util.Vector;
+
+import javax.swing.DefaultListModel;
 /**
  *
  * @author  Administrator
@@ -45,26 +47,27 @@ public class ClassPathDialog extends javax.swing.JDialog {
     private boolean modifiedPath = false;
     /** Creates new form ClassPathDialog */
     public ClassPathDialog(java.awt.Frame parent, boolean modal) {
+
         super(parent, modal);
         initComponents();
 
         jList1.setModel(new DefaultListModel());
         it.businesslogic.ireport.util.Misc.centerFrame( this );
-        
-        
+
+
         javax.swing.KeyStroke escape =  javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0, false);
         javax.swing.Action escapeAction = new javax.swing.AbstractAction() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 jButtonCancelActionPerformed(e);
             }
         };
-       
+
         getRootPane().getInputMap(javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW).put(escape, "ESCAPE");
         getRootPane().getActionMap().put("ESCAPE", escapeAction);
 
 
         applyI18n();
-        
+
         //to make the default button ...
         this.getRootPane().setDefaultButton(this.jButtonSave);
     }
@@ -316,7 +319,7 @@ String fileName = "";
 
         if (modifiedPath)
         {
-            int ret = javax.swing.JOptionPane.showConfirmDialog(this, 
+            int ret = javax.swing.JOptionPane.showConfirmDialog(this,
                     I18n.getString("message.classpath.save","Do you want save the classpath ?"));
 
             if (ret == javax.swing.JOptionPane.CANCEL_OPTION)
@@ -484,7 +487,7 @@ String fileName = "";
     // End of variables declaration//GEN-END:variables
 
     public void applyI18n(){
-                
+
 		this.setTitle(I18n.getString("classPathDialog.title","Classpath"));
                 jButtonCancel.setMnemonic(I18n.getString("classPathDialog.buttonCancelMnemonic","c").charAt(0));
                 jButtonSave.setMnemonic(I18n.getString("classPathDialog.buttonSaveMnemonic","s").charAt(0));

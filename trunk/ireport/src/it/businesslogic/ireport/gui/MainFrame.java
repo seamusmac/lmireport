@@ -10754,6 +10754,8 @@ public class MainFrame extends javax.swing.JFrame
         {
             cp_property += classpath.elementAt(i) +"\n";
         }
+
+        System.out.println("设定classpath:"+cp_property);
         getProperties().setProperty("classpath",cp_property);
     }
 
@@ -11362,23 +11364,28 @@ public class MainFrame extends javax.swing.JFrame
         return true;
     }
 
+
+    // LIMAO :添加默认的数据源的,这里我们仅留JDBCConnection 和 JavaBeanDataSourceConnection
+
     public void addDefaultConnectionImplementations()
     {
         addConnectionImplementation("it.businesslogic.ireport.connection.JDBCConnection");
-        addConnectionImplementation("it.businesslogic.ireport.connection.JRXMLDataSourceConnection");
+        //addConnectionImplementation("it.businesslogic.ireport.connection.JRXMLDataSourceConnection");
         addConnectionImplementation("it.businesslogic.ireport.connection.JavaBeanDataSourceConnection");
-        addConnectionImplementation("it.businesslogic.ireport.connection.JRCSVDataSourceConnection");
-        addConnectionImplementation("it.businesslogic.ireport.connection.JRDataSourceProviderConnection");
-        addConnectionImplementation("it.businesslogic.ireport.connection.JRCustomDataSourceConnection");
-        addConnectionImplementation("it.businesslogic.ireport.connection.JREmptyDatasourceConnection");
-        addConnectionImplementation("it.businesslogic.ireport.connection.JRHibernateConnection");
-        addConnectionImplementation("it.businesslogic.ireport.connection.JRSpringLoadedHibernateConnection");
-        addConnectionImplementation("it.businesslogic.ireport.connection.EJBQLConnection");
-        addConnectionImplementation("it.businesslogic.ireport.connection.JRXMLADataSourceConnection");
-        addConnectionImplementation("it.businesslogic.ireport.connection.MondrianConnection");
-        //addConnectionImplementation("it.businesslogic.ireport.connection.NullConnection");
-        //addConnectionImplementation("it.businesslogic.ireport.connection.JRCustomConnection");
-        addConnectionImplementation("it.businesslogic.ireport.connection.QueryExecuterConnection");
+        //addConnectionImplementation("it.businesslogic.ireport.connection.JRCSVDataSourceConnection");
+        // addConnectionImplementation("it.businesslogic.ireport.connection.JRDataSourceProviderConnection");
+        // addConnectionImplementation("it.businesslogic.ireport.connection.JRCustomDataSourceConnection");
+	       // addConnectionImplementation("it.businesslogic.ireport.connection.JREmptyDatasourceConnection");
+
+        //把hibernate支持包去掉
+        // addConnectionImplementation("it.businesslogic.ireport.connection.JRHibernateConnection");
+
+        //把spring支持包去掉
+	       // addConnectionImplementation("it.businesslogic.ireport.connection.JRSpringLoadedHibernateConnection");
+	       // addConnectionImplementation("it.businesslogic.ireport.connection.EJBQLConnection");
+	       // addConnectionImplementation("it.businesslogic.ireport.connection.JRXMLADataSourceConnection");
+	       // addConnectionImplementation("it.businesslogic.ireport.connection.MondrianConnection");
+	       // addConnectionImplementation("it.businesslogic.ireport.connection.QueryExecuterConnection");
     }
 
     public static java.util.Properties getBrandingProperties() {

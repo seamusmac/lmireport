@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,7 +25,7 @@
  *
  *
  * BeanInspectorPanel.java
- * 
+ *
  * Created on June 19, 2006, 2:57 PM
  *
  */
@@ -34,63 +34,62 @@ package it.businesslogic.ireport.data;
 
 import it.businesslogic.ireport.FieldsProviderEditor;
 import it.businesslogic.ireport.JRField;
-import it.businesslogic.ireport.ReportClassLoader;
 import it.businesslogic.ireport.gui.JBTreeCellRenderer;
 import it.businesslogic.ireport.gui.MainFrame;
 import it.businesslogic.ireport.gui.ReportQueryDialog;
 import it.businesslogic.ireport.gui.TreeJRField;
-import it.businesslogic.ireport.data.hibernate.HQLFieldsReader;
+import it.businesslogic.ireport.util.I18n;
 import it.businesslogic.ireport.util.Misc;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Vector;
+
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
-import it.businesslogic.ireport.util.I18n;
 
 /**
  *
  * @author  gtoffoli
  */
 public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProviderEditor {
-    
+
     private boolean pathOnDescription = false;
-    private JTable jTableFields = null; 
+    private JTable jTableFields = null;
     private boolean comboVisible = true;
     private ReportQueryDialog reportQueryDialog = null;
-    
-    
+
+
     /** Creates new form BeanInspectorPanel */
     public BeanInspectorPanel() {
         initComponents();
-        
+
         DefaultTreeModel dttm = (DefaultTreeModel)jTree1.getModel();
         DefaultMutableTreeNode root = new DefaultMutableTreeNode();
         jTree1.setModel(new DefaultTreeModel( root ));
-        
+
         jTree1.setCellRenderer( new JBTreeCellRenderer());
-        
+
         applyI18n();
     }
-    
-    
+
+
     public void setClassNames(List classNames)
     {
         if (classNames == null) return;
-        
+
         jComboBox1.removeAllItems();
         for (int i=0; i<classNames.size(); ++i)
         {
             jComboBox1.addItem( classNames.get(i));
         }
-        
+
         jComboBox1ActionPerformed(null);
     }
-    
+
     /**
      * Must be used when the combobox is not visible...
      */
@@ -104,7 +103,7 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
             exploreBean( root,className, "");
         }
     }
-    
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -209,19 +208,19 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
 
         DefaultTableModel dtm = (DefaultTableModel)getJTableFields().getModel();
         dtm.setRowCount(0);
-        
+
     }//GEN-LAST:event_jButton2ActionPerformed1
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
 
-        
+
         // Get all selected paths...
         if (MainFrame.getMainInstance().getActiveReportFrame() == null || getJTableFields() == null){
             return;
         }
-        
+
         DefaultTableModel dtm = (DefaultTableModel)getJTableFields().getModel();
-         
+
         TreePath[] paths = jTree1.getSelectionPaths();
         if (paths == null) return;
         for (int i=0; i<paths.length; ++i)
@@ -237,7 +236,7 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
             row.addElement(field);
             row.addElement(field.getClassType());
             row.addElement(field.getDescription());
-            
+
             if (isComboVisible() && jComboBox1.getSelectedItem() instanceof FieldClassWrapper)
             {
                 FieldClassWrapper cw = (FieldClassWrapper)jComboBox1.getSelectedItem();
@@ -253,7 +252,7 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
                     field.setName(  baseName + "_" + j);
                     found = fieldAlreadyExists(field);
             }
-            
+
             if (!found)
             {
                 dtm.addRow(row);
@@ -265,17 +264,17 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
 
         Object obj = jComboBox1.getSelectedItem();
-        if (obj == null) 
+        if (obj == null)
         {
             setClassName(null);
             return;
         }
         if (obj instanceof String) setClassName( (String)obj );
         if (obj instanceof FieldClassWrapper) setClassName( ((FieldClassWrapper)obj).getClassType());
-            
+
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
-    
+
     private boolean fieldAlreadyExists(JRField field)
     {
         boolean found = false;
@@ -291,19 +290,19 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
                    }
                }
             }
-        
+
         return found;
     }
-    
+
     private void jTree1MouseClicked1(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTree1MouseClicked1
 
-        
+
          if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1)
         {
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode)jTree1.getSelectionPath().getLastPathComponent();
-            
+
             if (tn.getChildCount()>0) return;
-            
+
                 /*if (!jTree1.isCollapsed( jTree1.getSelectionPath() ))
             {
                 jTree1.collapsePath( jTree1.getSelectionPath() );
@@ -316,27 +315,27 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
                 TreeJRField jrf = (TreeJRField)tn.getUserObject();
                 if (!jrf.getObj().isPrimitive() && !jrf.getObj().getName().startsWith("java.lang."))
                 {
-                   exploreBean(tn, jrf.getObj().getName(), 
+                   exploreBean(tn, jrf.getObj().getName(),
                            isPathOnDescription() ?
                             Misc.nvl(  jrf.getField().getDescription() , "") :
                             Misc.nvl(  jrf.getField().getName() , "")   );
                 }
             }
-        }       
-         
+        }
+
     }//GEN-LAST:event_jTree1MouseClicked1
-    
-    
+
+
     public void exploreBean(DefaultMutableTreeNode root, String classname, String parentPath)
     {
         try {
-            
+
             root.removeAllChildren();
             if (parentPath.length() > 0) parentPath += ".";
-            
+
             MainFrame.reportClassLoader.rescanLibDirectory();
             Class clazz = Class.forName(classname,true,MainFrame.reportClassLoader);
-            
+
             java.beans.PropertyDescriptor[] pd = org.apache.commons.beanutils.PropertyUtils.getPropertyDescriptors(clazz);
             for (int nd =0; nd < pd.length; ++nd)
             {
@@ -353,12 +352,12 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
                        {
                            field.setName(parentPath + fieldName);
                        }
-                       
+
                        TreeJRField jtf = new TreeJRField();
-                   
+
                        jtf.setField( field );
                        jtf.setObj( pd[nd].getPropertyType() );
-                   
+
                        boolean bChildrens = true;
                        if (pd[nd].getPropertyType().isPrimitive() || pd[nd].getPropertyType().getName().startsWith("java.lang."))
                        {
@@ -367,13 +366,13 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
                        root.add(new DefaultMutableTreeNode(jtf, bChildrens));
                    }
             }
-            
+
             jTree1.expandPath( new TreePath(root.getPath()) );
             jTree1.updateUI();
-            
+
         } catch (ClassNotFoundException cnf)
         {
-            javax.swing.JOptionPane.showMessageDialog(this, 
+            javax.swing.JOptionPane.showMessageDialog(this,
                     I18n.getFormattedString("messages.BeanInspectorPanel.classNotFoundError",
                                 "Class not found error!!\nCheck your classpath and retry!\n{0}", new Object[]{cnf.getMessage()}),
                     I18n.getString("message.title.error","Error"),javax.swing.JOptionPane.ERROR_MESSAGE);
@@ -409,7 +408,7 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
     public void setPathOnDescription(boolean pathOnDescription) {
         this.pathOnDescription = pathOnDescription;
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
@@ -420,10 +419,10 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTree jTree1;
     // End of variables declaration//GEN-END:variables
-    
-    
-    
-    
+
+
+
+
     public void applyI18n(){
                 // Start autogenerated code ----------------------
                 jButton2.setText(I18n.getString("beanInspectorPanel.button2","Add selected field(s)"));
@@ -433,40 +432,40 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
     }
 
     int lastExecution = 0;
-    
+
     public void queryChanged(String newQuery) {
-    
+
         lastExecution++;
         int thisExecution = lastExecution;
         // Execute a thread to perform the query change...
-        
+
         String error_msg = "";
         lastExecution++;
-            
+
         int in = lastExecution;
-        
+
         if (getReportQueryDialog() == null) return;
-            
+
         getReportQueryDialog().getJLabelStatusSQL().setText("Executing HQL query....");
         /////////////////////////////
-            
+
         try {
         Thread.currentThread().setContextClassLoader( MainFrame.getMainInstance().getReportClassLoader());
         } catch (Exception ex)
         {
             ex.printStackTrace();
         }
-            
-        if (in < lastExecution) return; //Abort, new execution requested
-        
-        HQLFieldsReader hqlFR = new HQLFieldsReader(newQuery, getReportQueryDialog().getSubDataset().getParameters());
-            
-        if (in < lastExecution) return; //Abort, new execution requested
-        
-        try {
-            Vector fields = hqlFR.readFields();
 
-            List columns = new ArrayList();
+        if (in < lastExecution) return; //Abort, new execution requested
+
+       // HQLFieldsReader hqlFR = new HQLFieldsReader(newQuery, getReportQueryDialog().getSubDataset().getParameters());
+
+        if (in < lastExecution) return; //Abort, new execution requested
+
+        try {
+            //Vector fields = hqlFR.readFields();
+
+    /*        List columns = new ArrayList();
             for (int i=0; i<fields.size(); ++i)
             {
                 JRField field = (JRField)fields.elementAt(i);
@@ -476,12 +475,12 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
             Vector v = hqlFR.getNotScalars();
 
             if (v.size() == 0) v = null;
-            
+
             if (in < lastExecution) return; //Abort, new execution requested
             setBeanExplorerFromWorker(v,true,true);
 
             if (in < lastExecution) return; //Abort, new execution requested
-            setColumnsFromWorker(columns);
+            setColumnsFromWorker(columns);*/
 
         } catch (Exception ex)
         {
@@ -489,15 +488,15 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
             setBeanExplorerFromWorker(null,true,true);
             setColumnErrorFromWork( "Error: " +  ex.getMessage() );
         }
-        
+
         getReportQueryDialog().getJLabelStatusSQL().setText("Ready");
     }
-    
+
     /**
      * Set the columns error message in the ReportQueryDialog....
      * This is called from a none swing thread, hence all the invoke and
      * wait magic.
-     * The message is only set if the query string matches the one the 
+     * The message is only set if the query string matches the one the
      * error message is for.
      *
      * @param columns The list of columns to set.
@@ -514,17 +513,17 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
 
             if (SwingUtilities.isEventDispatchThread()) { r.run(); }
             else { SwingUtilities.invokeAndWait( r ); }
-        
+
         } catch(Exception e) {
             // oh well we got interrupted.
         }
     }
-    
+
     /**
      * Set the columns in the ReportQueryDialog....
      * This is called from a none swing thread, hence all the invoke and
      * wait magic.
-     * The message is only set if the query string matches the one the 
+     * The message is only set if the query string matches the one the
      * error message is for.
      *
      * @param columns The list of columns to set.
@@ -541,12 +540,12 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
 
             if (SwingUtilities.isEventDispatchThread()) { r.run(); }
             else { SwingUtilities.invokeAndWait( r ); }
-        
+
         } catch(Exception e) {
             // oh well we got interrupted.
         }
     }
-    
+
     /**
      * Set the bean explorer
      *
@@ -558,11 +557,11 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
                 public void run() {
                     Vector v1 = v;
                     if (v1 == null) v1 = new Vector();
-                    
+
                     setComboVisible(useCombo);
                     setPathOnDescription(pathOnDescription);
                     setClassNames(v1);
-            
+
                     getReportQueryDialog().getSQLExpressionArea().requestFocusInWindow();
                     getReportQueryDialog().getSQLExpressionArea().requestFocus();
                 }
@@ -580,6 +579,6 @@ public class BeanInspectorPanel extends javax.swing.JPanel implements FieldsProv
     public void setReportQueryDialog(ReportQueryDialog reportQueryDialog) {
         this.reportQueryDialog = reportQueryDialog;
     }
-    
-    
+
+
 }

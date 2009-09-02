@@ -12,6 +12,7 @@ import it.businesslogic.ireport.connection.JDBCConnection;
 import it.businesslogic.ireport.connection.MondrianConnection;
 import it.businesslogic.ireport.gui.MainFrame;
 import it.businesslogic.ireport.util.I18n;
+
 import java.util.Vector;
 
 /**
@@ -19,14 +20,14 @@ import java.util.Vector;
  * @author  gtoffoli
  */
 public class MondrianConnectionEditor extends javax.swing.JPanel implements IReportConnectionEditor {
-    
+
     private IReportConnection iReportConnection = null;
     private boolean init = false;
-    
+
     /** Creates new form EJBQLConnectionEditor */
     public MondrianConnectionEditor() {
         initComponents();
-        
+
         Vector conns = MainFrame.getMainInstance().getConnections();
         for (int i=0; i<conns.size(); ++i)
         {
@@ -36,15 +37,15 @@ public class MondrianConnectionEditor extends javax.swing.JPanel implements IRep
                 jComboBoxMondrianJdbc.addItem( con.getName() );
             }
         }
-        
+
         if (jComboBoxMondrianJdbc.getItemCount() > 0)
         {
             jComboBoxMondrianJdbc.setSelectedIndex(0);
         }
-        
+
         applyI18n();
     }
-    
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -121,8 +122,8 @@ public class MondrianConnectionEditor extends javax.swing.JPanel implements IRep
         add(jPanelMondrian, java.awt.BorderLayout.CENTER);
 
     }// </editor-fold>//GEN-END:initComponents
-    
-    
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButtonBrowseCatalog;
     private javax.swing.JComboBox jComboBoxMondrianJdbc;
@@ -132,22 +133,24 @@ public class MondrianConnectionEditor extends javax.swing.JPanel implements IRep
     private javax.swing.JPanel jPanelMondrian;
     private javax.swing.JTextField jTextFieldCatalogURI;
     // End of variables declaration//GEN-END:variables
-    
-    
+
+
     public void setIReportConnection(IReportConnection c) {
         this.iReportConnection = c;
-        
-        
+
+
         if (iReportConnection instanceof MondrianConnection)
         {
             MondrianConnection con = (MondrianConnection)iReportConnection;
-            this.jTextFieldCatalogURI.setText( it.businesslogic.ireport.util.Misc.nvl(con.getProperties().get(MondrianConnection.CATALOG_URI), "") );            
-            jComboBoxMondrianJdbc.setSelectedItem( con.getConnectionName() );
+            this.jTextFieldCatalogURI.setText( it.businesslogic.ireport.util.Misc.nvl(con.getProperties().get(MondrianConnection.CATALOG_URI), "") );
+            // LIMAO : modify by li.mao since 3.0 [2009-9-2 ÏÂÎç03:46:21]
+
+            // jComboBoxMondrianJdbc.setSelectedItem( con.getConnectionName() );
         }
     }
 
     public IReportConnection getIReportConnection() {
-        
+
         if (this.jComboBoxMondrianJdbc.getSelectedIndex() < 0) {
             javax.swing.JOptionPane.showMessageDialog(this,
                     I18n.getString("messages.connectionDialog.setJDBCConnection","You have to choose a JDBC connection in order to configure the Mondrian OLAP connection.\nIf JDBC connection are not yet available, please create one before creating this connection."),
@@ -165,26 +168,26 @@ public class MondrianConnectionEditor extends javax.swing.JPanel implements IRep
         IReportConnection irConn = new MondrianConnection();
         irConn.getProperties().put(MondrianConnection.CATALOG_URI, jTextFieldCatalogURI.getText().trim());
         irConn.getProperties().put(MondrianConnection.CONNECTION_NAME, jComboBoxMondrianJdbc.getSelectedItem()+"");
-        
+
         iReportConnection = irConn;
         return iReportConnection;
     }
-    
+
     public void applyI18n(){
                 jButtonBrowseCatalog.setText(I18n.getString("connectionDialog.buttonBrowseCatalog","Browse..."));
                 jLabel19.setText(I18n.getString("connectionDialog.label19","Catalog URI (i.e. file:/path/schema.xml)"));
                 jLabel20.setText(I18n.getString("connectionDialog.label20","Jdbc Connection"));
-                
+
     }
-    
-    
-    private void jButtonBrowseCatalogActionPerformed(java.awt.event.ActionEvent evt) {                                                     
-            
+
+
+    private void jButtonBrowseCatalogActionPerformed(java.awt.event.ActionEvent evt) {
+
             String fileName = "";
 	    javax.swing.JFileChooser jfc = new javax.swing.JFileChooser( MainFrame.getMainInstance().getCurrentDirectory());
-	    
+
 	    jfc.setDialogTitle("Select file....");
-	    
+
 	    jfc.addChoosableFileFilter( new javax.swing.filechooser.FileFilter() {
 		    public boolean accept(java.io.File file) {
 			    String filename = file.getName();
@@ -194,18 +197,18 @@ public class MondrianConnectionEditor extends javax.swing.JPanel implements IRep
 			    return "XML *.xml";
 		    }
 	    });
-	    
+
 	    jfc.setMultiSelectionEnabled(false);
 	    jfc.setDialogType( javax.swing.JFileChooser.OPEN_DIALOG);
 	    if  (jfc.showOpenDialog( this) == javax.swing.JOptionPane.OK_OPTION) {
-		    java.io.File file = jfc.getSelectedFile();		
+		    java.io.File file = jfc.getSelectedFile();
                     try {
                         jTextFieldCatalogURI.setText( file.toURI() + "");
                     } catch (Exception ex){}
-	    }        
-        
-        
-    } 
-    
-    
+	    }
+
+
+    }
+
+
 }

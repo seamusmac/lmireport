@@ -32,7 +32,9 @@
 
 package it.businesslogic.ireport.gui;
 import it.businesslogic.ireport.IReportConnection;
-import it.businesslogic.ireport.connection.JDBCConnection;
+import it.businesslogic.ireport.IReportTemplate;
+import it.businesslogic.ireport.JRField;
+import it.businesslogic.ireport.Report;
 import it.businesslogic.ireport.connection.JRCSVDataSourceConnection;
 import it.businesslogic.ireport.connection.JRDataSourceProviderConnection;
 import it.businesslogic.ireport.connection.JRHibernateConnection;
@@ -43,28 +45,40 @@ import it.businesslogic.ireport.data.CincomMDXFieldsProvider;
 import it.businesslogic.ireport.data.MDXFieldsProvider;
 import it.businesslogic.ireport.data.SQLFieldsProvider;
 import it.businesslogic.ireport.gui.wizard.UserChoicesWizardTemplate;
-import it.businesslogic.ireport.util.*;
-import it.businesslogic.ireport.*;
-import java.sql.*;
-import java.util.*;
-import java.io.*;
+import it.businesslogic.ireport.util.I18n;
+import it.businesslogic.ireport.util.LanguageChangedEvent;
+import it.businesslogic.ireport.util.LanguageChangedListener;
+import it.businesslogic.ireport.util.Misc;
+import it.businesslogic.ireport.util.ReportGenerator;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilenameFilter;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Vector;
+
 import javax.swing.DefaultListModel;
 import javax.swing.DefaultListSelectionModel;
+import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
+import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 
 import org.apache.xerces.parsers.DOMParser;
 import org.apache.xpath.XPathAPI;
 import org.apache.xpath.objects.XBoolean;
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.w3c.dom.DOMException;
-
 import org.xml.sax.SAXException;
-
-import javax.swing.ImageIcon;
-import javax.swing.JOptionPane;
 
 /**
  *
@@ -72,35 +86,35 @@ import javax.swing.JOptionPane;
  */
 public class WizardDialog extends javax.swing.JDialog implements Runnable, LanguageChangedListener {
 //Modified by Felix Firgau on Feb 8th 2006
-    
+
     Thread t = null;
     Vector templates = null;
     org.syntax.jedit.JEditTextArea jRSQLExpressionArea1 = null;
-    
+
     UserChoicesWizardTemplate userTemplate = null;
     int maxStepVisited = 0;
-    
+
     /** Creates new form WizardDialog */
     public WizardDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
         applyI18n();
-        
+
         templates = new Vector();
-        
+
         jRSQLExpressionArea1 = new org.syntax.jedit.JEditTextArea();
         jRSQLExpressionArea1.getPainter().setLineHighlightColor(java.awt.Color.WHITE);
         jRSQLExpressionArea1.setDocument(new org.syntax.jedit.SyntaxDocument());
         jRSQLExpressionArea1.setTokenMarker(new org.syntax.jedit.tokenmarker.TSQLTokenMarker());
         jRSQLExpressionArea1.setAutoscrolls(true);
-        
+
         java.awt.GridBagConstraints gridBagConstraints= null;
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         //gridBagConstraints.insets = new java.awt.Insets(2, 2, 2, 2);
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        
+
         DefaultListSelectionModel dlsm = (DefaultListSelectionModel) this.jTableFields.getSelectionModel();
         dlsm.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e)
@@ -108,17 +122,17 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 jTableFieldsListSelectionValueChanged(e);
             }
         });
-        
+
         jPanel1.add(jRSQLExpressionArea1, gridBagConstraints);
-        
+
         wzStep = 1;
         this.setStep(wzStep,wzStep);
         this.setSize(720, 450);
         this.setResizable(true);
         Misc.centerFrame(this);
-        
-        
-        
+
+
+
         this.jRSQLExpressionArea1.getDocument().addDocumentListener( new javax.swing.event.DocumentListener() {
             public void changedUpdate(javax.swing.event.DocumentEvent evt) {
                 jRSQLExpressionArea1TextConnectionExpressionTextChanged();
@@ -130,7 +144,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 jRSQLExpressionArea1TextConnectionExpressionTextChanged();
             }
         });
-        
+
         this.jTextFieldBean.getDocument().addDocumentListener( new javax.swing.event.DocumentListener() {
             public void changedUpdate(javax.swing.event.DocumentEvent evt) {
                 jRSQLExpressionArea1TextConnectionExpressionTextChanged();
@@ -142,12 +156,12 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 jRSQLExpressionArea1TextConnectionExpressionTextChanged();
             }
         });
-        
+
         this.jRSQLExpressionArea1.requestFocusInWindow();
         jList1.setModel(new javax.swing.DefaultListModel());
         jList2.setModel(new javax.swing.DefaultListModel());
         jList3.setModel(new javax.swing.DefaultListModel());
-        
+
         String templates_dir = MainFrame.IREPORT_HOME_DIR;  //System.getProperty("ireport.home",".");
         templates_dir +=  File.separator + "templates";
         //System.out.println("Templates: " + templates_dir);
@@ -179,7 +193,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                     });
                 }
             }
-            
+
             for (int i=0;templates_files != null && i<templates_files.length; ++i) {
                 IReportTemplate itemplate = new IReportTemplate();
                 itemplate.setXmlFile(templates_files[i] +"");
@@ -190,14 +204,14 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                     iconname = Misc.changeFileExtension(iconname,".gif");
                     itemplate.setIcon( new javax.swing.ImageIcon( iconname) );
                 } catch (Exception ex){}
-                
+
                 templates.add( itemplate );
             }
-            
+
         } catch (Exception ex) {
         }
-        
-        
+
+
         // try to look in the classpath...
         try {
             Vector xml_template_files = new Vector();
@@ -206,16 +220,16 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 Object oobj = enum_pl.nextElement();
                 xml_template_files.add(oobj);
             }
-            
+
             for (int i=0; i<xml_template_files.size(); ++i) {
-                
+
                 Object source = xml_template_files.elementAt(i);
                 //  Create a Xerces DOM Parser
                 DOMParser parser = new DOMParser();
                 //  Parse the Document
                 //  and traverse the DOM
                 try {
-                    
+
                     parser.setEntityResolver( new org.xml.sax.EntityResolver() {
                         /* Code by Teodor Danciu */
                         public org.xml.sax.InputSource resolveEntity(
@@ -224,26 +238,26 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                                 ) throws SAXException//, java.io.IOException
                         {
                             org.xml.sax.InputSource inputSource = null;
-                            
+
                             if (systemId != null) {
                                 String dtd = null;
-                                
+
                                 if ( systemId.equals("http://ireport.sourceforge.net/dtds/iReportTemplate.dtd") ) {
                                     dtd = "it/businesslogic/ireport/dtds/iReportTemplate.dtd";
                                 } else {
                                     return new org.xml.sax.InputSource(systemId);
                                 }
-                                
-                                
+
+
                                 ClassLoader classLoader = this.getClass().getClassLoader();
-                                
+
                                 java.io.InputStream is = classLoader.getResourceAsStream(dtd);
                                 if (is != null) {
                                     inputSource = new org.xml.sax.InputSource(is);
                                 }
-                                
+
                             }
-                            
+
                             return inputSource;
                         }
                     });
@@ -251,22 +265,22 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                     InputStream input_source = null;
                     if ( source instanceof java.io.File ) {
                         input_source = new FileInputStream((java.io.File)source);
-                        
+
                     } else if ( source instanceof java.net.URL){
-                        
+
                         input_source = ((java.net.URL)source).openStream();
-                        
+
                     }
-                    
+
                     parser.parse(new org.xml.sax.InputSource( input_source ));
                     Document document = parser.getDocument();
-                    
+
                     //System.out.println("traverse");
                     Node node = document.getDocumentElement();
-                    
+
                     NodeList list = XPathAPI.selectNodeList(node, "/iReportTemplateSet/iReportTemplate");
                     Node childnode = null;
-                    
+
                     for (int n=0; n < list.getLength(); n++) {
                         IReportTemplate ireportTemplate = new IReportTemplate();
                         childnode = XPathAPI.selectSingleNode(list.item(n), "@name");
@@ -288,7 +302,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                                 e.printStackTrace();
                             }
                         }
-                        
+
                         templates.add(ireportTemplate);
                     }
                 } catch (SAXException e) {
@@ -297,26 +311,26 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                     System.err.println(e);
                 }
             } // End cycle on iReport plugin files...
-            
+
         } catch (Exception ex) {
             MainFrame.getMainInstance().logOnConsole("Error searching ireport/template.xml resources\n");
         }
-        
+
         updateTemplatesList();
-        
+
         jComboBoxTemplates.removeAllItems();
-        
+
         jComboBoxTemplates.addItem(I18n.getString("noTemplate","None"));
         java.util.List ucTemplates = MainFrame.getMainInstance().getUserChoicesWizardTemplates();
-        
+
         java.util.List tnames= new java.util.ArrayList();
-        
+
         for (int i=0; i<ucTemplates.size(); ++i)
         {
             jComboBoxTemplates.addItem(ucTemplates.get(i));
             tnames.add( ""+ucTemplates.get(i) );
         }
-        
+
         for (int i=1; i<1000 ;i++)
         {
             String s = I18n.getFormattedString("MyTemplate","My template {0}", new Object[]{new Integer(i)});
@@ -327,43 +341,43 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
             }
         }
         //jRSQLExpressionArea1.setText("00000000000000000000000000000000000000000000000000000\n\r");
-        
+
 
         //Added by Felix Firgau for I18n on Feb 8th 2006
         //it.businesslogic.ireport.util.I18n.setCurrentLocale( System.getProperty("Language"), System.getProperty("Country") );
         //I18n.addOnLanguageChangedListener( this );
         //this.pack();
         updateConnections();
-        
+
     }
-    
+
     public void updateConnections() {
         Object ircDefault =  MainFrame.getMainInstance().getProperties().get("DefaultConnection");
         jComboBoxConnection.removeAllItems();
-        
+
         Enumeration e = MainFrame.getMainInstance().getConnections().elements();
-        
+
         jComboBoxConnection.addItem(new NullConnection());
         while (e.hasMoreElements()) {
             IReportConnection irc = (IReportConnection)e.nextElement();
             jComboBoxConnection.addItem(irc);
         }
-        
+
         if (ircDefault != null) {
             jComboBoxConnection.setSelectedItem(ircDefault);
         }
     }
-    
+
     private int wzStep=0;
-    
-    
+
+
     public void updateTemplatesList() {
         if (templates == null) return;
         ((javax.swing.DefaultListModel)jList3.getModel()).removeAllElements();
-        
+
         for (int i=0;  i< templates.size(); ++i) {
             IReportTemplate itemplate = (IReportTemplate)templates.elementAt(i);
-            
+
             if (jRadioButtonTabularLayout.isSelected() && itemplate.getType() != IReportTemplate.TABULAR) continue;
             if (jRadioButtonColumnarLayout.isSelected() && itemplate.getType() != IReportTemplate.COLUMNAR) continue;
             //if (jComboBoxTemplates.getItemCount()<2 || (jComboBoxTemplates.getSelectedIndex() == 0 && itemplate.getType() != IReportTemplate.COLUMNAR) )  continue;
@@ -371,7 +385,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
             /*
             TemplateFile tf = new TemplateFile();
             tf.file = templates[i];
-             
+
             tf.name = templates[i].getName().substring(0, templates[i].getName().length()-4);
              */
             ((javax.swing.DefaultListModel)jList3.getModel()).addElement(itemplate);
@@ -380,13 +394,13 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
             jList3.setSelectedIndex(0);
         jList3.updateUI();
     }
-    
+
     public void jRSQLExpressionArea1TextConnectionExpressionTextChanged() {
         jComboBoxConnectionActionPerformed(null);
-        
+
     }
-    
-    
+
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -1275,7 +1289,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         {
             userTemplate = (UserChoicesWizardTemplate)jComboBoxTemplates.getSelectedItem();
             this.jRSQLExpressionArea1.setText( userTemplate.getQuery() );
-            
+
             if (userTemplate.getIRDatasourceName() != null && userTemplate.getIRDatasourceName().length() >0)
             {
                 for (int i=0; i<jComboBoxConnection.getItemCount(); ++i)
@@ -1289,13 +1303,13 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
             }
             this.jRSQLExpressionArea1.setText( userTemplate.getQuery() );
         }
-        
+
     }//GEN-LAST:event_jComboBoxConnectionActionPerformed1
 
     private void jCheckBoxSaveTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxSaveTemplateActionPerformed
 
         jTextFieldTemplateName.setEnabled( jCheckBoxSaveTemplate.isSelected() );
-        
+
     }//GEN-LAST:event_jCheckBoxSaveTemplateActionPerformed
 
     private void jButtonModifyFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonModifyFieldActionPerformed
@@ -1313,107 +1327,107 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 field.setName(jrpd.getField().getName());
                 field.setClassType(jrpd.getField().getClassType());
                 field.setProperties(jrpd.getField().getProperties());
-                
+
                 jTableFields.setValueAt(field.getClassType(), row,1);
                 jTableFields.updateUI();
             }
         }
-        
+
     }//GEN-LAST:event_jButtonModifyFieldActionPerformed
 
-    
+
     private void jTableFieldsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTableFieldsMouseClicked
 
         if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1 &&
                 jTableFields.getSelectedRow() >= 0) {
                 jButtonModifyFieldActionPerformed( null );
         }
-        
+
         //if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON3) {
         //    jPopupMenuFields.show(jTableFields, evt.getPoint().x,
         //            evt.getPoint().y);
         //}
-        
+
     }//GEN-LAST:event_jTableFieldsMouseClicked
-    
+
     private void jButtonDesignQueryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonDesignQueryActionPerformed
-        
-        
+
+
         IReportConnection irc = (IReportConnection)jComboBoxConnection.getSelectedItem();
-        
+
         String query = jRSQLExpressionArea1.getText();
-        
+
         try {
             if (irc.isJDBCConnection()) {
                 SQLFieldsProvider sfp = new SQLFieldsProvider();
                 query = sfp.designQuery(irc, query, null);
             } else if (irc instanceof JRXMLADataSourceConnection) {
-                
+
                 CincomMDXFieldsProvider mfp = new CincomMDXFieldsProvider();
                 query = mfp.designQuery(irc, query, null);
             } else {
                 return;
             }
-            
+
             if (query != null && query.length() > 0) {
                 jRSQLExpressionArea1.setText(query);
             }
-            
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        
-        
+
+
     }//GEN-LAST:event_jButtonDesignQueryActionPerformed
-    
+
     private void jButtonSaveQueryActionPerformed1(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSaveQueryActionPerformed1
         Misc.saveSQLQuery( jRSQLExpressionArea1.getText(), this );
     }//GEN-LAST:event_jButtonSaveQueryActionPerformed1
-    
+
     private void jButtonLoadQueryActionPerformed1(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonLoadQueryActionPerformed1
         String query = Misc.loadSQLQuery(this);
-        
+
         if (query != null) {
             jRSQLExpressionArea1.setText(query);
         }
     }//GEN-LAST:event_jButtonLoadQueryActionPerformed1
-    
+
     private void jTextFieldBeanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldBeanActionPerformed
         jComboBoxConnectionActionPerformed(null);
     }//GEN-LAST:event_jTextFieldBeanActionPerformed
-    
+
     private void jButtonNewConnectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonNewConnectionActionPerformed
-        
-        
+
+
         it.businesslogic.ireport.connection.gui.ConnectionDialog cd = new it.businesslogic.ireport.connection.gui.ConnectionDialog(this,true);
-        
+
         cd.setVisible(true);
-        
+
         IReportConnection con = null;
         if (cd.getDialogResult() == JOptionPane.OK_OPTION) {
             con = cd.getIReportConnection();
             MainFrame.getMainInstance().getConnections().addElement(con);
-            
+
             if (MainFrame.getMainInstance().getConnections().size() == 1) {
                 MainFrame.getMainInstance().setActiveConnection(con);
             } else {
                 MainFrame.getMainInstance().saveiReportConfiguration();
             }
-            
+
             this.updateConnections();
             this.jComboBoxConnection.setSelectedItem(con);
         }
-        
-        
-        
+
+
+
     }//GEN-LAST:event_jButtonNewConnectionActionPerformed
-    
+
     private void jComboBoxConnectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxConnectionActionPerformed
-        
+
         boolean canNext = false;
         if (jComboBoxConnection.getSelectedItem() != null) {
             IReportConnection irc = (IReportConnection)jComboBoxConnection.getSelectedItem();
-            
+
             jButtonDesignQuery.setVisible(false);
             if (irc.isJDBCConnection()) {
                 //jLabel2.setText("SQL query");
@@ -1424,7 +1438,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 jButtonDesignQuery.setVisible( SQLFieldsProvider.useVisualDesigner  );
                 jTextFieldBean.setVisible(false);
                 jButtonDesignQuery.setEnabled(true);
-                
+
                 if (jRSQLExpressionArea1.getText().length() > 0) canNext = true;
             } else if (irc instanceof JRHibernateConnection) {
                 //jLabel2.setText("HQL query");
@@ -1444,7 +1458,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 // Activate the designer button...
                 jButtonDesignQuery.setVisible( MDXFieldsProvider.useVisualDesigner  );
                 if (jRSQLExpressionArea1.getText().length() > 0) canNext = true;
-                
+
             } else if (irc instanceof it.businesslogic.ireport.connection.JRDataSourceProviderConnection) {
                 jLabel2.setText("");
                 jPanel1.setVisible(false);
@@ -1481,7 +1495,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 jTextFieldBean.setVisible(false);
                 canNext = false;
             }
-            
+
         } else {
             jLabel2.setText("Please create a new connection / datasource.");
             jPanel1.setVisible(false);
@@ -1489,28 +1503,28 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
             jButtonSaveQuery.setVisible(false);
             jTextFieldBean.setVisible(false);
         }
-        
+
         jButtonNext.setEnabled(canNext);
-        
+
     }//GEN-LAST:event_jComboBoxConnectionActionPerformed
-    
-    
+
+
     private void jRadioButtonColumnarLayoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButtonColumnarLayoutActionPerformed
         updateTemplatesList();
     }//GEN-LAST:event_jRadioButtonColumnarLayoutActionPerformed
-    
+
     private void jRadioButtonTabularLayoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButtonTabularLayoutActionPerformed
         updateTemplatesList();
     }//GEN-LAST:event_jRadioButtonTabularLayoutActionPerformed
-    
+
     private void jList3ValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jList3ValueChanged
-        
+
         if (jList3.getSelectedIndex() >= 0) {
             IReportTemplate tf = (IReportTemplate)jList3.getSelectedValue();
             // Take the image...
-            
+
             this.jLabelImage.setIcon( tf.getIcon() );
-            
+
             this.jLabelImage.updateUI();
             this.jButtonNext.setEnabled(true);
         } else {
@@ -1518,7 +1532,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
             this.jButtonNext.setEnabled(false);
         }
     }//GEN-LAST:event_jList3ValueChanged
-    
+
     private void jComboBox3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox3ActionPerformed
         // Add to combobox 2 all not selected items...
         Object obj1 = jComboBox1.getSelectedItem();
@@ -1539,7 +1553,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
             }
         }
     }//GEN-LAST:event_jComboBox3ActionPerformed
-    
+
     private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
         // Add to combobox 2 all not selected items...
         Object obj1 = jComboBox1.getSelectedItem();
@@ -1560,7 +1574,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
             }
         }
     }//GEN-LAST:event_jComboBox2ActionPerformed
-    
+
     public void disableGroups(int fromIndex) {
         switch (fromIndex) {
             case 2:
@@ -1577,10 +1591,10 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 jLabelG4.setEnabled(false);
         }
     }
-    
-    
+
+
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-        
+
         // Add to combobox 2 all not selected items...
         Object obj1 = jComboBox1.getSelectedItem();
         if (jComboBox1.getSelectedIndex() <= 0) {
@@ -1598,15 +1612,15 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                     jComboBox2.addItem( obj );
             }
         }
-        
-        
+
+
     }//GEN-LAST:event_jComboBox1ActionPerformed
-    
+
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        
+
         javax.swing.DefaultListModel list1 = (javax.swing.DefaultListModel)jList1.getModel();
         javax.swing.DefaultListModel list2 = (javax.swing.DefaultListModel)jList2.getModel();
-        
+
         for (int i=0; i< list1.getSize(); ++i) {
             list2.addElement(list1.getElementAt(i));
         }
@@ -1616,11 +1630,11 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         else
             jButtonNext.setEnabled(true);
     }//GEN-LAST:event_jButton5ActionPerformed
-    
+
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
         int index = jList2.getSelectedIndex();
         if (index <0) return;
-        
+
         Object[] objs = jList2.getSelectedValues();
         for (int i=0; i< objs.length; ++i) {
             Object obj = objs[i];
@@ -1642,12 +1656,12 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 jButtonNext.setEnabled(true);
         }
     }//GEN-LAST:event_jButton6ActionPerformed
-    
+
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        
+
         int index = jList1.getSelectedIndex();
         if (index <0) return;
-        
+
         Object[] objs = jList1.getSelectedValues();
         for (int i=0; i< objs.length; ++i) {
             Object obj = objs[i];
@@ -1668,13 +1682,13 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 jButtonNext.setEnabled(true);
         }
     }//GEN-LAST:event_jButton4ActionPerformed
-    
+
     private void jButtonCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCancelActionPerformed
-        
+
         if (t != null && t.isAlive()) {
             t.interrupt();
         }
-        
+
         if (wzStep == 6) {
             //javax.swing.JOptionPane.showMessageDialog(null, ((TemplateFile)jList3.getSelectedValue()).file.getAbsolutePath()+"" );
             String templateName = "";
@@ -1685,10 +1699,10 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                         I18n.getString("message.title.error","Error"), javax.swing.JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
+
             try {
                 Report report = null;
-                
+
                 UserChoicesWizardTemplate ucwt = new UserChoicesWizardTemplate();
                 ucwt.setName( jTextFieldTemplateName.getText().trim() );
                 ucwt.setQuery( jRSQLExpressionArea1.getText());
@@ -1724,15 +1738,15 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 {
                     ucwt.getGroupExpressions().add("" + jComboBox4.getSelectedItem());
                 }
-                
+
                 report =  ReportGenerator.createReport(ucwt);
-                
+
                 if (jCheckBoxSaveTemplate.isSelected())
                 {
                     MainFrame.getMainInstance().getUserChoicesWizardTemplates().add(ucwt);
                     UserChoicesWizardTemplate.storeWizardTemplates( MainFrame.getMainInstance().getUserChoicesWizardTemplates() );
                 }
-                
+
                 this.setReport(report);
                 MainFrame.getMainInstance().setActiveConnection( (IReportConnection)jComboBoxConnection.getSelectedItem());
                 this.setDialogResult(javax.swing.JOptionPane.OK_OPTION);
@@ -1743,27 +1757,27 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                         I18n.getString("message.title.error","Error"), javax.swing.JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
+
         } else
             this.setDialogResult(javax.swing.JOptionPane.CANCEL_OPTION);
-        
+
         this.setVisible(false);
         this.dispose();
-        
+
     }//GEN-LAST:event_jButtonCancelActionPerformed
-    
+
     private void jButtonNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonNextActionPerformed
         this.nextStep();
     }//GEN-LAST:event_jButtonNextActionPerformed
-    
+
     private void jButtonPrevActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonPrevActionPerformed
         this.prevStep();
     }//GEN-LAST:event_jButtonPrevActionPerformed
-    
+
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
         javax.swing.DefaultListModel list2 = (javax.swing.DefaultListModel)jList1.getModel();
         javax.swing.DefaultListModel list1 = (javax.swing.DefaultListModel)jList2.getModel();
-        
+
         for (int i=0; i< list1.getSize(); ++i) {
             list2.addElement(list1.getElementAt(i));
         }
@@ -1773,21 +1787,21 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         else
             jButtonNext.setEnabled(true);
     }//GEN-LAST:event_jButton7ActionPerformed
-    
+
     /** Closes the dialog */
     private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
         setVisible(false);
         dispose();
     }//GEN-LAST:event_closeDialog
-    
+
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
         new WizardDialog(new javax.swing.JFrame(), true).setVisible(true);
     }
-    
-    
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton jButton4;
@@ -1859,25 +1873,25 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
     private javax.swing.JTextField jTextFieldBean;
     private javax.swing.JTextField jTextFieldTemplateName;
     // End of variables declaration//GEN-END:variables
-    
+
     private int status;
-    
+
     private Report report;
-    
+
     private int dialogResult;
-    
+
     public void nextStep() {
         this.setStep( wzStep+1, wzStep);
     }
-    
+
     public void prevStep() {
         this.setStep(wzStep-1, wzStep);
     }
-    
-    
+
+
     public void setStep(int step, int oldStep) {
         jButtonCancel.setText(it.businesslogic.ireport.util.I18n.getString("cancel","Cancel"));
-        
+
         switch (step) {
             case 1:
                 setViewedPanel(1);
@@ -1886,7 +1900,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                     jButtonNext.setEnabled(true);
                 } else
                     jButtonNext.setEnabled(false);
-                
+
                 jButtonPrev.setEnabled(false);
                 break;
             case 2:
@@ -1899,22 +1913,22 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                     return;
                 }
                 setViewedPanel(2);
-                
+
                 if (  ((javax.swing.DefaultListModel)jList2.getModel()).getSize() == 0
                         && jComboBoxConnection.getSelectedIndex() > 0)
                     jButtonNext.setEnabled(false);
                 else
                     jButtonNext.setEnabled(true);
-                
+
                 jButton4.setEnabled(jComboBoxConnection.getSelectedIndex() != 0);
                 jButton5.setEnabled(jComboBoxConnection.getSelectedIndex() != 0);
                 jButton6.setEnabled(jComboBoxConnection.getSelectedIndex() != 0);
                 jButton7.setEnabled(jComboBoxConnection.getSelectedIndex() != 0);
-                
+
                 jButtonPrev.setEnabled(true);
                 break;
             case 3:
-                
+
                 // If we are using an sql query, skip this step...
                 if (jComboBoxConnection.getSelectedItem() != null) {
                     IReportConnection irc = (IReportConnection)jComboBoxConnection.getSelectedItem();
@@ -1935,16 +1949,16 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 // Review fields....
                 jButtonPrev.setEnabled(true);
                 jButtonNext.setEnabled(true);
-                
+
                 javax.swing.table.DefaultTableModel dtm = (javax.swing.table.DefaultTableModel)jTableFields.getModel();
                 dtm.setRowCount(0);
                 javax.swing.DefaultListModel dlmFields = (javax.swing.DefaultListModel)jList2.getModel();
                 for (int i=0; i<dlmFields.getSize(); ++i) {
-                
+
                     JRField f = (JRField)(dlmFields.getElementAt(i));
                     dtm.addRow(new Object[]{f, f.getClassType()});
                 }
-                
+
                 setViewedPanel(3);
                 break;
             case 4:
@@ -1959,13 +1973,13 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                     jComboBox4.removeAllItems();
                     jComboBox4.setEnabled(false);
                     jLabelG4.setEnabled(false);
-                    
+
                     javax.swing.DefaultListModel dlm = (javax.swing.DefaultListModel)jList2.getModel();
                     jComboBox1.addItem("");
                     for (int i=0; i<dlm.getSize(); ++i) {
                         jComboBox1.addItem( dlm.getElementAt(i));
                     }
-                    
+
                     if (this.userTemplate != null)
                     {
                         boolean found = false;
@@ -1977,14 +1991,14 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                             if (k==1) combo = jComboBox2;
                             if (k==2) combo = jComboBox3;
                             if (k==3) combo = jComboBox4;
-                            
+
                             System.out.println("Combo " + k + " items: " + combo.getItemCount());
                             for (int i=0; i<combo.getItemCount(); ++i) {
                                 String s = ""+combo.getItemAt(i);
                                 if (s.equals(exp))
                                 {
                                     combo.setSelectedIndex(i);
-                                    
+
                                     if (k==0) jComboBox1ActionPerformed(null);
                                     else if (k==1) jComboBox2ActionPerformed(null);
                                     else if (k==2) jComboBox3ActionPerformed(null);
@@ -1993,14 +2007,14 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                                 }
                             }
                         }
-                        
+
                         jCheckBoxSetHeader.setSelected( userTemplate.isSaveFieldDescriptions() );
                     }
                 }
                 setViewedPanel(4);
                 break;
             case 5:
-                
+
                 // Find the right report template file
                 if (this.userTemplate != null && oldStep < step)
                 {
@@ -2011,13 +2025,13 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                         {
                             jRadioButtonColumnarLayout.setSelected( itemplate.getType() == itemplate.COLUMNAR);
                             jRadioButtonTabularLayout.setSelected( itemplate.getType() == itemplate.TABULAR);
-                            
+
                             updateTemplatesList();
                             jList3.setSelectedValue(itemplate, true);
                         }
                     }
                 }
-                
+
                 jButtonNext.setEnabled( jList3.getSelectedIndex()>=0 );
                 setViewedPanel(5);
                 break;
@@ -2027,11 +2041,11 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 setViewedPanel(6);
                 break;
         }
-        
+
         if (maxStepVisited < step) maxStepVisited = step;
         wzStep = step;
     }
-    
+
     public void setViewedPanel(int panel) {
         this.jPanelRoot.removeAll();
         java.awt.Font f = new java.awt.Font( jLabelStep1.getFont().getName(), java.awt.Font.PLAIN, 11);
@@ -2041,7 +2055,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         this.jLabelStep3.setFont(f);
         this.jLabelStep4.setFont(f);
         this.jLabelStep5.setFont(f);
-        
+
         switch (panel) {
             case 1:
                 this.jPanelRoot.add(jPanelStep1);
@@ -2074,12 +2088,12 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 this.jLabelStep5.setFont(f2);
                 break;
         }
-        
+
         jPanelRoot.updateUI();
     }
-    
-    
-    
+
+
+
     /** When an object implementing interface <code>Runnable</code> is used
      * to create a thread, starting the thread causes the object's
      * <code>run</code> method to be called in that separately executing
@@ -2092,23 +2106,23 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
      *
      */
     public void run() {
-        
+
         Thread.currentThread().setContextClassLoader( MainFrame.getMainInstance().getReportClassLoader() );
         // This method is invoked to read fields....
         try {
             IReportConnection irc = (IReportConnection)jComboBoxConnection.getSelectedItem();
-            
-            
+
+
             // Get fields....
             List fields = readFields(irc,jRSQLExpressionArea1.getText(), jTextFieldBean.getText());
-            
+
             if (fields == null) return;
             DefaultListModel dlm1 = (DefaultListModel)jList1.getModel();
             DefaultListModel dlm2 = (DefaultListModel)jList2.getModel();
-            
+
             dlm1.removeAllElements();
             dlm2.removeAllElements();
-            
+
             for (int i=0; i <fields.size(); ++i) {
                 it.businesslogic.ireport.JRField field = (JRField)fields.get(i);
                 // Check if parameter already exists...
@@ -2125,7 +2139,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                     dlm1.addElement(field);
                 }
             }
-            
+
             // Move the selected fields...
             if (this.userTemplate != null)
             {
@@ -2143,12 +2157,12 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                     }
                 }
             }
-            
+
             jList1.updateUI();
             jList2.updateUI();
-            
+
             setStep(2, 2);
-            
+
         } catch (Exception ex) {
             java.io.StringWriter sw = new java.io.StringWriter();
             ex.printStackTrace(new java.io.PrintWriter( sw ));
@@ -2157,18 +2171,18 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
             this.cancelElaborationStep1();
             return;
         }
-        
-        
+
+
     }
-    
+
     public void cancelElaborationStep1() {
         this.jButtonNext.setEnabled(true);
         this.jButtonPrev.setEnabled(false);
     }
-    
-    
-   
-    
+
+
+
+
     private String getQueryLanguage()
     {
         if (jComboBoxConnection.getSelectedItem() == null)
@@ -2177,18 +2191,18 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         }
         else if (jComboBoxConnection.getSelectedItem() instanceof JRHibernateConnection) {
             return "hql";
-        } 
+        }
         else if (jComboBoxConnection.getSelectedItem() instanceof JRXMLADataSourceConnection)
         {
             return "xmla-mdx";
         }
         return "sql";
-        
+
     }
-    
-    
-    
-    
+
+
+
+
     /** Getter for property dialogResult.
      * @return Value of property dialogResult.
      *
@@ -2196,7 +2210,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
     public int getDialogResult() {
         return dialogResult;
     }
-    
+
     /** Setter for property dialogResult.
      * @param dialogResult New value of property dialogResult.
      *
@@ -2204,7 +2218,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
     public void setDialogResult(int dialogResult) {
         this.dialogResult = dialogResult;
     }
-    
+
     /** Getter for property report.
      * @return Value of property report.
      *
@@ -2212,7 +2226,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
     public it.businesslogic.ireport.Report getReport() {
         return report;
     }
-    
+
     /** Setter for property report.
      * @param report New value of property report.
      *
@@ -2220,9 +2234,9 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
     public void setReport(it.businesslogic.ireport.Report report) {
         this.report = report;
     }
-    
-    
-    
+
+
+
     /**
      * Return a list of JRField
      *
@@ -2232,23 +2246,23 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         if (conn.isJDBCConnection()) {
             Connection con = null;
             Statement ps = null;
-            
+
             try {
-                
-                
+
+
                 con = conn.getConnection();
-                
+
                 ps = con.createStatement();
-                
+
                 // Some JDBC drivers don't supports this method...
                 try { ps.setFetchSize(0); } catch(Exception e ) {}
-                
+
                 ResultSet rs = ps.executeQuery(query);
-                
-                
+
+
                 ResultSetMetaData rsmd = rs.getMetaData();
-                
-                
+
+
                 List columns = new ArrayList();
                 for (int i=1; i <=rsmd.getColumnCount(); ++i) {
                     it.businesslogic.ireport.JRField field =
@@ -2257,8 +2271,8 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                             Misc.getJdbcTypeClass(rsmd, i) );
                     columns.add( field );
                 }
-                
-                
+
+
                 return columns;
             } catch( IllegalArgumentException ie ) {
                 error_msg = ie.getMessage();
@@ -2268,7 +2282,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                         "messages.connection.noClassDefFoundError","{0}\nNoClassDefFoundError!!\nCheck your classpath!\n{1}",
                         new Object[]{"", ex.getMessage() }
                 );
-                
+
             } catch (java.sql.SQLException ex) {
                 error_msg = I18n.getFormattedString(
                         "messages.connection.sqlError","{0}\nSQL problems: {1}\n{2}",
@@ -2285,9 +2299,10 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 if(con !=null) try { con.close(); } catch(Exception e ) {}
             }
         } else if ( conn instanceof JRHibernateConnection) {
-            it.businesslogic.ireport.data.hibernate.HQLFieldsReader reader = new it.businesslogic.ireport.data.hibernate.HQLFieldsReader(query,new Vector());
+            //it.businesslogic.ireport.data.hibernate.HQLFieldsReader reader = new it.businesslogic.ireport.data.hibernate.HQLFieldsReader(query,new Vector());
             try {
-                return reader.readFields();
+               // return reader.readFields();
+
             } catch (Exception ex) {
                 ex.printStackTrace();
                 error_msg = I18n.getFormattedString(
@@ -2296,19 +2311,19 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 );
             }
         } else if ( conn instanceof JRDataSourceProviderConnection) {
-            
+
             try {
                 net.sf.jasperreports.engine.JRField[] jrfields = ((JRDataSourceProviderConnection)conn).getDataSourceProvider().getFields(null);
-                
+
                 java.util.ArrayList v_fields = new java.util.ArrayList();
                 for (int i=0; i<jrfields.length; ++i) {
                     it.businesslogic.ireport.JRField field = new it.businesslogic.ireport.JRField(jrfields[i].getName(), jrfields[i].getValueClassName());
                     field.setDescription( it.businesslogic.ireport.util.Misc.nvl( jrfields[i].getDescription(),""));
                     v_fields.add( field );
                 }
-                
+
                 return v_fields;
-                
+
             } catch (Exception ex) {
                 ex.printStackTrace();
                 error_msg = I18n.getFormattedString(
@@ -2317,13 +2332,13 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 );
             }
         } else if ( conn instanceof JRXMLADataSourceConnection) {
-            
+
             try {
-                
+
                 CincomMDXFieldsProvider mfp = new CincomMDXFieldsProvider();
                 java.util.ArrayList v_fields = mfp.getFields( query,  (JRXMLADataSourceConnection)conn);
                 return v_fields;
-                
+
             } catch (Exception ex) {
                 ex.printStackTrace();
                 error_msg = I18n.getFormattedString(
@@ -2331,13 +2346,13 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                         new Object[]{"", ex.getMessage() }
                 );
             }
-            
+
         } else if ( conn instanceof JavaBeanDataSourceConnection) {
             java.util.ArrayList v_fields = new java.util.ArrayList();
             try {
-                
+
                 Class clazz = Class.forName(className);
-                
+
                 java.beans.PropertyDescriptor[] pd = org.apache.commons.beanutils.PropertyUtils.getPropertyDescriptors(clazz);
                 for (int nd =0; nd < pd.length; ++nd) {
                     String fieldName = pd[nd].getName();
@@ -2349,7 +2364,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                     }
                 }
                 return v_fields;
-                
+
             } catch (ClassNotFoundException cnf) {
 
 
@@ -2357,7 +2372,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                         "messages.connection.classNotFoundError","{0}\nClassNotFoundError!\nMsg: {1}\nPossible not found class: {2}\nCheck your classpath!",
                         new Object[]{"", cnf.getMessage(), "" }
                 );
-                
+
             } catch (Exception ex) {
                 ex.printStackTrace();
                 error_msg = I18n.getFormattedString(
@@ -2365,13 +2380,13 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                         new Object[]{"", ex.getMessage() }
                 );
             }
-            
+
         } else if ( conn instanceof JRCSVDataSourceConnection) {
             java.util.ArrayList v_fields = new java.util.ArrayList();
             try {
-                
+
                 Vector names = ((JRCSVDataSourceConnection)conn).getColumnNames();
-                
+
                 for (int nd =0; nd < names.size(); ++nd) {
                     String fieldName = ""+names.elementAt(nd);
                     it.businesslogic.ireport.JRField field = new it.businesslogic.ireport.JRField(fieldName, "java.lang.String");
@@ -2379,32 +2394,32 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                     v_fields.add( field );
                 }
                 return v_fields;
-                
+
             } catch (Exception ex) {
                 ex.printStackTrace();
                 error_msg = "" + ex.getMessage();
             }
-            
+
         } else if ( conn instanceof NullConnection) {
-            
+
             java.util.ArrayList v_fields = new java.util.ArrayList();
             try {
-                
-                
+
+
                 return v_fields;
-                
+
             } catch (Exception ex) {
                 ex.printStackTrace();
                 error_msg = "" + ex.getMessage();
             }
-            
+
         }
-        
+
         if (error_msg != null) {
             JOptionPane.showMessageDialog(MainFrame.getMainInstance(),error_msg,
                     I18n.getString("message.title.error","Error"), JOptionPane.ERROR_MESSAGE);
         }
-        
+
         return null;
     }
     //added by Felix Firgau on Feb 8th 2006
@@ -2419,7 +2434,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         jButton6.setText(I18n.getString("wizardDialog.button6","<"));
         jButton7.setText(I18n.getString("wizardDialog.button7","<<"));
         // End autogenerated code ----------------------
-        
+
         jLabel13.setText(it.businesslogic.ireport.util.I18n.getString("connectionDialog.labelTemplate","Use the following template..."));
         jLabel1.setText(it.businesslogic.ireport.util.I18n.getString("wizLabel", "Steps"));
         jLabelStep1.setText(it.businesslogic.ireport.util.I18n.getString("wizStep1", "Step 1"));
@@ -2444,24 +2459,24 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         jButtonSaveQuery.setText(it.businesslogic.ireport.util.I18n.getString("saveQuery","Save query"));
         jCheckBoxSetHeader.setText(it.businesslogic.ireport.util.I18n.getString("setHeader","Get column descriptions from datasource"));
         jCheckBoxSaveTemplate.setText(it.businesslogic.ireport.util.I18n.getString("wizardDialog.checkBoxSaveTemplate","Save choices as template..."));
-        
+
         jButtonModifyField.setText( it.businesslogic.ireport.util.I18n.getString("modify","Modify") );
         jTableFields.getColumnModel().getColumn(0).setHeaderValue( I18n.getString("valuesPanel.tableFields.fieldName","Field name") );
         jTableFields.getColumnModel().getColumn(1).setHeaderValue( I18n.getString("valuesPanel.tableFields.classType","Class type") );
-        
+
         this.setTitle(I18n.getString("wizardDialog.title","iReport Wizard"));
         jButtonPrev.setMnemonic(I18n.getString("wizardDialog.buttonPrevMnemonic","p").charAt(0));
         jButtonNext.setMnemonic(I18n.getString("wizardDialog.buttonNextMnemonic","n").charAt(0));
         jButtonCancel.setMnemonic(I18n.getString("wizardDialog.buttonCancelMnemonic","c").charAt(0));
-        
+
     }
-    
+
     public void languageChanged(LanguageChangedEvent evt) {
         applyI18n();
     }
     //Modification end
 
-    
+
     public void jTableFieldsListSelectionValueChanged(javax.swing.event.ListSelectionEvent e)
     {
 
@@ -2477,7 +2492,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
 }
 
 class TemplateFile {
-    
+
     public File file = null;
     public String name = "";
     public String toString() { return name; }

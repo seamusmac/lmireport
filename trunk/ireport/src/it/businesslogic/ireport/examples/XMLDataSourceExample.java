@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -20,21 +20,21 @@
  * Free Software Foundation, Inc.,
  * 59 Temple Place - Suite 330,
  * Boston, MA  USA  02111-1307
- *
- *
- *
- *
  * XMLDataSourceExample.java
- * 
+ *
  */
 
 package it.businesslogic.ireport.examples;
 
 import it.businesslogic.ireport.connection.JRXMLDataSource;
-import net.sf.jasperreports.engine.export.JRPdfExporter;
 
-import net.sf.jasperreports.engine.*;
 import java.util.HashMap;
+
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JRExporter;
+import net.sf.jasperreports.engine.JRExporterParameter;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
 
 
 public class XMLDataSourceExample {
@@ -45,25 +45,25 @@ public class XMLDataSourceExample {
 		String outFileName = "/addressbook.pdf";
                 String xmlFileName = "/addressbook.xml";
                 String recordPath = "/addressbook/category/person";
-                
+
                 JRXMLDataSource jrxmlds = new JRXMLDataSource(xmlFileName,recordPath);
-                
+
 		HashMap hm = new HashMap();
-		
+
 		try
 		{
 			JasperPrint print = JasperFillManager.fillReport(
-						reportFileName, 
-						hm, 
+						reportFileName,
+						hm,
 						jrxmlds);
-			
+
 			JRExporter exporter = new net.sf.jasperreports.engine.export.JRPdfExporter();
-			
+
 			exporter.setParameter(JRExporterParameter.OUTPUT_FILE_NAME,outFileName);
                   	exporter.setParameter(JRExporterParameter.JASPER_PRINT,print);
-                  	
+
                   	exporter.exportReport();
-                  	System.out.println("Created file: " + outFileName);				
+                  	System.out.println("Created file: " + outFileName);
 		}
 		catch (JRException e)
 		{

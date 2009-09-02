@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,41 +25,35 @@
  *
  *
  * JRSpringLoadedHibernateConnection.java
- * 
+ *
  */
 
 package it.businesslogic.ireport.connection;
 
-import it.businesslogic.ireport.IReportConnectionEditor;
-import it.businesslogic.ireport.connection.gui.JRSpringLoadedHibernateConnectionEditor;
-import it.businesslogic.ireport.gui.MainFrame;
-import it.businesslogic.ireport.util.I18n;
-import java.util.StringTokenizer;
-import javax.swing.JOptionPane;
 
-import org.hibernate.SessionFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
+//import org.hibernate.SessionFactory;
+//import org.springframework.context.ApplicationContext;
+//import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
- * 
- * 
+ *
+ *
  * @author Jeffrey Payne
  *
  */
 
 public class JRSpringLoadedHibernateConnection extends JRHibernateConnection {
-	
+
 	private final static String PROP_KEY_SPRING_CONFIG = "spring.loaded.hibernate.spring.config";
 	private final static String PROP_KEY_SESSION_FACTORY_ID = "spring.loaded.hibernate.session.factory.id";
-	
+
 	private String springConfig = null;
 	private String sessionFactoryBeanId = null;
-	
 
-	
-	public ApplicationContext getApplicationContext() {
-		
+
+
+	/*public ApplicationContext getApplicationContext() {
+
                 StringTokenizer parser = new StringTokenizer(getSpringConfig(), ",");
                 String[] configs = new String[parser.countTokens()];
                 int iCount = 0;
@@ -87,18 +81,18 @@ public class JRSpringLoadedHibernateConnection extends JRHibernateConnection {
 	public void setSpringConfig(String springConfig) {
 		this.springConfig = springConfig;
 	}
-	
+
 	 public SessionFactory getSessionFactory() {
-		 
+
 		 return (SessionFactory)getApplicationContext().getBean(getSessionFactoryBeanId());
-		 
+
 	 }
-	 
-        /*
+
+
          *  This method return all properties used by this connection
-         */
+
         public java.util.HashMap getProperties()
-        {    
+        {
             java.util.HashMap map = new java.util.HashMap();
             map.put(PROP_KEY_SESSION_FACTORY_ID, getSessionFactoryBeanId());
             map.put(PROP_KEY_SPRING_CONFIG, getSpringConfig());
@@ -110,21 +104,21 @@ public class JRSpringLoadedHibernateConnection extends JRHibernateConnection {
             setSessionFactoryBeanId((String)map.get(PROP_KEY_SESSION_FACTORY_ID));
             setSpringConfig((String)map.get(PROP_KEY_SPRING_CONFIG));
         }
-        
+
         public String getDescription(){ return I18n.getString("connectionType.hibernateSpring", "Spring loaded Hibernate connection"); }
-	
-        
+
+
         public IReportConnectionEditor getIReportConnectionEditor()
         {
             return new JRSpringLoadedHibernateConnectionEditor();
         }
-         
-        
+
+
         public void test() throws Exception
         {
             try {
                     Thread.currentThread().setContextClassLoader( MainFrame.getMainInstance().getReportClassLoader() );
-                    
+
                     SessionFactory sf = getSessionFactory();
                     if (sf == null) {
                             JOptionPane.showMessageDialog(MainFrame.getMainInstance(),I18n.getString("messages.connectionDialog.noSessionFactoryReturned","No session factory returned.  Check your session factory bean id against the spring configuration."),I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
@@ -138,5 +132,5 @@ public class JRSpringLoadedHibernateConnection extends JRHibernateConnection {
                     JOptionPane.showMessageDialog(MainFrame.getMainInstance(),e.getMessage(), I18n.getString("message.title.error","Error"),JOptionPane.ERROR_MESSAGE);
 
             }
-        }
+        }*/
 }

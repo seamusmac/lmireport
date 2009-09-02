@@ -7,7 +7,6 @@
 package it.businesslogic.ireport.connection.gui;
 
 import it.businesslogic.ireport.IReportConnection;
-import it.businesslogic.ireport.connection.EJBQLConnection;
 import it.businesslogic.ireport.IReportConnectionEditor;
 import it.businesslogic.ireport.connection.JRSpringLoadedHibernateConnection;
 import it.businesslogic.ireport.util.I18n;
@@ -17,16 +16,16 @@ import it.businesslogic.ireport.util.I18n;
  * @author  gtoffoli
  */
 public class JRSpringLoadedHibernateConnectionEditor extends javax.swing.JPanel implements IReportConnectionEditor {
-    
+
     private IReportConnection iReportConnection = null;
     private boolean init = false;
-    
+
     /** Creates new form EJBQLConnectionEditor */
     public JRSpringLoadedHibernateConnectionEditor() {
         initComponents();
         applyI18n();
     }
-    
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -87,8 +86,8 @@ public class JRSpringLoadedHibernateConnectionEditor extends javax.swing.JPanel 
         add(jPanelSpringLoadedHibernate, java.awt.BorderLayout.CENTER);
 
     }// </editor-fold>//GEN-END:initComponents
-    
-    
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel21;
@@ -97,34 +96,37 @@ public class JRSpringLoadedHibernateConnectionEditor extends javax.swing.JPanel 
     private javax.swing.JTextField jTextFieldSLHSessionFactory;
     private javax.swing.JTextField jTextFieldSLHSpringConfig;
     // End of variables declaration//GEN-END:variables
-    
-    
+
+
     public void setIReportConnection(IReportConnection c) {
-        
+
         this.iReportConnection = c;
         if (iReportConnection instanceof JRSpringLoadedHibernateConnection)
         {
-            this.jTextFieldSLHSpringConfig.setText( ((JRSpringLoadedHibernateConnection)iReportConnection).getSpringConfig() );
-            this.jTextFieldSLHSessionFactory.setText( ((JRSpringLoadedHibernateConnection)iReportConnection).getSessionFactoryBeanId() );
+        	// LIMAO : modify by li.mao since 3.0 [2009-9-2 ÏÂÎç03:46:02]
+
+            //this.jTextFieldSLHSpringConfig.setText( ((JRSpringLoadedHibernateConnection)iReportConnection).getSpringConfig() );
+            //this.jTextFieldSLHSessionFactory.setText( ((JRSpringLoadedHibernateConnection)iReportConnection).getSessionFactoryBeanId() );
         }
     }
 
     public IReportConnection getIReportConnection() {
-        
-        IReportConnection irConn = new JRSpringLoadedHibernateConnection();
-        ((JRSpringLoadedHibernateConnection)irConn).setSessionFactoryBeanId(jTextFieldSLHSessionFactory.getText());
-        ((JRSpringLoadedHibernateConnection)irConn).setSpringConfig(jTextFieldSLHSpringConfig.getText());
+        // LIMAO : modify by li.mao since 3.0 [2009-9-2 ÏÂÎç03:45:37]
 
-        iReportConnection = irConn;
+        //IReportConnection irConn = new JRSpringLoadedHibernateConnection();
+        //((JRSpringLoadedHibernateConnection)irConn).setSessionFactoryBeanId(jTextFieldSLHSessionFactory.getText());
+        //((JRSpringLoadedHibernateConnection)irConn).setSpringConfig(jTextFieldSLHSpringConfig.getText());
+
+        //iReportConnection = irConn;
         return iReportConnection;
     }
-    
+
     public void applyI18n(){
 
                 jLabel21.setText(I18n.getString("connectionDialog.label21","Spring configuration"));
                 jLabel22.setText(I18n.getString("connectionDialog.label22","Session Factory Bean ID"));
-                                
+
     }
-    
-    
+
+
 }
