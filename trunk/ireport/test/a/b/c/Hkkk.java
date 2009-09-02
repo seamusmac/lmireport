@@ -17,6 +17,8 @@
  */
 package a.b.c;
 
+import java.util.List;
+
 
 /**
  * @author ¿Ó√Ø
@@ -31,10 +33,8 @@ public class Hkkk {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		String[] fontFamilies = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-        for (int i=0; i<fontFamilies.length; ++i) {
-            System.out.println(fontFamilies[i]);
-        }
+		List listOfLanguages = it.businesslogic.ireport.util.I18n.getListOfAvailLanguages();
+		System.out.println(listOfLanguages.size());
 
 	}
 

@@ -49,7 +49,7 @@ public interface AddedOepretorInterface {
 
 	Object afterClose();
 
-	//Object
+	Object registerSongTi();
 
 }
 

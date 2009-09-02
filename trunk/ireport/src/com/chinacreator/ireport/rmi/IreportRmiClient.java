@@ -67,7 +67,7 @@ public class IreportRmiClient {
 		getRmiRemoteInterface().save(ireportFile);
 		System.out.println("OVER.....");
 
-		
+
 	}
 
 

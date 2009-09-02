@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,73 +25,45 @@
  *
  *
  * ReportGroupWizard.java
- * 
+ *
  * Created on March 22, 2006, 8:52 PM
  *
  */
 
 package it.businesslogic.ireport.gui.wizard;
 
-import it.businesslogic.ireport.Band;
 import it.businesslogic.ireport.Group;
-import it.businesslogic.ireport.IReportConnection;
-import it.businesslogic.ireport.IReportTemplate;
-import it.businesslogic.ireport.JRField;
 import it.businesslogic.ireport.Report;
-import it.businesslogic.ireport.ReportElement;
-import it.businesslogic.ireport.StaticTextReportElement;
 import it.businesslogic.ireport.SubReportElement;
-import it.businesslogic.ireport.TextFieldReportElement;
-import it.businesslogic.ireport.TransformationType;
-import it.businesslogic.ireport.connection.JDBCConnection;
-import it.businesslogic.ireport.connection.JRHibernateConnection;
-import it.businesslogic.ireport.gui.ConnectionDialog;
 import it.businesslogic.ireport.gui.JReportFrame;
 import it.businesslogic.ireport.gui.MainFrame;
-import it.businesslogic.ireport.gui.WizardDialog;
 import it.businesslogic.ireport.gui.event.ReportBandChangedEvent;
+import it.businesslogic.ireport.util.I18n;
 import it.businesslogic.ireport.util.Misc;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FilenameFilter;
-import java.io.InputStream;
-import java.util.Enumeration;
+
 import java.util.Vector;
-import javax.swing.DefaultListModel;
-import javax.swing.ImageIcon;
+
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-
-import org.apache.xerces.parsers.DOMParser;
-import org.apache.xpath.XPathAPI;
-import org.apache.xpath.objects.XBoolean;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-import it.businesslogic.ireport.util.I18n;
 
 /**
  *
  * @author  gtoffoli
  */
 public class ReportGroupWizard extends javax.swing.JPanel implements GenericWizard {
-    
+
     private String reportFileName = null;
     private SubReportElement subReportElement = null;
     private BaseWizardPanel wizardPanel = null;
-    private JDialog wizardDialog = null; 
+    private JDialog wizardDialog = null;
     private JReportFrame jReportFrame = null;
-    
+
     Vector templates = null;
-    
+
     private Thread t = null;
-  
+
     /** Creates new form SubreportWizardPanes */
     public ReportGroupWizard() {
         initComponents();
@@ -107,7 +79,7 @@ public class ReportGroupWizard extends javax.swing.JPanel implements GenericWiza
                 if (wizardPanel != null) wizardPanel.updateButtons();
             }
         });
-        
+
         jTextField1.getDocument().addDocumentListener( new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
                 if (wizardPanel != null) wizardPanel.updateButtons();
@@ -119,35 +91,35 @@ public class ReportGroupWizard extends javax.swing.JPanel implements GenericWiza
                 if (wizardPanel != null) wizardPanel.updateButtons();
             }
         });
-                
+
         // These are the combobox values
         Vector values = new Vector();
-        
+
         Report report = MainFrame.getMainInstance().getActiveReportFrame().getReport();
-        
+
         values.addAll( report.getFields());
         values.addAll( report.getVariables());
         values.addAll( report.getParameters());
-        
+
         for (int i=0; i<values.size(); ++i)
         {
             jComboBoxObject.addItem(values.elementAt(i));
         }
-    }   
-    
+    }
+
     public void startWizard()
     {
-        setJReportFrame(MainFrame.getMainInstance().getActiveReportFrame());      
+        setJReportFrame(MainFrame.getMainInstance().getActiveReportFrame());
         wizardDialog = new JDialog(MainFrame.getMainInstance(),true);
         wizardPanel = new BaseWizardPanel();
         wizardPanel.setGenericWizard(this);
         wizardDialog.getContentPane().add(wizardPanel);
         wizardDialog.pack();
         Misc.centerFrame(wizardDialog);
-        
+
         wizardDialog.setVisible(true);
     }
-    
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -317,9 +289,9 @@ public class ReportGroupWizard extends javax.swing.JPanel implements GenericWiza
     }// </editor-fold>//GEN-END:initComponents
 
 private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
-    
-    
-    
+
+
+
 }//GEN-LAST:event_jTextField1ActionPerformed
 
     private void jRadioButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton1ActionPerformed
@@ -328,11 +300,11 @@ private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
 
     private void jRadioButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton2ActionPerformed
         if (wizardPanel != null) wizardPanel.updateButtons();
-        
+
     }//GEN-LAST:event_jRadioButton2ActionPerformed
 
     private void jRadioButton2PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jRadioButton2PropertyChange
-        
+
     }//GEN-LAST:event_jRadioButton2PropertyChange
 
     private void jPanel1PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jPanel1PropertyChange
@@ -340,18 +312,18 @@ private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
     }//GEN-LAST:event_jPanel1PropertyChange
 
     private void jComboBoxObjectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxObjectActionPerformed
-       
+
         if (wizardPanel != null) wizardPanel.updateButtons();
     }//GEN-LAST:event_jComboBoxObjectActionPerformed
 
-    
+
     private void jPanel0PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jPanel0PropertyChange
 
-        
-        
+
+
     }//GEN-LAST:event_jPanel0PropertyChange
-    
-    
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JCheckBox jCheckBox1;
@@ -371,7 +343,7 @@ private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
 
 
     public String[] getStepsNames() {
-        
+
         String[] names = new String[2];
         //
         names[0] = I18n.getString("reportGroupWizard.stepsnames.criteria","Criteria");
@@ -383,11 +355,11 @@ private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
     }
 
     public String getStepDescription(int step) {
-        
+
     	//
         if (step==0) return
         		I18n.getString("reportGroupWizard.stepdescription.step0","Choose the group by criteria");
-        		//"Choose the group by criteria";        
+        		//"Choose the group by criteria";
         if (step==1) return
         		I18n.getString("reportGroupWizard.stepdescription.step1","Group details");
         		//"Group details";
@@ -400,7 +372,7 @@ private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
     }
 
     public void finish(int currentStep) {
-        
+
         if (currentStep != -1)
         {
                 Report report =  getJReportFrame().getReport();
@@ -450,20 +422,20 @@ private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
                 MainFrame.getMainInstance().getElementPropertiesDialog().updateGroups();
                 MainFrame.getMainInstance().reportBandChanged( new ReportBandChangedEvent(this.getJReportFrame(), null, ReportBandChangedEvent.ADDED ));
         }
-        
+
         this.getWizardDialog().setVisible(false);
         this.getWizardDialog().dispose();
     }
-    
+
     public boolean nextStep(int nextStep) {
-        
+
         if (nextStep == 0) // First step == 0
         {
-           
-        } 
-        else if (nextStep == 1) 
+
+        }
+        else if (nextStep == 1)
         {
-            
+
         }
         return true;
     }
@@ -473,13 +445,13 @@ private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
     }
 
     public boolean canFinish(int currentStep) {
-        
+
         if (currentStep>0) return true;
         else return canNext(currentStep);
     }
 
     public boolean canNext(int currentStep) {
-        
+
         if (currentStep == 0)
         {
             if (jTextField1.getText().trim().length() == 0) return false;
@@ -496,18 +468,18 @@ private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
                 	String msg = new String(I18n.getString("reportGroupWizard.jLabelErrorMessage","This group name is already in use."));
                 	jLabelErrorMessage.setText(msg);
                 	//
-                	
+
                     //jLabelErrorMessage.setText("This group name is already in use.");
                     return false;
                 }
             }
-            
+
             if (s.equals("page") || s.equals("column") || s.equals("lastPage"))
             {
                 jLabelErrorMessage.setText(I18n.getString("messages.invalidGroupName","Invalid group name!"));
                 return false;
             }
-            
+
             if (jRadioButton1.isSelected() && jComboBoxObject.getSelectedItem() != null) return true;
             if (jRadioButton2.isSelected() && jRTextExpressionArea.getText().trim().length() > 0) return true;
         }
@@ -569,8 +541,8 @@ private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
     public void setJReportFrame(JReportFrame jReportFrame) {
         this.jReportFrame = jReportFrame;
     }
-    
-    
+
+
     public void applyI18n(){
                 // Start autogenerated code ----------------------
                 jCheckBox1.setText(I18n.getString("reportGroupWizard.checkBox1","Add the group header"));
@@ -580,7 +552,7 @@ private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-F
                 // Start autogenerated code ----------------------
                 jLabel1.setText(I18n.getString("reportGroupWizard.label1","Group name"));
                 // End autogenerated code ----------------------
-                
+
                 //
                 jCheckBox2.setText(I18n.getString("reportGroupWizard.checkBox2","Add the group footer"));
                 //

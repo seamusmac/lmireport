@@ -33,18 +33,16 @@
 package it.businesslogic.ireport.gui.wizard;
 
 import it.businesslogic.ireport.Report;
-import it.businesslogic.ireport.gui.*;
-import it.businesslogic.ireport.util.I18nOptionPane;
+import it.businesslogic.ireport.gui.ClassPathDialog;
+import it.businesslogic.ireport.gui.MainFrame;
+import it.businesslogic.ireport.util.I18n;
 import it.businesslogic.ireport.util.Misc;
 import it.businesslogic.ireport.util.ReportGenerator;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+
 import java.io.File;
+import java.util.List;
+
 import javax.swing.DefaultListModel;
-import java.util.*;
-import javax.swing.JCheckBox;
-import it.businesslogic.ireport.util.I18n;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 /**
  *
@@ -58,7 +56,7 @@ public class UserTemplatesDialog extends javax.swing.JDialog {
     public UserTemplatesDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        applyI18n();    
+        applyI18n();
         jList1.setModel(new DefaultListModel());
         it.businesslogic.ireport.util.Misc.centerFrame( this );
 
@@ -73,25 +71,25 @@ public class UserTemplatesDialog extends javax.swing.JDialog {
         getRootPane().getInputMap(javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW).put(escape, "ESCAPE");
         getRootPane().getActionMap().put("ESCAPE", escapeAction);
 
-        
+
         DefaultListModel dlm = new DefaultListModel();
         jList1.setModel(dlm);
 
-         
+
          java.util.List list = MainFrame.getMainInstance().getUserChoicesWizardTemplates();
-         
+
          for (int i=0; i<list.size(); ++i)
          {
              dlm.addElement( list.get(i) );
          }
-        
+
          if (list.size() > 0)
          {
              jList1.setSelectedIndex(0);
          }
-         
+
         jList1.updateUI();
-         
+
         //to make the default button ...
         this.getRootPane().setDefaultButton(this.jButtonSave);
     }
@@ -233,12 +231,12 @@ public class UserTemplatesDialog extends javax.swing.JDialog {
             jButtonCreateReports.setEnabled(false);
             jButtonDeleteTemplate.setEnabled(false);
         }
-        
+
     }//GEN-LAST:event_jList1ValueChanged
 
     private void jButtonSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSaveActionPerformed
-        
-        
+
+
         List list = MainFrame.getMainInstance().getUserChoicesWizardTemplates();
         list.clear();
         DefaultListModel dlm = (DefaultListModel)jList1.getModel();
@@ -246,9 +244,9 @@ public class UserTemplatesDialog extends javax.swing.JDialog {
         {
             list.add(dlm.getElementAt(i));
         }
-        
+
         UserChoicesWizardTemplate.storeWizardTemplates(list);
-        
+
         setDialogResult(javax.swing.JOptionPane.OK_OPTION);
         setVisible(false);
     }//GEN-LAST:event_jButtonSaveActionPerformed
@@ -262,20 +260,20 @@ public class UserTemplatesDialog extends javax.swing.JDialog {
             dlm.remove(indexes[i]);
             modifiedList = true;
         }
-        
+
     }//GEN-LAST:event_jButtonCreateReportsjButtonDeselectAllActionPerformed1
 
     private void jButtonDeselectAllActionPerformed1(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonDeselectAllActionPerformed1
 
-        
+
         Object[] templates = jList1.getSelectedValues();
         if (templates.length == 0) return;
-        
-        
+
+
         int filesCreated = 0;
-        
+
         // Ask for destination directory...
-        
+
         javax.swing.JFileChooser jfc = new javax.swing.JFileChooser( MainFrame.getMainInstance().getCurrentDirectory());
 
         jfc.setDialogTitle("Select output directory");
@@ -303,21 +301,21 @@ public class UserTemplatesDialog extends javax.swing.JDialog {
             java.io.File directory = jfc.getSelectedFile();
 
             MainFrame.getMainInstance().setCurrentDirectory(directory, true);
-            
+
             for (int i = templates.length-1; i>=0; --i)
             {
                 UserChoicesWizardTemplate template = (UserChoicesWizardTemplate)templates[i];
                 File file = new File(directory, Misc.string_replace("_"," ", template.getName() ) + ".jrxml");
-                
+
                 if (file.exists())
                 {
                     //is different file to save?
                     //confirm overwrite
-                   int ret = JOptionPane.showConfirmDialog(this, 
+                   int ret = JOptionPane.showConfirmDialog(this,
                             I18n.getFormattedString("userTemplatesDialog.message.overwrite","The file {0} already exists.\nDo you want overwrite it?",new Object[]{""+file}),
                                     "",  JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
-                    
-                            
+
+
                     if (ret == JOptionPane.CANCEL_OPTION) break;
                     if (ret == JOptionPane.NO_OPTION)
                     {
@@ -354,7 +352,7 @@ public class UserTemplatesDialog extends javax.swing.JDialog {
                         file = jfc.getSelectedFile();
                     }
                 }
-                
+
                 try {
                     Report report = ReportGenerator.createReport(template);
                     report.saveXMLFile( ""+file );
@@ -365,13 +363,13 @@ public class UserTemplatesDialog extends javax.swing.JDialog {
                    break;
                 }
             }
-            
+
             JOptionPane.showMessageDialog(this,I18n.getFormattedString("userTemplatesDialog.message.createdReports","{0} report(s) created successful.", new Object[]{new Integer(filesCreated)}), "",JOptionPane.INFORMATION_MESSAGE);
         }
-        
-        
-        
-        
+
+
+
+
     }//GEN-LAST:event_jButtonDeselectAllActionPerformed1
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
@@ -413,7 +411,7 @@ public class UserTemplatesDialog extends javax.swing.JDialog {
         });
     }
 
-   
+
 
 
 
@@ -441,8 +439,7 @@ public class UserTemplatesDialog extends javax.swing.JDialog {
         jButtonCreateReports.setText(I18n.getString("userTemplatesDialog.buttonGenerateReport","Generate report(s)"));
         jButtonDeleteTemplate.setText(I18n.getString("userTemplatesDialog.buttonRemoveTemplate","Remove template"));
         jButtonSave.setText(I18n.getString("userTemplatesDialog.buttonSave","Save changes"));
-        
         this.setTitle(I18n.getString("userTemplatesDialog.title","User choices templates"));
-                        // End autogenerated code ----------------------
+                // End autogenerated code ----------------------
     }
 }

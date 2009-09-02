@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,7 +25,7 @@
  *
  *
  * SubreportWizardNewReport.java
- * 
+ *
  * Created on March 22, 2006, 8:52 PM
  *
  */
@@ -46,16 +46,18 @@ import it.businesslogic.ireport.TransformationType;
 import it.businesslogic.ireport.connection.JDBCConnection;
 import it.businesslogic.ireport.connection.JRHibernateConnection;
 import it.businesslogic.ireport.connection.NullConnection;
-import it.businesslogic.ireport.gui.ConnectionDialog;
 import it.businesslogic.ireport.gui.MainFrame;
 import it.businesslogic.ireport.gui.WizardDialog;
+import it.businesslogic.ireport.util.I18n;
 import it.businesslogic.ireport.util.Misc;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.Vector;
+
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
@@ -72,23 +74,22 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-import it.businesslogic.ireport.util.I18n;
 
 /**
  *
  * @author  gtoffoli
  */
 public class SubreportWizardNewReport extends javax.swing.JPanel implements GenericWizard, Runnable {
-    
+
     private String reportFileName = null;
     private SubReportElement subReportElement = null;
     private BaseWizardPanel wizardPanel = null;
     private javax.swing.JDialog wizardDialog = null;
-    
+
     Vector templates = null;
-    
+
     private Thread t = null;
-  
+
     /** Creates new form SubreportWizardPanes */
     public SubreportWizardNewReport() {
         initComponents();
@@ -104,7 +105,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                 if (wizardPanel != null) wizardPanel.updateButtons();
             }
         });
-        
+
         jTextFieldBean.getDocument().addDocumentListener( new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
                 if (wizardPanel != null) wizardPanel.updateButtons();
@@ -116,7 +117,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                 if (wizardPanel != null) wizardPanel.updateButtons();
             }
         });
-        
+
         jTextFieldReportFileName.getDocument().addDocumentListener( new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
                 if (wizardPanel != null) wizardPanel.updateButtons();
@@ -131,27 +132,27 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                 updateExpressionLabels();
             }
         });
-        
+
         // These are the combobox values
         Vector values = new Vector();
-        
+
         Report report = MainFrame.getMainInstance().getActiveReportFrame().getReport();
-        
+
         values.addAll( report.getFields());
         values.addAll( report.getVariables());
         values.addAll(report.getParameters());
-        
+
         jList1.setModel( new DefaultListModel());
         jList2.setModel( new DefaultListModel());
         jList3.setModel( new DefaultListModel());
-        
-            
+
+
         // If the cell should appear like a combobox in its
         // non-editing state, also set the combobox renderer
         //col.setCellRenderer(new TableComboBoxRenderer(values));
-        
+
         updateTemplatesList();
-        
+
         String fileName = report.getFilename();
         File f = new File(fileName);
         String baseFileName = f.getName();
@@ -160,23 +161,23 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
         {
             pathFile += File.separator;
         }
-        
+
         if (baseFileName.indexOf(".") > 0)
             baseFileName = baseFileName.substring(0, baseFileName.lastIndexOf("."));
-        
+
         File f2 = null;
         for (int i = 0; ; ++i)
         {
             fileName = baseFileName + "_subreport" + i + ".jrxml";
-        
+
             f2 = new File(pathFile, fileName);
             if (!f2.exists()) break;
         }
-        
+
         jTextFieldReportFileName.setText(f2.getName());
 
-    }   
-    
+    }
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -667,7 +668,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
 
     private void jButtonLoadQueryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonLoadQueryActionPerformed
         String query = Misc.loadSQLQuery(this);
-        
+
         if (query != null) {
             jRSQLExpressionArea1.setText(query);
         }
@@ -675,7 +676,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
 
-        
+
         // jfilechooser...
 	    JFileChooser jfc = new JFileChooser();
             File original_file = null;
@@ -687,9 +688,9 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                 }
             } catch (Exception ex)
             {
-                
+
             }
-            
+
 	    jfc.setFileFilter( new javax.swing.filechooser.FileFilter() {
 		    public boolean accept(java.io.File file) {
 			    String filename = file.getName().toLowerCase();
@@ -699,9 +700,9 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
 			    return "JasperReports Report file *jrxml";
 		    }
 	    });
-            
+
 	    if (jfc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-                
+
                     if (original_file != null && original_file.equals(jfc.getSelectedFile()))
                     {
                         JOptionPane.showMessageDialog(this,
@@ -709,7 +710,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                                 "Master and report files can not be the same file!") );
                         return;
                     }
-                    
+
                     String s = jfc.getSelectedFile().getPath();
                     if (original_file != null && original_file.getParentFile() != null)
                     {
@@ -726,14 +727,14 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                     jTextFieldReportFileName.setText( s );
 	    }
         if (wizardPanel != null) wizardPanel.updateButtons();
-        
+
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jList3ValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jList3ValueChanged
         if (jList3.getSelectedIndex() >= 0) {
             IReportTemplate tf = (IReportTemplate)jList3.getSelectedValue();
             // Take the image...
-            
+
             this.jLabelImage.setIcon( tf.getIcon() );
             if (tf.getIcon() == null)
             {
@@ -743,7 +744,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
             {
                 this.jLabelImage.setText("");
             }
-            
+
             this.jLabelImage.updateUI();
             if (wizardPanel != null) wizardPanel.updateButtons();
         }
@@ -760,7 +761,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         int index = jList2.getSelectedIndex();
         if (index <0) return;
-        
+
         Object[] objs = jList2.getSelectedValues();
         for (int i=0; i< objs.length; ++i) {
             Object obj = objs[i];
@@ -774,7 +775,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         javax.swing.DefaultListModel list2 = (javax.swing.DefaultListModel)jList2.getModel();
         javax.swing.DefaultListModel list1 = (javax.swing.DefaultListModel)jList1.getModel();
-        
+
         for (int i=0; i< list2.getSize(); ++i) {
             list1.addElement(list2.getElementAt(i));
         }
@@ -786,7 +787,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         javax.swing.DefaultListModel list1 = (javax.swing.DefaultListModel)jList1.getModel();
         javax.swing.DefaultListModel list2 = (javax.swing.DefaultListModel)jList2.getModel();
-        
+
         for (int i=0; i< list1.getSize(); ++i) {
             list2.addElement(list1.getElementAt(i));
         }
@@ -797,7 +798,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         int index = jList1.getSelectedIndex();
         if (index <0) return;
-        
+
         Object[] objs = jList1.getSelectedValues();
         for (int i=0; i< objs.length; ++i) {
             Object obj = objs[i];
@@ -814,20 +815,20 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
 
     private void jButtonNewConnectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonNewConnectionActionPerformed
         it.businesslogic.ireport.connection.gui.ConnectionDialog cd = new it.businesslogic.ireport.connection.gui.ConnectionDialog(wizardDialog,true);
-        
+
         cd.setVisible(true);
-        
+
         IReportConnection con = null;
         if (cd.getDialogResult() == JOptionPane.OK_OPTION) {
             con = cd.getIReportConnection();
             MainFrame.getMainInstance().getConnections().addElement(con);
-            
+
             if (MainFrame.getMainInstance().getConnections().size() == 1) {
                 MainFrame.getMainInstance().setActiveConnection(con);
             } else {
                 MainFrame.getMainInstance().saveiReportConfiguration();
             }
-            
+
             this.updateConnections();
             this.jComboBoxConnection.setSelectedItem(con);
         }
@@ -836,25 +837,25 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
     public void updateConnections() {
         Object ircDefault =  MainFrame.getMainInstance().getProperties().get("DefaultConnection");
         jComboBoxConnection.removeAllItems();
-        
+
         jComboBoxConnection.addItem(new NullConnection());
-        
+
         Enumeration e = MainFrame.getMainInstance().getConnections().elements();
         while (e.hasMoreElements()) {
             IReportConnection irc = (IReportConnection)e.nextElement();
             jComboBoxConnection.addItem(irc);
         }
-        
+
         if (ircDefault != null) {
             jComboBoxConnection.setSelectedItem(ircDefault);
         }
     }
-    
+
     private void jComboBoxConnectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxConnectionActionPerformed
         boolean canNext = false;
         if (jComboBoxConnection.getSelectedItem() != null) {
             IReportConnection irc = (IReportConnection)jComboBoxConnection.getSelectedItem();
-            
+
             if (irc.isJDBCConnection()) {
                 jLabel2.setText("SQL query");
                 jTextFieldBean.setVisible(false);
@@ -918,11 +919,11 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
 
     private void jPanel0PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_jPanel0PropertyChange
 
-        
-        
+
+
     }//GEN-LAST:event_jPanel0PropertyChange
-    
-    
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup2;
@@ -969,7 +970,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
 
 
     public String[] getStepsNames() {
-        
+
         String[] names = new String[4];
         //
         names[0] = I18n.getString("subreportWizardNewReport.stepsnames.query","Query/datasource");
@@ -982,16 +983,16 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
         //names[3] = "Expression";
         //names[3] = "Finish";
         //
-        
+
         return names;
     }
 
     public String getStepDescription(int step) {
-        
+
     	//
         if (step==0) return
         		I18n.getString("subreportWizardExistingReport.stepdescription.step0","How fill the subreport");
-        		//"How fill the subreport";        
+        		//"How fill the subreport";
         if (step==1) return
         		I18n.getString("subreportWizardExistingReport.stepdescription.step0","Select the subreport fields");
         		//"Select the subreport fields";
@@ -1002,7 +1003,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
         		I18n.getString("subreportWizardExistingReport.stepdescription.step0","Subreport expession");
         		//"Subreport expession";
         //
-        
+
         return "";
     }
 
@@ -1022,7 +1023,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
         {
             try {
                 Report finalReport = createReport(((IReportTemplate)jList3.getSelectedValue()).getXmlFile(), jRadioButtonColumnarLayout.isSelected() ? 1 : 0);
-                
+
                 if (jRadioButton4.isSelected())
                 {
                     Report report = MainFrame.getMainInstance().getActiveReportFrame().getReport();
@@ -1043,14 +1044,14 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                     {
                         it.businesslogic.ireport.JRParameter param = new it.businesslogic.ireport.JRParameter("SUBREPORT_DIR","java.lang.String");
                         //File f = new File( getReportFileName() );
-                        
+
                         String s = MainFrame.getMainInstance().getTranslatedCompileDirectory();
-                    
+
                         if (s.length() > 0 && !s.endsWith(File.separator)) s += File.separator;
-                    
+
                         s = Misc.string_replace("\\\\","\\",s);
                         s = "\"" + s + "\"";
-                        
+
                         /*
                         String s = f.getParent(); //Path();
                         if (s!= null)
@@ -1059,8 +1060,8 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                             {
                                 s += File.separator;
                             }
-                        } 
-                        else 
+                        }
+                        else
                         {
                             s = "";
                         }
@@ -1077,9 +1078,9 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                     getSubReportElement().setSubreportExpression(jLabel2e.getText());
                 }
                 getSubReportElement().setSubreportExpressionClass("java.lang.String");
-                
+
                 MainFrame.getMainInstance().openNewReportWindow(finalReport);
-            
+
             } catch (Exception ex)
             {
                 javax.swing.JOptionPane.showMessageDialog(getParent(),ex.getMessage()+"",
@@ -1087,18 +1088,18 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                 ex.printStackTrace();
             }
         }
-        
+
         this.getWizardDialog().setVisible(false);
         this.getWizardDialog().dispose();
     }
-    
+
     public boolean nextStep(int nextStep) {
-        
+
         if (nextStep == 0) // First step == 0
         {
-           
-        } 
-        else if (nextStep == 1) 
+
+        }
+        else if (nextStep == 1)
         {
            // We must retrive fields...
            wizardPanel.getJButtonNext().setEnabled(false);
@@ -1108,9 +1109,9 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
            t.start();
            return false;
         }
-        else if (nextStep == 2) 
+        else if (nextStep == 2)
         {
-            
+
            updateExpressionLabels();
         }
         return true;
@@ -1121,13 +1122,13 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
     }
 
     public boolean canFinish(int currentStep) {
-        
+
         if (currentStep<3) return false;
         if (jTextFieldReportFileName.getText().trim().length() > 0)
         {
             String s = jTextFieldReportFileName.getText().trim();
             String s2 = MainFrame.getMainInstance().getActiveReportFrame().getReport().getFilename();
-            if (s.indexOf(File.separator) >=0) 
+            if (s.indexOf(File.separator) >=0)
             {
                 return (!s.equals(s2));
             }
@@ -1141,12 +1142,12 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
     }
 
     public boolean canNext(int currentStep) {
-        
+
         if (currentStep == 0)
         {
              if (jComboBoxConnection.getSelectedItem() != null) {
                 IReportConnection irc = (IReportConnection)jComboBoxConnection.getSelectedItem();
-            
+
                 if (irc.isJDBCConnection()) {
                     if (jRSQLExpressionArea1.getText().length() > 0) return true;
                 } else if (irc instanceof JRHibernateConnection) {
@@ -1226,8 +1227,8 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
     public void setWizardDialog(javax.swing.JDialog wizardDialog) {
         this.wizardDialog = wizardDialog;
     }
-    
-    
+
+
     /** When an object implementing interface <code>Runnable</code> is used
      * to create a thread, starting the thread causes the object's
      * <code>run</code> method to be called in that separately executing
@@ -1240,26 +1241,26 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
      *
      */
     public void run() {
-        
+
         Thread.currentThread().setContextClassLoader( MainFrame.getMainInstance().getReportClassLoader() );
         // This method is invoked to read fields....
         try {
             IReportConnection irc = (IReportConnection)jComboBoxConnection.getSelectedItem();
-            
+
             DefaultListModel dlm1 = (DefaultListModel)jList1.getModel();
             dlm1.removeAllElements();
-            
+
             DefaultListModel dlm2 = (DefaultListModel)jList2.getModel();
             dlm2.removeAllElements();
             // Get fields....
             java.util.List fields = WizardDialog.readFields(irc,jRSQLExpressionArea1.getText(), jTextFieldBean.getText());
-            
-            if (fields == null) 
+
+            if (fields == null)
             {
                 cancelElaborationStep1();
                 return;
             }
-            
+
             for (int i=0; i <fields.size(); ++i) {
                 it.businesslogic.ireport.JRField field = (JRField)fields.get(i);
                 // Check if parameter already exists...
@@ -1277,9 +1278,9 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                 }
                 if (jList1.getModel().getSize()>0) jList1.setSelectedIndex(0);
             }
-            
+
             wizardPanel.goStep(1);
-            
+
         } catch (Exception ex) {
             java.io.StringWriter sw = new java.io.StringWriter();
             ex.printStackTrace(new java.io.PrintWriter( sw ));
@@ -1288,26 +1289,26 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
             cancelElaborationStep1();
             return;
         }
-        
+
     }
-    
+
     public void cancelElaborationStep1() {
             wizardPanel.updateButtons();
     }
-    
-    
+
+
     public void updateTemplatesList() {
         if (templates == null)
         {
             loadTemplateFiles();
              if (templates == null) return;
         }
-        
+
         ((javax.swing.DefaultListModel)jList3.getModel()).removeAllElements();
-        
+
         for (int i=0;  i< templates.size(); ++i) {
             IReportTemplate itemplate = (IReportTemplate)templates.elementAt(i);
-            
+
             if (jRadioButtonTabularLayout.isSelected() && itemplate.getType() != IReportTemplate.TABULAR) continue;
             if (jRadioButtonColumnarLayout.isSelected() && itemplate.getType() != IReportTemplate.COLUMNAR) continue;
             //if (jComboBoxTemplates.getItemCount()<2 || (jComboBoxTemplates.getSelectedIndex() == 0 && itemplate.getType() != IReportTemplate.COLUMNAR) )  continue;
@@ -1315,7 +1316,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
             /*
             TemplateFile tf = new TemplateFile();
             tf.file = templates[i];
-             
+
             tf.name = templates[i].getName().substring(0, templates[i].getName().length()-4);
              */
             ((javax.swing.DefaultListModel)jList3.getModel()).addElement(itemplate);
@@ -1324,14 +1325,14 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
             jList3.setSelectedIndex(0);
         jList3.updateUI();
     }
-    
-    
+
+
     public void loadTemplateFiles()
     {
         templates = new Vector();
         String templates_dir = MainFrame.IREPORT_HOME_DIR;  //System.getProperty("ireport.home",".");
         templates_dir +=  File.separator + "templates";
-        //System.out.println("Templates: " + templates_dir);
+        System.out.println("AAAAAAAAAAAAAATemplates: " + templates_dir);
         //C:\\documenti\\progetti\\ireport\\iReport2\\templates
         try {
             File f = new File(templates_dir);
@@ -1360,7 +1361,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                     });
                 }
             }
-            
+
             for (int i=0;templates_files != null && i<templates_files.length; ++i) {
                 IReportTemplate itemplate = new IReportTemplate();
                 itemplate.setXmlFile(templates_files[i] +"");
@@ -1371,14 +1372,14 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                     iconname = Misc.changeFileExtension(iconname,".gif");
                     itemplate.setIcon( new javax.swing.ImageIcon( iconname) );
                 } catch (Exception ex){}
-                
+
                 templates.add( itemplate );
             }
-            
+
         } catch (Exception ex) {
         }
-        
-        
+
+
         // try to look in the classpath...
         try {
             Vector xml_template_files = new Vector();
@@ -1387,16 +1388,16 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                 Object oobj = enum_pl.nextElement();
                 xml_template_files.add(oobj);
             }
-            
+
             for (int i=0; i<xml_template_files.size(); ++i) {
-                
+
                 Object source = xml_template_files.elementAt(i);
                 //  Create a Xerces DOM Parser
                 DOMParser parser = new DOMParser();
                 //  Parse the Document
                 //  and traverse the DOM
                 try {
-                    
+
                     parser.setEntityResolver( new org.xml.sax.EntityResolver() {
                         /* Code by Teodor Danciu */
                         public org.xml.sax.InputSource resolveEntity(
@@ -1405,26 +1406,26 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                                 ) throws SAXException//, java.io.IOException
                         {
                             org.xml.sax.InputSource inputSource = null;
-                            
+
                             if (systemId != null) {
                                 String dtd = null;
-                                
+
                                 if ( systemId.equals("http://ireport.sourceforge.net/dtds/iReportTemplate.dtd") ) {
                                     dtd = "it/businesslogic/ireport/dtds/iReportTemplate.dtd";
                                 } else {
                                     return new org.xml.sax.InputSource(systemId);
                                 }
-                                
-                                
+
+
                                 ClassLoader classLoader = this.getClass().getClassLoader();
-                                
+
                                 java.io.InputStream is = classLoader.getResourceAsStream(dtd);
                                 if (is != null) {
                                     inputSource = new org.xml.sax.InputSource(is);
                                 }
-                                
+
                             }
-                            
+
                             return inputSource;
                         }
                     });
@@ -1432,22 +1433,22 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                     InputStream input_source = null;
                     if ( source instanceof java.io.File ) {
                         input_source = new FileInputStream((java.io.File)source);
-                        
+
                     } else if ( source instanceof java.net.URL){
-                        
+
                         input_source = ((java.net.URL)source).openStream();
-                        
+
                     }
-                    
+
                     parser.parse(new org.xml.sax.InputSource( input_source ));
                     Document document = parser.getDocument();
-                    
+
                     //System.out.println("traverse");
                     Node node = document.getDocumentElement();
-                    
+
                     NodeList list = XPathAPI.selectNodeList(node, "/iReportTemplateSet/iReportTemplate");
                     Node childnode = null;
-                    
+
                     for (int n=0; n < list.getLength(); n++) {
                         IReportTemplate ireportTemplate = new IReportTemplate();
                         childnode = XPathAPI.selectSingleNode(list.item(n), "@name");
@@ -1469,7 +1470,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                                 e.printStackTrace();
                             }
                         }
-                        
+
                         templates.add(ireportTemplate);
                     }
                 } catch (SAXException e) {
@@ -1478,18 +1479,18 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                     System.err.println(e);
                 }
             } // End cycle on iReport plugin files...
-            
+
         } catch (Exception ex) {
             MainFrame.getMainInstance().logOnConsole("Error searching ireport/template.xml resources\n");
         }
-        
-        
+
+
     }
-    
+
     public void updateExpressionLabels()
     {
         String fileName = jTextFieldReportFileName.getText().trim();
-        
+
         if (fileName.length() == 0)
         {
             jLabel1.setText("");
@@ -1513,15 +1514,15 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
 
            String s2 = MainFrame.getMainInstance().getTranslatedCompileDirectory();
            f = new File( fileName );
-           
+
            f = new File(s2, Misc.string_replace(".jasper",".jrxml",f.getName()));
            s2 = Misc.string_replace("\\\\","\\","" + f);
            jLabel2e.setText("\"" + s2 + "\"");
         }
-        
-        
+
+
     }
-    
+
     /*
       *
       *  type=1 -> TABULAR
@@ -1529,14 +1530,14 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
       */
     public Report createReport(String templateFileName, int reportType)
     throws Exception {
-        
+
         Report template = new Report(templateFileName);
-        
+
         template.incrementReportChanges();
-        
+
         String s = jTextFieldReportFileName.getText().trim();
         String s2 = MainFrame.getMainInstance().getActiveReportFrame().getReport().getFilename();
-        if (s.indexOf(File.separator) >=0) 
+        if (s.indexOf(File.separator) >=0)
         {
             template.setFilename(s);
         }
@@ -1548,13 +1549,13 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
             s2 += s;
             template.setFilename(s2);
         }
-        
+
         // remove all bands except column header and detail...
-        
+
         //2. Find detail and column header bands...
         Band detail=null;
         Band columns=null;
-        
+
         Enumeration e = template.getBands().elements();
         while (e.hasMoreElements()) {
             Band band = (Band)e.nextElement();
@@ -1571,7 +1572,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
             ReportElement rElement = (ReportElement)e.nextElement();
             rElement.trasform(new java.awt.Point(0,- template.getBandYLocation( rElement.getBand() )),TransformationType.TRANSFORMATION_MOVE );
         }
-        
+
         if (reportType == 0) // TABULAR
         {
                 //1. Adding fields...
@@ -1697,10 +1698,10 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                     ffheight +=  detailField.position.y+detailField.height-10;
                 }
                 if (nfields != 0) detail.setHeight(ffheight);
-        
+
         }
-    
-        
+
+
         // Remove template groups...****************
         e = template.getElements().elements();
         Vector elements_to_delete = new Vector();
@@ -1711,14 +1712,14 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                 elements_to_delete.addElement(rElement);
             }
         }
-        
-        
-        
+
+
+
         e =elements_to_delete.elements();
         while (e.hasMoreElements()) {
             template.getElements().removeElement(e.nextElement());
         }
-        
+
         Group g;
         if ((g=template.getGroupByName("Group1"))!=null) {
             template.getBands().removeElement(g.getGroupFooter());
@@ -1735,13 +1736,13 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
             template.getBands().removeElement(g.getGroupHeader());
             template.getGroups().removeElement(g);
         }
-        
+
         if ((g=template.getGroupByName("Group4"))!=null) {
             template.getBands().removeElement(g.getGroupFooter());
             template.getBands().removeElement(g.getGroupHeader());
             template.getGroups().removeElement(g);
         }
-        
+
         e = template.getBands().elements();
         while (e.hasMoreElements()) {
             Band band = (Band)e.nextElement();
@@ -1750,8 +1751,8 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                 band.setHeight(0);
             }
         }
-        
-        
+
+
                 // Remove margins...
 
         int leftMargin = template.getLeftMargin();
@@ -1762,22 +1763,22 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
         template.setTopMargin(0);
         template.setBottomMargin(0);
 
-        
+
         e = template.getElements().elements();
         while (e.hasMoreElements()) {
             ReportElement rElement = (ReportElement)e.nextElement();
             rElement.trasform(new java.awt.Point(- leftMargin, template.getBandYLocation( rElement.getBand() )),TransformationType.TRANSFORMATION_MOVE );
         }
-        
-        
-        
-        
+
+
+
+
         if (jComboBoxConnection.getSelectedItem() instanceof JDBCConnection)
         {
             getSubReportElement().setConnectionExpression("$P{REPORT_CONNECTION}");
             getSubReportElement().setUseConnection(true);
             template.setQuery( jRSQLExpressionArea1.getText() );
-        
+
         }
         else if (jComboBoxConnection.getSelectedItem() instanceof JRHibernateConnection)
         {
@@ -1788,13 +1789,13 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
         {
             template.setWhenNoDataType("AllSectionsNoDetail");
         }
-        
+
         //System.out.println("Saving: " + template.getFilename());
         template.saveXMLFile();
         return template;
     }
-    
- 
+
+
     public void applyI18n(){
                 // Start autogenerated code ----------------------
                 jRadioButton4.setText(I18n.getString("subreportWizardNewReport.radioButton4","Store the directory name in a parameter"));
@@ -1823,7 +1824,7 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
 
 
 class TemplateFile {
-    
+
     public File file = null;
     public String name = "";
     public String toString() { return name; }

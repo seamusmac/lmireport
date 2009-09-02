@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,7 +25,7 @@
  *
  *
  * Misc.java
- * 
+ *
  * Created on 14 febbraio 2003, 16.35
  *
  */
@@ -41,14 +41,37 @@ import it.businesslogic.ireport.gui.ExpressionEditor;
 import it.businesslogic.ireport.gui.JRTextExpressionArea;
 import it.businesslogic.ireport.gui.MainFrame;
 import it.businesslogic.ireport.gui.sheet.Tag;
-import java.awt.*;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.ComponentOrientation;
+import java.awt.Graphics;
+import java.awt.MediaTracker;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.image.*;
-import java.util.*;
-import java.util.jar.*;
-import java.net.*;
-import java.io.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
+import java.io.PrintWriter;
+import java.net.JarURLConnection;
+import java.net.URL;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.Vector;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -61,6 +84,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.text.JTextComponent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+
 import org.apache.xerces.parsers.DOMParser;
 import org.flexdock.docking.Dockable;
 import org.flexdock.docking.DockingConstants;
@@ -262,7 +286,7 @@ public class Misc {
                 }
 
                 //comboBox.removeAllItems();
-                
+
                 java.util.Vector items = new java.util.Vector(newItems.size(),1);
                 boolean selected = false;
                 boolean foundNullItem = false;
@@ -278,15 +302,15 @@ public class Misc {
                         if (item.equals("")) {
                                 foundNullItem = true;
                         }
-                        
+
                         currentelement++;
                 }
 
                 if (addNullEntry) {
-                        if (!foundNullItem) items.add(0,""); 
+                        if (!foundNullItem) items.add(0,"");
                         if (selectedIndex < 0) selectedIndex = 0;
                 }
-                
+
                 comboBox.setModel( new DefaultComboBoxModel(items)  );
                 comboBox.setSelectedIndex(selectedIndex);
 
@@ -302,15 +326,15 @@ public class Misc {
                 }
 
                 //comboBox.removeAllItems();
-                
+
                 java.util.Vector items = new java.util.Vector(newItems.size(),1);
-                
+
                 boolean selected = false;
                 boolean foundNullItem = false;
                 Enumeration e = newItems.elements();
                 int selectedIndex = -1;
                 int currentelement = 0;
-                
+
                 while (e.hasMoreElements()) {
                         String item = ""+e.nextElement();
                         items.add(item);
@@ -325,10 +349,10 @@ public class Misc {
                 }
 
                 if (addNullEntry) {
-                        if (!foundNullItem) items.add(0,""); 
+                        if (!foundNullItem) items.add(0,"");
                         if (selectedIndex < 0) selectedIndex = 0;
                 }
-                
+
                 comboBox.setModel( new DefaultComboBoxModel(items)  );
                 comboBox.setSelectedIndex(selectedIndex);
 
@@ -586,7 +610,7 @@ public class Misc {
                             return f.lastModified();
                         }
                 } catch (Exception ex) {
-                        
+
                 }
                 return -1;
         }
@@ -603,7 +627,8 @@ public class Misc {
                 return f;
         }//end frameFromComponent
         //ErtanO 12.03.2004
-        public static java.util.List getAvailablePLAF(){
+        @SuppressWarnings("unchecked")
+		public static java.util.List getAvailablePLAF(){
                 java.util.List l = new java.util.ArrayList();
                 l.add("System");
                 l.add("TinyLAF");
@@ -615,6 +640,7 @@ public class Misc {
                 l.add("JGoodiesLAF-ExtWindows");
 		//l.add("KunststofLAF");
 
+                //LIMAO: Æ¤·ô~~
                 javax.swing.UIManager.LookAndFeelInfo[] lfinfo = javax.swing.UIManager.getInstalledLookAndFeels();
 
                 for (int i=0; i<lfinfo.length; ++i) {
@@ -625,7 +651,7 @@ public class Misc {
         }
         public static void setPLAF(String s){
                 try {
-                        
+
                         if(s.equals("TinyLAF")) {
                                 javax.swing.UIManager.setLookAndFeel("de.muntjak.tinylookandfeel.TinyLookAndFeel");
                         } else if(s.equals("TonicLAF")) {
@@ -688,7 +714,7 @@ public class Misc {
                                         }
                                 }
                         }
-                        
+
                 } catch (Exception ex) {
                         ex.printStackTrace();
                 }
@@ -732,15 +758,15 @@ public class Misc {
                 {
                     cl = MainFrame.getMainInstance().getReportClassLoader();
                 }
-                
+
                 Enumeration dirEnum = cl.getResources( localPackageName );
-                
+
                 Set names = new HashSet();
 
                 // Loop CLASSPATH directories
                 while( dirEnum.hasMoreElements() ) {
                         URL resUrl = (URL) dirEnum.nextElement();
-                       
+
                         // Pointing to filesystem directory
                         if ( resUrl.getProtocol().equals("file") ) {
                             try {
@@ -757,7 +783,7 @@ public class Misc {
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                             }
-                            
+
                                 // Pointing to Jar file
                         } else if ( resUrl.getProtocol().equals("jar") ) {
                                 JarURLConnection jconn = (JarURLConnection) resUrl.openConnection();
@@ -815,7 +841,7 @@ public class Misc {
         /**
          *  Take a string like _it_IT or it_IT or it
          *  and return the right locale
-         *  
+         *
          */
         static public java.util.Locale getLocaleFromString( String localeName, Locale defaultLocale )
 	{
@@ -876,7 +902,7 @@ public class Misc {
                 }
             }
         }
-        
+
 
         /**
          * Return the named connection configured in iReport
@@ -1224,8 +1250,8 @@ public class Misc {
 
             return null;
     }
-    
-    
+
+
     /**
      * Save the expressions list to the specified file...
      */
@@ -1264,7 +1290,7 @@ public class Misc {
         { }
         return true;
     }
-    
+
     /**
      * Read the expressions list from the specified file...
      */
@@ -1352,7 +1378,7 @@ public class Misc {
 
         } catch (Exception ex) {
         }
-        
+
         return v;
     }
 
@@ -1362,22 +1388,22 @@ public class Misc {
         // 1. Look for the report to wich this element belong...
         JReportFrame frames = MainFrame.getMainInstance()
     }
-    
+
     public static Report getReportByBand(Band b)
     {
-        
+
     }
-    
+
     public static Report getReportByReportElement(ReportElement re)
     {
         if (re instanceof CrosstabReportElement)
         {
-            
+
         }
     }
-  */  
-    
-    
+  */
+
+
    /**
     *     side can be:
     *        DockingConstants.NOTRH_REGION
@@ -1386,21 +1412,21 @@ public class Misc {
     *        DockingConstants.WEST_REGION
     *
     *     index is the position into a side
-    *     
+    *
     *     i.e.
     *         dockAt( dockable, DockingConstants.WEST_REGION, 0)   means the top left position
     *
     *
-    */   
+    */
    static public boolean dockAt(Dockable toDock, String side, int index)
-   {  
+   {
        Dockable rootDockable = MainFrame.getMainInstance().getDesktopView();
        Dockable dockable = rootDockable;
-              
+
        String directionV = null;
        String directionH = null;
        String directionIndex = null;
-       
+
        if (side.equals( DockingConstants.NORTH_REGION ))
        {
            directionV =  DockingConstants.NORTH_REGION;
@@ -1425,15 +1451,15 @@ public class Misc {
            directionH = DockingConstants.WEST_REGION;
            directionIndex = DockingConstants.EAST_REGION;
        }
-       
+
        String counterDirectionIndex = null;
        if (directionIndex.equals( DockingConstants.NORTH_REGION) ) counterDirectionIndex = DockingConstants.SOUTH_REGION;
        if (directionIndex.equals( DockingConstants.SOUTH_REGION) ) counterDirectionIndex = DockingConstants.NORTH_REGION;
        if (directionIndex.equals( DockingConstants.WEST_REGION) ) counterDirectionIndex = DockingConstants.EAST_REGION;
        if (directionIndex.equals( DockingConstants.EAST_REGION) ) counterDirectionIndex = DockingConstants.WEST_REGION;
-           
-       
-       
+
+
+
        try {
                 if (((View)rootDockable).getSibling(side) != null)
                 {
@@ -1445,21 +1471,21 @@ public class Misc {
                            dockable =  (tmp != null) ? tmp : DefaultDockingStrategy.getSibling(dockable, directionH);
                        }
                 }
-                    
+
            } catch (Throwable ex){
-           
+
            ex.printStackTrace();
-       } 
-       
-      
-       
+       }
+
+
+
        if (dockable == rootDockable) // there are no siblings in side direction...
        {
-           
+
            return dockable.dock(toDock, side);
        }
-       
-       
+
+
        // dockable is now the root...
        // Go in the indexDirection for index times (if possible)...
        int i = 0;
@@ -1467,20 +1493,20 @@ public class Misc {
        {
            // Look for the right sibling..
            try {
-           System.out.println("Index " + i); 
+           System.out.println("Index " + i);
            if (DefaultDockingStrategy.getSibling(dockable, directionIndex) == null) break;
            dockable = DefaultDockingStrategy.getSibling(dockable, directionIndex);
-           
-           
+
+
            } catch (Throwable ex){
-           
+
            ex.printStackTrace();
            }
        }
-       
+
        if (i == index)
        {
-           
+
            return dockable.dock(toDock, counterDirectionIndex);
        }
        else
@@ -1489,9 +1515,9 @@ public class Misc {
        }
 
    }
-   
-   
-   
+
+
+
     /**
      * Save the expression asking for a file.
      * see saveSQLQuery(String query, Component c)
@@ -1597,23 +1623,23 @@ public class Misc {
 
             return null;
     }
-    
-    
-    
-   /** This method uses the code from: http://www.centerkey.com/java/browser/ 
-     *  
-     *  Bare Bones Browser Launch                          
-     *  Version 1.5                                        
-     *  December 10, 2005                                  
-     *  Supports: Mac OS X, GNU/Linux, Unix, Windows XP    
-     *  Example Usage:                                     
-     *     String url = "http://www.centerkey.com/";       
-     *     BareBonesBrowserLaunch.openURL(url);            
-     *  Public Domain Software -- Free to Use as You Like  
+
+
+
+   /** This method uses the code from: http://www.centerkey.com/java/browser/
+     *
+     *  Bare Bones Browser Launch
+     *  Version 1.5
+     *  December 10, 2005
+     *  Supports: Mac OS X, GNU/Linux, Unix, Windows XP
+     *  Example Usage:
+     *     String url = "http://www.centerkey.com/";
+     *     BareBonesBrowserLaunch.openURL(url);
+     *  Public Domain Software -- Free to Use as You Like
      *
      **/
    public static void openURL(String url) {
-             
+
       String osName = System.getProperty("os.name");
       try {
          if (osName.startsWith("Mac OS")) {
@@ -1642,7 +1668,7 @@ public class Misc {
             }
          }
       catch (Exception e) {
-         JOptionPane.showMessageDialog(MainFrame.getMainInstance(), 
+         JOptionPane.showMessageDialog(MainFrame.getMainInstance(),
                  I18n.getString("misc.browserLunchError","Error attempting to launch web browser") + "\n" + e.getLocalizedMessage());
          }
       }
@@ -1665,7 +1691,7 @@ public class Misc {
        }
        return result;
    }
-   
+
    /**
     * Creates fileName inside <user home>/classes/it/businesslogic/ireport/locale
     * and stores there the properties keys
@@ -1691,8 +1717,8 @@ public class Misc {
                 }
             }
             try {
-                File outFile = new File(fdir,fileName); 
-                
+                File outFile = new File(fdir,fileName);
+
                 properties.store(new FileOutputStream(outFile),"");
 
             } catch (Exception ex)
@@ -1700,8 +1726,8 @@ public class Misc {
                 ex.printStackTrace();
             }
   }
-   
-   
+
+
   /**
    * If treePath is not in the current jTree selection, set it as selected.
    *
@@ -1709,7 +1735,7 @@ public class Misc {
   public static void ensurePathIsSelected(TreePath treePath, JTree jTree)
   {
         if (jTree == null || treePath == null) return;
-        
+
         TreePath[] selectedPaths = jTree.getSelectionPaths();
         for (int i=0; selectedPaths != null && i<selectedPaths.length; ++i)
         {
@@ -1717,7 +1743,7 @@ public class Misc {
         }
         jTree.setSelectionPath(treePath);
   }
-  
+
   /**
    * This method select the whole text inside a textarea and set there the focus.
    * It should be used to select a component that contains a wrong expression.
@@ -1726,12 +1752,12 @@ public class Misc {
   public static void selectTextAndFocusArea(final JComponent expArea)
   {
       if (expArea == null) return;
-      
+
       if (expArea instanceof JRTextExpressionArea)
       {
         ((JRTextExpressionArea)expArea).setSelectionStart(0);
         ((JRTextExpressionArea)expArea).setSelectionEnd(  ((JRTextExpressionArea)expArea).getText().length() );
-        ((JRTextExpressionArea)expArea).setHasErrors(true); 
+        ((JRTextExpressionArea)expArea).setHasErrors(true);
       }
       else if (expArea instanceof JTextComponent)
       {
@@ -1739,18 +1765,18 @@ public class Misc {
         ((JTextComponent)expArea).setSelectionEnd(  ((JTextComponent)expArea).getText().length() );
         ((JTextComponent)expArea).setBorder(new LineBorder(Color.RED.darker(),2));
       }
-      
+
       //Border b = expArea.getBorder();
-      
+
       expArea.requestFocusInWindow();
       /*
       SwingUtilities.invokeLater( new Runnable() {
           public void run() {
-              
+
               Graphics2D g = (Graphics2D)expArea.getGraphics();
               Stroke s = g.getStroke();
               g.setStroke( ReportElement.getPenStroke("4Point",1.0));
-              g.setColor( ReportElement.getAlphaColor(Color.RED, 128)  );        
+              g.setColor( ReportElement.getAlphaColor(Color.RED, 128)  );
               g.drawRect(0,0,expArea.getWidth(), expArea.getHeight() );
               g.setStroke(s);
           }
@@ -1760,7 +1786,7 @@ public class Misc {
 
     /**
      * Find the DefaultMutableTreeNode containing the userObject as UserObject
-     * 
+     *
      * Returns null if node == null or userObject == null
      */
     public static DefaultMutableTreeNode findNodeWithUserObject(Object userObject, javax.swing.tree.TreeNode node)
@@ -1769,26 +1795,26 @@ public class Misc {
         {
             return null;
         }
-        
+
         if (node instanceof DefaultMutableTreeNode)
         {
             DefaultMutableTreeNode dmtn = (DefaultMutableTreeNode)node;
             if (dmtn.getUserObject() != null &&
                 dmtn.getUserObject().equals(userObject)) return dmtn;
         }
-        
+
         // look in the children...
         for (int i=0; i<node.getChildCount(); ++i)
         {
             DefaultMutableTreeNode dmtn = findNodeWithUserObject( userObject, node.getChildAt(i));
             if (dmtn != null) return dmtn;
         }
-        
+
         return null;
-            
+
     }
-    
-    
+
+
     /**
      * Add the properties in resourceUri to props.
      * If resourceUri does not exists, nothing happen.
@@ -1797,16 +1823,16 @@ public class Misc {
     public static void addProperties(String resourceUri, java.util.Properties props)
     {
         try {
-            
+
             InputStream is = Misc.class.getResourceAsStream(resourceUri);
             if (is == null) return;
             props.load( is );
         } catch (Exception ex)
         {
             ex.printStackTrace();
-        }      
+        }
     }
-    
+
     /**
      * Get the content of a text resource file...
      *
@@ -1816,10 +1842,10 @@ public class Misc {
         String content ="";
         if (resourceUri == null) return content;
         try {
-            
+
             InputStream is = Misc.class.getResourceAsStream(resourceUri);
             if (is == null) return content;
-        
+
             LineNumberReader lnr = new LineNumberReader(new InputStreamReader(is) );
             String line = null;
             boolean first = true;
@@ -1829,18 +1855,18 @@ public class Misc {
                 content += line;
                 first = false;
             }
-            
+
             lnr.close();
-            
+
         } catch (Exception ex)
         {
             ex.printStackTrace();
-        }      
-        
+        }
+
         return content;
     }
-    
-    
+
+
 
     public static HashMap opTimes = new HashMap();
 
@@ -1853,7 +1879,7 @@ public class Misc {
      *   Misc.optime("My operation");  // Start the timer
      *   ....block to measure....
      *   Misc.optime("My operation");  // Stop the timer
-     * </code></pre>  
+     * </code></pre>
      *  Result on video:
      * <pre><code>
      *    My operation START (1)
@@ -1866,12 +1892,12 @@ public class Misc {
         {
             long t0 = ((Long)opTimes.get(opName)).longValue();
             long opCounter = ((Long)opTimes.get(opName+"_coutner" )).longValue();
-            
+
             opTimes.remove(opName);
-            System.out.println(opName + " END (" + opCounter + ")\t" +  (t - t0) + "ms"); 
+            System.out.println(opName + " END (" + opCounter + ")\t" +  (t - t0) + "ms");
             System.out.flush();
-            
-            
+
+
         }
         else
         {
@@ -1887,8 +1913,8 @@ public class Misc {
             System.out.flush();
         }
     }
-  
-    
+
+
     /**
      *  This method validates URL like:
      *
@@ -1896,24 +1922,24 @@ public class Misc {
      *  domain.domain.dom[:port]
      *
      */
-    public static boolean isValidUrl(String url) 
-    { 
-        String strRegex = 
-         "((([0-9]{1,3}\\.){3})[0-9]{1,3})" + // IP- 199.194.52.184 
-         "|" + // allows either IP or domain 
-         "(([0-9a-z][0-9a-z-]{0,61})?[0-9a-z]\\.?)++" + // domain pice 
-         "(:[0-9]{1,4})?"; // port number- :80 
-         
+    public static boolean isValidUrl(String url)
+    {
+        String strRegex =
+         "((([0-9]{1,3}\\.){3})[0-9]{1,3})" + // IP- 199.194.52.184
+         "|" + // allows either IP or domain
+         "(([0-9a-z][0-9a-z-]{0,61})?[0-9a-z]\\.?)++" + // domain pice
+         "(:[0-9]{1,4})?"; // port number- :80
+
          return url.matches( strRegex );
-    } 
-    
-    
+    }
+
+
     /**
      *  Look for the SubDataset of an Object in the given report / subDataset.
      *  If the subDataset is a report, it looks recursively in each subdataset...
      * @param report Report or SubDataset to look in
      * @param object Object to search for (Parameter, Field, Variable)
-     * 
+     *
      * @return a subdataset or null if the object is not found
      */
     public static SubDataset getObjectSubDataset(SubDataset report, Object object)
@@ -1921,7 +1947,7 @@ public class Misc {
         if (report.getParameters().contains(object)) return report;
         if (report.getFields().contains(object)) return report;
         if (report.getVariables().contains(object)) return report;
-        
+
         if (report instanceof Report)
         {
             for (int i=0; i<((Report)report).getSubDatasets().size(); ++i)
@@ -1933,23 +1959,23 @@ public class Misc {
                 }
             }
         }
-        
+
         return null;
     }
-    
+
     public static final KeyListener ARABIC_KEY_LISTENER = new KeyListener() {
 
             boolean pressedRightShift = false;
             boolean pressedRightCtl = false;
-            
-            
+
+
             public void keyTyped(KeyEvent e) {
             }
 
             public void keyPressed(KeyEvent e) {
-                
+
                 if (pressedRightShift && pressedRightCtl) return;
-                
+
                 if (e.getKeyCode() == KeyEvent.VK_SHIFT && e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT)
                 {
                     pressedRightShift = true;
@@ -1958,7 +1984,7 @@ public class Misc {
                 {
                     pressedRightCtl = true;
                 }
-                
+
                 if (pressedRightShift && pressedRightCtl)
                 {
                     if (e.getSource() instanceof JComponent)
@@ -1971,7 +1997,7 @@ public class Misc {
             }
 
             public void keyReleased(KeyEvent e) {
-                
+
                 if (e.getKeyCode() == KeyEvent.VK_SHIFT && e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT)
                 {
                     pressedRightShift = false;
@@ -1984,18 +2010,18 @@ public class Misc {
                 }
             }
         };
-        
-        
+
+
         public static int getMaxBandHeight(Report report, Band band)
         {
             int available_height = report.getHeight() - report.getTopMargin()- report.getBottomMargin();
-            
+
             String bname = band.getName();
             if (bname.equals("background")) return available_height;
             if (bname.equals("title") && report.isIsTitleNewPage()) return available_height;
             if (bname.equals("summary") && report.isIsSummaryNewPage()) return available_height;
             if (bname.equals("noData")) return available_height;
-            
+
             // Group header should go with column/page header and footers...
             if (band.isGroupHeader() || band.isGroupFooter())
             {
@@ -2020,10 +2046,10 @@ public class Misc {
                 if (!bname.equals("columnHeader")) available_height -= report.getBandByName("columnHeader").getHeight();
                 if (!bname.equals("columnFooter")) available_height -= report.getBandByName("columnFooter").getHeight();
                 if (!bname.equals("detail")) available_height -= report.getBandByName("detail").getHeight();
-            
+
             }
-            
+
             return available_height;
-            
+
         }
 }//end class Misc

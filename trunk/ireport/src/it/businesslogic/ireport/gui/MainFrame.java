@@ -100,6 +100,7 @@ import it.businesslogic.ireport.util.Misc;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Point;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
@@ -162,6 +163,12 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import com.chinacreator.ireport.AddedOperator;
+import com.chinacreator.ireport.IreportConstant;
+import com.chinacreator.ireport.IreportUtil;
+import com.chinacreator.ireport.rmi.IreportFile;
+import com.chinacreator.ireport.rmi.IreportRmiClient;
 /**
  * This class is the core of the GUI of iReport. From this class we control all
  * events related to the open and close files, handling of properties files,
@@ -469,7 +476,8 @@ public class MainFrame extends javax.swing.JFrame
         this(new HashMap());
     }
     /** Creates new form MainFrame */
-    public MainFrame(final Map args) {
+    @SuppressWarnings("unchecked")
+	public MainFrame(final Map args) {
 
         if (mainInstance==null) {
             mainInstance = this;
@@ -548,13 +556,18 @@ public class MainFrame extends javax.swing.JFrame
 /*        if (args.get("noPlaf") == null || args.get("noPlaf").equals("false"))
           PlafManager.setPreferredTheme("win32");*/
         if (args.get("noPlaf") == null || args.get("noPlaf").equals("false")) {
-          Misc.setPLAF(properties.getProperty("LookAndFeel"));
+        	//LIMAO: 皮肤只能为Metal 否则可能出现乱码或者样式
+          String LAF = "Metal";
+          System.out.println("设置皮肤为:"+LAF);
+          //Misc.setPLAF(properties.getProperty("LookAndFeel"));
+          Misc.setPLAF(LAF);
           PlafManager.setPreferredTheme("win32");
         }
 
         //Modified by Felix Firgau for I18n on Feb 8th 2006
         //if (sp!=null) sp.updateLoadingStatus(30,"Init main frame components");
         if (sp!=null) sp.updateLoadingStatus(30,it.businesslogic.ireport.util.I18n.getString("initMainFrame","Init main frame components"));
+
         //Modification end
 
         jToolbarFormatPanel = new ToolbarFormatPanel(this);
@@ -708,9 +721,10 @@ public class MainFrame extends javax.swing.JFrame
         //Modification end
 
         String[] fontFamilies = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-        jComboBoxFont.addItem("");
+        jComboBoxFont.setFont(new Font("宋体",Font.PLAIN,12));
         for (int i=0; i<fontFamilies.length; ++i)
         {
+        	System.out.println("SSS"+fontFamilies[i]);
             jComboBoxFont.addItem(fontFamilies[i]);
             if (fontFamilies[i].equalsIgnoreCase("SansSerif"))
             {
@@ -5255,6 +5269,7 @@ public class MainFrame extends javax.swing.JFrame
         return openFile(new File(filename));
     }
 
+    // FIXME ： OPEN....
     public JReportFrame openFile(File file){
 
         JReportFrame reportFrame;
@@ -6490,6 +6505,8 @@ public class MainFrame extends javax.swing.JFrame
     }//GEN-LAST:event_jMenuItemSaveAsActionPerformed
 
 
+    // LIMAO : 保存为 modify by li.mao since 3.0 [2009-8-18 下午02:18:54]
+
     public void saveAs(JReportFrame jrf)
     {
             String reportName = jrf.getReport().getName();
@@ -6498,7 +6515,7 @@ public class MainFrame extends javax.swing.JFrame
             // -----------------------------------------------------------------
 
             javax.swing.JFileChooser jfc = new javax.swing.JFileChooser(getCurrentDirectory());
-            jfc.setDialogTitle("Save report as XML jasperreports file as....");
+            jfc.setDialogTitle(I18n.getString("Save.report.as.XML.jasperreports.file.as....", "Save report as XML jasperreports file as...."));
 
             // Handling the new File, that gets saved for the first time
             // Propose a new file name based on the report name
@@ -6790,10 +6807,11 @@ public class MainFrame extends javax.swing.JFrame
         if (jMDIDesktopPane.getSelectedFrame() != null &&
         jMDIDesktopPane.getSelectedFrame() instanceof JReportFrame) {
             JReportFrame jrf = (JReportFrame)jMDIDesktopPane.getSelectedFrame();
-
             save( jrf );
         }
     }//GEN-LAST:event_jMenuItemSaveActionPerformed
+
+    // LIMAO : 保存 modify by li.mao since 3.0 [2009-8-18 下午02:21:09]
 
     public void save(JReportFrame jrf)
     {
@@ -6836,7 +6854,7 @@ public class MainFrame extends javax.swing.JFrame
             }
 
             if (jrf.getReport().getFilename() == null ||
-            jrf.getReport().getFilename().trim().equals("")) {
+                jrf.getReport().getFilename().trim().equals("")) {
                 // Choose a file name....
                 javax.swing.JFileChooser jfc = new javax.swing.JFileChooser(getCurrentDirectory());
                 jfc.setDialogTitle("Save report as XML jasperreports file....");
@@ -6907,7 +6925,6 @@ public class MainFrame extends javax.swing.JFrame
                                     reportFrame.doDefaultCloseAction();
                                 }
                             } else {
-
                                 //canceled
                                 return;
                             }
@@ -7042,6 +7059,10 @@ public class MainFrame extends javax.swing.JFrame
             //this.updateRecentFileList();
             this.jTreeFiles.updateUI();
 
+            // LIMAO : modify by li.mao since 3.0 [2009-8-20 下午05:28:50]
+            //将文件添加到服务器
+            AddedOperator.getInstance().afterSave(jrf.getReport().getFilename());
+
     }
 
     /**
@@ -7111,6 +7132,8 @@ public class MainFrame extends javax.swing.JFrame
      *
      * @return JReportFrame[]
      */
+    // LIMAO : 打开 modify by li.mao since 3.0 [2009-8-18 下午02:41:18]
+
     public JReportFrame[] open()
     {
         // Select an XMl file...
@@ -7803,12 +7826,8 @@ public class MainFrame extends javax.swing.JFrame
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-
-        // command line arguments
-        //StringParam patternArg =
-        //    new StringParam("config-file", "",
-        //                    StringParam.PUBLIC);
-
+    	// LIMAO : 注册宋体字体 modify by li.mao since 3.0 [2009-9-1 下午05:08:18]
+    	AddedOperator.getInstance().registerSongTi();
 
         System.setProperty("sun.swing.enableImprovedDragGesture","");
 
@@ -7891,6 +7910,7 @@ public class MainFrame extends javax.swing.JFrame
         Map map = new HashMap();
         if (configFileOpt.isSet()) {
             map.put("config-file", configFileOpt.getFile().getPath());
+            System.out.println("config-file:"+configFileOpt.getFile().getPath());
         }
 
         if (!configSplashOpt.isTrue()) {
@@ -7901,10 +7921,12 @@ public class MainFrame extends javax.swing.JFrame
 
         if (ireportHomeDirOpt.isSet()) {
             map.put("ireport-home", ireportHomeDirOpt.getFile().getPath());
+            System.out.println("ireport-home:"+ireportHomeDirOpt.getFile().getPath());
         }
 
         if (userHomeDirOpt.isSet()) {
             map.put("user-home", userHomeDirOpt.getFile().getPath());
+            System.out.println("user-home:"+userHomeDirOpt.getFile().getPath());
         }
 
         if (tempDirOpt.isSet()) {
@@ -7943,6 +7965,26 @@ public class MainFrame extends javax.swing.JFrame
                 _mainFrame.setVisible(true);
             }
         });
+        // LIMAO : 在远程启动的时候打开当前选择文件 modify by li.mao since 3.0 [2009-8-20 下午04:36:47]
+        IreportFile ireportFile = null;
+        try {
+        	ireportFile = IreportRmiClient.getInstance().rmiInterfactRemote.open("fgh.jrxml");
+
+		if(ireportFile != null){
+			String path = "G:\\z\\"+ireportFile.getFileName();
+			File oldFile = new File(path);
+			if(oldFile.exists()){
+				oldFile.delete();
+			}
+
+			byte[] content = ireportFile.getContent();
+		    File f = IreportUtil.bytesToFile(path, content);
+
+		    _mainFrame.openFile(f);
+		  }
+        } catch (Exception e) {
+			e.printStackTrace();
+		}
     }
 
 
@@ -9102,7 +9144,7 @@ public class MainFrame extends javax.swing.JFrame
 
             if (activeSelection.size() == 0)
             {
-                ElementPropertiesDialog.setComboBoxText(isTheFirstElement, "SansSerif" , jComboBoxFont);
+                ElementPropertiesDialog.setComboBoxText(isTheFirstElement,IreportConstant.FONT_SONGTI, jComboBoxFont);
                 ElementPropertiesDialog.setElementComboNumber(isTheFirstElement, 10, jNumberComboBoxSize );
             }
             else
@@ -9115,7 +9157,7 @@ public class MainFrame extends javax.swing.JFrame
                         TextReportElement tre = (TextReportElement)re;
 
                         String fontName = tre.getFontName();
-                        if (fontName == null || fontName.trim().length() == 0) fontName ="SansSerif";
+                        if (fontName == null || fontName.trim().length() == 0) fontName =IreportConstant.FONT_SONGTI;
 
                         if (sameFontName) sameFontName = ElementPropertiesDialog.setComboBoxText(isTheFirstElement, fontName , jComboBoxFont);
                         if (sameFontSize) sameFontSize = ElementPropertiesDialog.setElementComboNumber(isTheFirstElement, tre.getFontSize() , jNumberComboBoxSize );
@@ -9924,6 +9966,8 @@ public class MainFrame extends javax.swing.JFrame
         jMenuItemInsertPageBreak.setText(I18n.getString("mainFrame.menuItemInsertPageBreak","Insert page/column break"));
         jMenuItemChart.setText(I18n.getString("mainFrame.menuItemChart","Chart"));
         jMenuItemForum.setText(I18n.getString("mainFrame.menuItemForum","Forum..."));
+
+        // LIMAO : HOMEPAGE 呵呵 modify by li.mao since 3.0 [2009-8-21 下午02:49:37]
 
         String homePage = I18n.getString("mainFrame.menuItemHomePage","iReport home page");
         homePage = Misc.string_replace( getBrandingProperties().getProperty("ireport.name"), "iReport", homePage);

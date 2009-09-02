@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,7 +25,7 @@
  *
  *
  * IReportFont.java
- * 
+ *
  * Created on 6 giugno 2003, 23.23
  *
  */
@@ -33,8 +33,6 @@
 package it.businesslogic.ireport;
 
 import java.awt.font.TextAttribute;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -42,7 +40,7 @@ import java.util.Map;
  * @author  Administrator
  */
 public class IReportFont extends IReportHashMapBean {
-    
+
     static public final String IS_DEFAULT_FONT = "defaultFont";
     static public final String REPORT_FONT = "reportFont";
     static public final String FONT_NAME = "fontName";
@@ -55,11 +53,17 @@ public class IReportFont extends IReportHashMapBean {
     static public final String IS_STRIKETROUGHT = "strikeTrought";
     static public final String IS_PDF_EMBEDDED = "pdfEmbedded";
     static public final String PDF_ENCODING = "pdfEncoding";
-    
+
+    // LIMAO : 默认字体 modify by li.mao since 3.0 [2009-8-21 上午11:18:03]
+
     static public final boolean  DEFAULT_IS_DEFAULT_FONT = false;
     static public final String  DEFAULT_REPORT_FONT = "";
+
+    //LIMAO SansSerif => 宋体
     static public final String  DEFAULT_FONT_NAME = "SansSerif";
-    static public final String  DEFAULT_PDF_FONT_NAME = "Helvetica";
+
+    //LIMAO: Helvetica=>STSong-Light
+    static public final String  DEFAULT_PDF_FONT_NAME = "STSong-Light";
     static public final int     DEFAULT_FONT_SIZE = 10;
     static public final String  DEFAULT_TTF_FONT_NAME = "";
     static public final boolean DEFAULT_IS_BOLD = false;
@@ -67,20 +71,22 @@ public class IReportFont extends IReportHashMapBean {
     static public final boolean DEFAULT_IS_ITALIC = false;
     static public final boolean DEFAULT_IS_STRIKETROUGHT = false;
     static public final boolean DEFAULT_IS_PDF_EMBEDDED = false;
-    static public final String  DEFAULT_PDF_ENCODING = "Cp1252";
-    
-    
-    
+
+    // LIMAO: Cp1252 => UniGB-UCS2-H
+    static public final String  DEFAULT_PDF_ENCODING = "UniGB-UCS2-H";
+
+
+
     /** Creates a new instance of IReportFont */
     public IReportFont() {
     }
-    
+
     public Object clone()
     {
             IReportFont newBean = new IReportFont();
             return super.clone(newBean);
     }
-        
+
     /** Getter for property bold.
      * @return Value of property bold.
      *
@@ -88,12 +94,12 @@ public class IReportFont extends IReportHashMapBean {
     public boolean isBold() {
         return getBooleanValue( IS_BOLD, DEFAULT_IS_BOLD );
     }
-    
+
     public boolean isSet(String property)
     {
         return (getBeanProperties().get(property) != null);
     }
-    
+
     /** Setter for property bold.
      * @param bold New value of property bold.
      *
@@ -101,7 +107,7 @@ public class IReportFont extends IReportHashMapBean {
     public void setBold(boolean bold) {
         getBeanProperties().put(IS_BOLD, ""+bold);
     }
-    
+
     /** Getter for property fontName.
      * @return Value of property fontName.
      *
@@ -109,7 +115,7 @@ public class IReportFont extends IReportHashMapBean {
     public java.lang.String getFontName() {
         return getStringValue(FONT_NAME, DEFAULT_FONT_NAME);
     }
-    
+
     /** Setter for property fontName.
      * @param fontName New value of property fontName.
      *
@@ -117,7 +123,7 @@ public class IReportFont extends IReportHashMapBean {
     public void setFontName(java.lang.String fontName) {
         getBeanProperties().put(FONT_NAME, fontName);
     }
-    
+
     /** Getter for property fontSize.
      * @return Value of property fontSize.
      *
@@ -125,7 +131,7 @@ public class IReportFont extends IReportHashMapBean {
     public int getFontSize() {
         return getIntValue(FONT_SIZE, DEFAULT_FONT_SIZE);
     }
-    
+
     /** Setter for property fontSize.
      * @param fontSize New value of property fontSize.
      *
@@ -133,7 +139,7 @@ public class IReportFont extends IReportHashMapBean {
     public void setFontSize(int fontSize) {
         getBeanProperties().put(FONT_SIZE, ""+fontSize);
     }
-    
+
     /** Getter for property italic.
      * @return Value of property italic.
      *
@@ -141,7 +147,7 @@ public class IReportFont extends IReportHashMapBean {
     public boolean isItalic() {
         return getBooleanValue( IS_ITALIC, DEFAULT_IS_ITALIC );
     }
-    
+
     /** Setter for property italic.
      * @param italic New value of property italic.
      *
@@ -149,7 +155,7 @@ public class IReportFont extends IReportHashMapBean {
     public void setItalic(boolean italic) {
        getBeanProperties().put(IS_ITALIC, ""+italic);
     }
-    
+
     /** Getter for property pdfEmbedded.
      * @return Value of property pdfEmbedded.
      *
@@ -157,7 +163,7 @@ public class IReportFont extends IReportHashMapBean {
     public boolean isPdfEmbedded() {
         return getBooleanValue( IS_PDF_EMBEDDED, DEFAULT_IS_PDF_EMBEDDED );
     }
-    
+
     /** Setter for property pdfEmbedded.
      * @param pdfEmbedded New value of property pdfEmbedded.
      *
@@ -165,7 +171,7 @@ public class IReportFont extends IReportHashMapBean {
     public void setPdfEmbedded(boolean pdfEmbedded) {
         getBeanProperties().put(IS_PDF_EMBEDDED, ""+pdfEmbedded);
     }
-    
+
     /** Getter for property pdfEncoding.
      * @return Value of property pdfEncoding.
      *
@@ -173,7 +179,7 @@ public class IReportFont extends IReportHashMapBean {
     public java.lang.String getPdfEncoding() {
         return getStringValue(PDF_ENCODING, DEFAULT_PDF_ENCODING);
     }
-    
+
     /** Setter for property pdfEncoding.
      * @param pdfEncoding New value of property pdfEncoding.
      *
@@ -181,7 +187,7 @@ public class IReportFont extends IReportHashMapBean {
     public void setPdfEncoding(java.lang.String pdfEncoding) {
         getBeanProperties().put(PDF_ENCODING, ""+pdfEncoding);
     }
-    
+
     /** Getter for property PDFFontName.
      * @return Value of property PDFFontName.
      *
@@ -189,7 +195,7 @@ public class IReportFont extends IReportHashMapBean {
     public java.lang.String getPDFFontName() {
         return getStringValue(PDF_FONT_NAME, DEFAULT_PDF_FONT_NAME);
     }
-    
+
     /** Setter for property PDFFontName.
      * @param PDFFontName New value of property PDFFontName.
      *
@@ -201,7 +207,7 @@ public class IReportFont extends IReportHashMapBean {
                 getBeanProperties().put(TTF_FONT_NAME, ""+PDFFontName);
 	}
     }
-    
+
     /** Getter for property reportFont.
      * @return Value of property reportFont.
      *
@@ -209,7 +215,7 @@ public class IReportFont extends IReportHashMapBean {
     public java.lang.String getReportFont() {
         return getStringValue(REPORT_FONT, DEFAULT_REPORT_FONT);
     }
-    
+
     /** Setter for property reportFont.
      * @param reportFont New value of property reportFont.
      *
@@ -217,7 +223,7 @@ public class IReportFont extends IReportHashMapBean {
     public void setReportFont(java.lang.String reportFont) {
         getBeanProperties().put(REPORT_FONT, ""+reportFont);
     }
-    
+
     /** Getter for property strikeTrought.
      * @return Value of property strikeTrought.
      *
@@ -225,7 +231,7 @@ public class IReportFont extends IReportHashMapBean {
     public boolean isStrikeTrought() {
         return getBooleanValue( IS_STRIKETROUGHT, DEFAULT_IS_STRIKETROUGHT );
     }
-    
+
     /** Setter for property strikeTrought.
      * @param strikeTrought New value of property strikeTrought.
      *
@@ -233,7 +239,7 @@ public class IReportFont extends IReportHashMapBean {
     public void setStrikeTrought(boolean strikeTrought) {
         getBeanProperties().put(IS_STRIKETROUGHT, ""+strikeTrought);
     }
-    
+
     /** Getter for property TTFFont.
      * @return Value of property TTFFont.
      *
@@ -241,7 +247,7 @@ public class IReportFont extends IReportHashMapBean {
     public java.lang.String getTTFFont() {
         return getStringValue(TTF_FONT_NAME, DEFAULT_TTF_FONT_NAME);
     }
-    
+
     /** Setter for property TTFFont.
      * @param TTFFont New value of property TTFFont.
      *
@@ -249,7 +255,7 @@ public class IReportFont extends IReportHashMapBean {
     public void setTTFFont(java.lang.String TTFFont) {
         getBeanProperties().put(TTF_FONT_NAME, ""+TTFFont);
     }
-    
+
     /** Getter for property underline.
      * @return Value of property underline.
      *
@@ -257,7 +263,7 @@ public class IReportFont extends IReportHashMapBean {
     public boolean isUnderline() {
         return getBooleanValue( IS_UNDERLINE, DEFAULT_IS_UNDERLINE );
     }
-    
+
     /** Setter for property underline.
      * @param underline New value of property underline.
      *
@@ -265,17 +271,17 @@ public class IReportFont extends IReportHashMapBean {
     public void setUnderline(boolean underline) {
         getBeanProperties().put(IS_UNDERLINE, ""+underline);
     }
-        
+
     public String toString()
     {
         return this.getReportFont();
     }
-    
+
     public String getDescription()
     {
         return this.getFontName()+" "+this.getFontSize();
     }
-    
+
     /** Getter for property defaultFont.
      * @return Value of property defaultFont.
      *
@@ -283,7 +289,7 @@ public class IReportFont extends IReportHashMapBean {
     public boolean isDefaultFont() {
         return getBooleanValue( IS_DEFAULT_FONT, DEFAULT_IS_DEFAULT_FONT );
     }
-    
+
     /** Setter for property defaultFont.
      * @param defaultFont New value of property defaultFont.
      *
@@ -291,10 +297,10 @@ public class IReportFont extends IReportHashMapBean {
     public void setDefaultFont(boolean defaultFont) {
         getBeanProperties().put(IS_DEFAULT_FONT, ""+defaultFont);
     }
-    
-    
+
+
     /** Convert to java.awt.Font.
-    */    
+    */
     public java.awt.Font getJavaAWTFont(){
 
              int style = java.awt.Font.PLAIN;
@@ -315,25 +321,25 @@ public class IReportFont extends IReportHashMapBean {
     }
 
 	/** Copy java.awt.Font common attributes.
-	*/    
+	*/
 	public void setJavaAWTFont(java.awt.Font font){
-		
+
 		//not logical name
 		setFontName( font.getFontName() );
-		
+
 		setFontSize( font.getSize() );
-   	
+
 		int style = font.getStyle();
 		setBold( (style & java.awt.Font.BOLD) > 0 );
 		setItalic( (style & java.awt.Font.ITALIC) > 0);
-	
+
 		Map fontAttributes = font.getAttributes();
 		setUnderline( (fontAttributes.containsKey(TextAttribute.UNDERLINE) && fontAttributes.get(TextAttribute.UNDERLINE).equals(TextAttribute.UNDERLINE_ON)));
 		setStrikeTrought( (fontAttributes.containsKey(TextAttribute.STRIKETHROUGH) && fontAttributes.get(TextAttribute.STRIKETHROUGH).equals(TextAttribute.STRIKETHROUGH_ON)));
-	
+
 	}
-        
-        
+
+
         public static boolean isTTFFont(String fontName)
         {
             if (fontName.equals("Helvetica")) return false;
@@ -359,8 +365,8 @@ public class IReportFont extends IReportHashMapBean {
             if (fontName.equals("HYSMyeongJo-Medium")) return false;
             return true;
         }
-        
-        
+
+
         /**
          * Try to match the most appropriate pdf font
          *
@@ -373,25 +379,25 @@ public class IReportFont extends IReportHashMapBean {
                 if (fontName.startsWith("Helvetica") && bold && !italic) return "Helvetica-Bold";
                 if (fontName.startsWith("Helvetica") && bold && italic) return "Helvetica-BoldOblique";
                 if (fontName.startsWith("Helvetica") && !bold && italic) return "Helvetica-Oblique";
-                
+
                 if (fontName.startsWith("Courier") && !bold && !italic) return "Courier";
                 if (fontName.startsWith("Courier") && bold && !italic) return "Courier-Bold";
                 if (fontName.startsWith("Courier") && bold && italic) return "Courier-BoldOblique";
                 if (fontName.startsWith("Courier") && !bold && italic) return "Courier-Oblique";
-                
+
                 if (fontName.startsWith("Times") && !bold && !italic) return "Times-Roman";
                 if (fontName.startsWith("Times") && bold && !italic) return "Times-Bold";
                 if (fontName.startsWith("Times") && bold && italic) return "Times-BoldItalic";
                 if (fontName.startsWith("Times") && !bold && italic) return "Times-Italic";
-                
+
             }
             return fontName;
        }
-       
-        
+
+
         /**
         * Set the more appropriate pdf font name reading the bold and italic properties
-        * of element. 
+        * of element.
         */
         public static boolean adjustPdfFontName(TextReportElement element)
         {
@@ -401,7 +407,7 @@ public class IReportFont extends IReportHashMapBean {
                    element.setPDFFontName(newPdfFontName);
                    return true;
                }
-               
+
                return false;
         }
 }

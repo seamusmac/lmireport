@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,7 +25,7 @@
  *
  *
  * ReportListener.java
- * 
+ *
  * Created on 17 giugno 2003, 1.03
  *
  */
@@ -34,35 +34,35 @@ package it.businesslogic.ireport.gui.event;
 
 /**
  * This listener handle all report events regarding selection and changes.
- * A single event (excluse reportElementsSelectionChanged) can mark 
+ * A single event (excluse reportElementsSelectionChanged) can mark
  * a document as "dirty".
  *
  * @author  Giulio Toffoli
  */
 public interface ReportListener extends java.util.EventListener  {
-    
+
     /**
       *     This method is called when a new element is selected,
       *     or deselected.
       */
      public void reportElementsSelectionChanged(ReportElementsSelectionEvent evt);
-   
+
      /*
       *     This method is called when an element is removed, changed or added.
       */
       public void reportElementsChanged(ReportElementChangedEvent evt);
-      
+
      /*
       *     This method is called when a band is removed, changed or added.
-      */ 
+      */
      public void reportBandChanged(ReportBandChangedEvent evt );
-     
+
       /**
       *     This method is called when a new element is selected,
       *     or deselected.
       */
      public void reportBandsSelectionChanged(ReportBandsSelectionEvent evt);
-     
+
      /**
       *     This method is called when a new object is selected,
       *     or deselected.

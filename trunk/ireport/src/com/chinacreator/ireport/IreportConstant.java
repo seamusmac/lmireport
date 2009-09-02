@@ -26,6 +26,10 @@ package com.chinacreator.ireport;
 //begin IreportConstant.java
 public final class IreportConstant {
 	public final static String FONT_SONGTI = "ËÎÌו";
+
+	public final static String SUCCESS = "SUCCESS";
+
+	public final static String FAIL = "FAIL";
 }
 
 //end IreportConstant.java

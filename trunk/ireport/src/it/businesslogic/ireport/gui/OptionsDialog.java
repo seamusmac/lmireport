@@ -32,16 +32,28 @@
 
 package it.businesslogic.ireport.gui;
 import it.businesslogic.ireport.ReportElement;
+import it.businesslogic.ireport.gui.event.SheetPropertyValueChangedEvent;
+import it.businesslogic.ireport.gui.event.SheetPropertyValueChangedListener;
+import it.businesslogic.ireport.gui.sheet.CategorySheetPanel;
+import it.businesslogic.ireport.gui.sheet.ColorSelectorPanel;
 import it.businesslogic.ireport.gui.sheet.HexColorChooserPanel;
-import it.businesslogic.ireport.util.*;
+import it.businesslogic.ireport.gui.sheet.NumberComboBoxSheetProperty;
+import it.businesslogic.ireport.gui.sheet.SheetProperty;
+import it.businesslogic.ireport.gui.sheet.Tag;
+import it.businesslogic.ireport.util.I18n;
+import it.businesslogic.ireport.util.LanguageChangedEvent;
+import it.businesslogic.ireport.util.LanguageChangedListener;
+import it.businesslogic.ireport.util.LocaleAdapter;
+import it.businesslogic.ireport.util.Misc;
+
 import java.awt.Color;
 import java.io.File;
-import javax.swing.*;
-import it.businesslogic.ireport.gui.event.*;
-import it.businesslogic.ireport.gui.sheet.*;
-import java.util.*;
-
 import java.util.Locale;
+import java.util.Vector;
+
+import javax.swing.JFileChooser;
+import javax.swing.JInternalFrame;
+import javax.swing.SwingUtilities;
 /**
  *
  * @author  Administrator
@@ -161,7 +173,7 @@ public class OptionsDialog extends javax.swing.JDialog implements LanguageChange
                 categorySheetPanel.addSheetProperty(category_name, new SheetProperty("ShowToolTipsInDesign",it.businesslogic.ireport.util.I18n.getString("gui.OptionsDialog.LabelShowToolTipsInDesign","Show ToolTips in design"), SheetProperty.BOOLEAN));
                 categorySheetPanel.addSheetProperty(category_name, new SheetProperty("MagneticPower",it.businesslogic.ireport.util.I18n.getString("gui.OptionsDialog.magneticPower","Magnetic power"), SheetProperty.INTEGER));
                 categorySheetPanel.addSheetProperty(category_name, new SheetProperty("RealTimeValidation",it.businesslogic.ireport.util.I18n.getString("gui.OptionsDialog.RealTimeValidation","Enable real time validation"), SheetProperty.BOOLEAN));
-                
+
                 categorySheetPanel.addSheetProperty(category_name, new SheetProperty("enableRMIServer",it.businesslogic.ireport.util.I18n.getString("gui.OptionsDialog.startRMIServer","Enable RMI server"), SheetProperty.BOOLEAN));
                 categorySheetPanel.addSheetProperty(category_name, new SheetProperty("RMIServerPort",it.businesslogic.ireport.util.I18n.getString("gui.OptionsDialog.RMIServerPort","RMI server port"), SheetProperty.INTEGER));
 
@@ -172,9 +184,9 @@ public class OptionsDialog extends javax.swing.JDialog implements LanguageChange
                 listOfLanguages = it.businesslogic.ireport.util.I18n.getListOfAvailLanguages();
 
                 listOfLanguages.add(0, Locale.getDefault());
-                
-                
-                
+
+
+
                 it.businesslogic.ireport.Language languageModel = null;
 
                 String selectedLanguage = mf.getProperties().getProperty("Language");
@@ -216,9 +228,9 @@ public class OptionsDialog extends javax.swing.JDialog implements LanguageChange
                 categorySheetPanel.addSheetProperty(category_name, new SheetProperty("showCompatibilityMessageLoad",it.businesslogic.ireport.util.I18n.getString("gui.OptionsDialog.LabelShowWarningForCompatibilityLoad","Show warning for version compatibility on load"), SheetProperty.BOOLEAN));
                 categorySheetPanel.addSheetProperty(category_name, new SheetProperty("LoadFontOnStartup",it.businesslogic.ireport.util.I18n.getString("gui.OptionsDialog.LoadFontOnStartup","Load font files on startup"), SheetProperty.BOOLEAN));
 
-                
+
                 categorySheetPanel.addSheetProperty(category_name, new SheetProperty("RestoreLayout",it.businesslogic.ireport.util.I18n.getString("gui.OptionsDialog.RestoreLayoutOnStartup","Restore layout on startup"), SheetProperty.BOOLEAN));
-        
+
 
                 category_name =  it.businesslogic.ireport.util.I18n.getString("gui.OptionsDialog.ReportDefaults","Report defaults");
                 SheetProperty sp_script_language = new SheetProperty("DefaultScriptingLanguage",it.businesslogic.ireport.util.I18n.getString("gui.OptionsDialog.DefaultScriptingLanguage","Default language for expressions"), SheetProperty.COMBOBOX);
@@ -243,7 +255,7 @@ public class OptionsDialog extends javax.swing.JDialog implements LanguageChange
                 categorySheetPanel.addSheetProperty(category_name, sp_default_style);
 
                 category_name = I18n.getString("optionsDialog.tabLookAndFeel","LookAndFeel");
-                                
+
                 SheetProperty sp_laf = new SheetProperty("LookAndFeel",it.businesslogic.ireport.util.I18n.getString("gui.OptionsDialog.LabelLookAndFeel","Look & Feel"), SheetProperty.COMBOBOX);
                 Vector tags_laf = new Vector();
 
@@ -362,7 +374,7 @@ public class OptionsDialog extends javax.swing.JDialog implements LanguageChange
             jTabbedPane1.setTitleAt(1, I18n.getString("optionsDialog.tab.Compiler","Compiler"));
             jTabbedPane1.setTitleAt(2, I18n.getString("optionsDialog.tab.Backup","Backup"));
             jTabbedPane1.setTitleAt(3, I18n.getString("optionsDialog.tab.ExternalPrograms","External programs"));
-        
+
             ((javax.swing.border.TitledBorder)jPanelCompileDir.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("optionsDialog.panelBorder.DefaultCompilationDirectory","Default compilation directory") );
             ((javax.swing.border.TitledBorder)jPanelCompileDir1.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("optionsDialog.panelBorder.Compiler","Compiler") );
             ((javax.swing.border.TitledBorder)jPanelCompileDir2.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("optionsDialog.panelBorder.ReportVirtualizer","Report Virtualizer") );
@@ -370,7 +382,7 @@ public class OptionsDialog extends javax.swing.JDialog implements LanguageChange
             ((javax.swing.border.TitledBorder)jPanel6.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("optionsDialog.panelBorder.BackupFilesOnSave","Backup files on save") );
             ((javax.swing.border.TitledBorder)jPanelExternalEditor.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("optionsDialog.panelBorder.ExternalEditor","External editor") );
             ((javax.swing.border.TitledBorder)jPanelViewers.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("optionsDialog.panelBorder.Viewers","Viewers") );
-            
+
             createSheet();
             loadConfiguration();
             this.setTitle("iReport - " + it.businesslogic.ireport.util.I18n.getString("gui.OptionsDialog.title","Options"));
@@ -394,10 +406,10 @@ public class OptionsDialog extends javax.swing.JDialog implements LanguageChange
             {
                 this.categorySheetPanel.setPropertyValue("Antialias", Misc.nvl(mf.getProperties().getProperty("Antialias"),"true") );
                 this.categorySheetPanel.setPropertyValue("RealTimeValidation", Misc.nvl(mf.getProperties().getProperty("RealTimeValidation"),"true") );
-                
+
                 this.categorySheetPanel.setPropertyValue("ShowToolTipsInDesign", Misc.nvl(mf.getProperties().getProperty("ShowToolTipsInDesign"),"false") );
                 this.categorySheetPanel.setPropertyValue("MagneticPower", Misc.nvl(mf.getProperties().getProperty("MagneticPower"),"5") );
-                
+
                 this.categorySheetPanel.setPropertyValue("RecentFilesLength", Misc.nvl(mf.getProperties().getProperty("RecentFilesLength"),"10"));
                 this.categorySheetPanel.setPropertyValue("DefaultUnit",  Misc.nvl(mf.getProperties().getProperty("DefaultUnit"),"cm") );
                 this.categorySheetPanel.setPropertyValue("showGrid",  Misc.nvl(mf.getProperties().getProperty("showGrid"),"false") );
@@ -408,18 +420,18 @@ public class OptionsDialog extends javax.swing.JDialog implements LanguageChange
                 this.categorySheetPanel.setPropertyValue("AskToSave",  Misc.nvl(mf.getProperties().getProperty("AskToSave"),"true") );
                 this.categorySheetPanel.setPropertyValue("showCompatibilityMessage",  Misc.nvl(mf.getProperties().getProperty("showCompatibilityMessage"),"true") );
                 this.categorySheetPanel.setPropertyValue("showCompatibilityMessageLoad",  Misc.nvl(mf.getProperties().getProperty("showCompatibilityMessageLoad"),"true") );
-                
+
 
                 this.categorySheetPanel.setPropertyValue("LoadFontOnStartup",  Misc.nvl(mf.getProperties().getProperty("LoadFontOnStartup"),"true") );
 
                 this.categorySheetPanel.setPropertyValue("RestoreLayout",  Misc.nvl(mf.getProperties().getProperty("RestoreLayout"),"true") );
 
-                
+
                 java.awt.Color color = new java.awt.Color(Integer.parseInt( Misc.nvl(mf.getProperties().getProperty("NewViewBorderColor"), Color.lightGray.getRGB() + "" )));
                 String color_str =  HexColorChooserPanel.getEncodedColor( color );
                         //"[" + color.getRed() + "," + color.getGreen() + "," +  color.getBlue()+ "]";
                 this.categorySheetPanel.setPropertyValue("NewViewBorderColor", color_str );
-                
+
                 String size = Misc.nvl(mf.getProperties().getProperty("GridSize"),"10");
                 if (size.equals("null") || size.trim().length() == 0) size = "10";
                 this.categorySheetPanel.setPropertyValue("GridSize", size);
@@ -1545,14 +1557,14 @@ public class OptionsDialog extends javax.swing.JDialog implements LanguageChange
             {
                 try {
                     jfc.setCurrentDirectory( new File(jTextFieldCompilationDir.getText()));
-                    
+
                 } catch (Exception ex){
                     try {
                         jfc.setCurrentDirectory( new File(MainFrame.getMainInstance().getCurrentDirectory()));
                     } catch (Exception ex2){}
                 }
             }
-            
+
 	    if (jfc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 		    jTextFieldCompilationDir.setText( jfc.getSelectedFile().getPath());
 	    }
@@ -1708,20 +1720,20 @@ public class OptionsDialog extends javax.swing.JDialog implements LanguageChange
                         prop.put("showGrid",""+this.categorySheetPanel.getPropertyValue("showGrid"));
                         prop.put("Antialias",""+this.categorySheetPanel.getPropertyValue("Antialias"));
                         prop.put("RealTimeValidation",""+this.categorySheetPanel.getPropertyValue("RealTimeValidation"));
-                        
+
                         prop.put("AutoReload",""+this.categorySheetPanel.getPropertyValue("AutoReload"));
                         prop.put("AskToSave",""+this.categorySheetPanel.getPropertyValue("AskToSave"));
                         prop.put("showCompatibilityMessage",""+this.categorySheetPanel.getPropertyValue("showCompatibilityMessage"));
                         prop.put("showCompatibilityMessageLoad",""+this.categorySheetPanel.getPropertyValue("showCompatibilityMessageLoad"));
-                        
+
                         prop.put("LoadFontOnStartup",""+this.categorySheetPanel.getPropertyValue("LoadFontOnStartup"));
                         prop.put("RestoreLayout",""+this.categorySheetPanel.getPropertyValue("RestoreLayout"));
 
                         prop.put("ShowToolTipsInDesign",""+""+this.categorySheetPanel.getPropertyValue("ShowToolTipsInDesign"));
 
                         prop.put("MagneticPower", ""+this.categorySheetPanel.getPropertyValue("MagneticPower"));
-                        
-                                
+
+
                         prop.put("enableRMIServer",""+this.categorySheetPanel.getPropertyValue("enableRMIServer"));
                         prop.put("RMIServerPort",""+""+this.categorySheetPanel.getPropertyValue("RMIServerPort"));
 
@@ -1739,7 +1751,8 @@ public class OptionsDialog extends javax.swing.JDialog implements LanguageChange
                         {
                             ReportElement.lightcolor = color;
                         }
-                        
+
+                        //LIMAO: look and feel
                         String currentLAF = prop.getProperty("LookAndFeel","");
 
                         prop.put("LookAndFeel",""+""+this.categorySheetPanel.getPropertyValue("LookAndFeel"));

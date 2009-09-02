@@ -33,10 +33,16 @@
 package it.businesslogic.ireport.util;
 
 import it.businesslogic.ireport.gui.MainFrame;
-import java.util.*;
-import java.util.jar.*;
-import java.net.*;
-import java.io.*;
+
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.Vector;
 
 /**
  *
@@ -126,7 +132,7 @@ public class I18n
     public static java.util.List getListOfAvailLanguages()
     {
         java.util.List supportedLocales = new java.util.ArrayList();
-        
+
         try
         {
             Set names = Misc.getResoucesInPackage( localPackageName );
@@ -265,7 +271,9 @@ public class I18n
 //    }
 
 
-    // Default to english
+    // Default to ÖÐÎÄ
+    // LIMAO : modify by li.mao since 3.0 [2009-8-21 ÉÏÎç11:05:49]
+
     private static Locale currentLocale = Locale.ENGLISH;
 
     public static void setCurrentLocale( String language )
