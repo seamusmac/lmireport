@@ -55,7 +55,7 @@ import org.w3c.dom.NodeList;
 
 /**
  *
- * @author  Administrator
+ * @author  limao
  */
 // LIMAO : 数据库连接面板 modify by li.mao since 3.0 [2009-9-2 下午02:38:21]
 
@@ -69,7 +69,6 @@ public class ConnectionsDialog extends javax.swing.JDialog {
         this.setSize(490,500);
         //DefaultTableColumnModel dtcm = (DefaultTableColumnModel)jTableParameters.getColumnModel();
         //DefaultTableCellRenderer tcr = (DefaultTableCellRenderer)dtcm.getColumn(0).getHeaderRenderer();
-
         //new DefaultTableCellRenderer();
         //tcr.setFont(jTableParameters.getFont());
         //tcr.setBackground(this.getBackground());
@@ -715,7 +714,7 @@ public class ConnectionsDialog extends javax.swing.JDialog {
         return getAvailableConnectionName(proposedConnectionName, 0);
      }
 
-     private static String getAvailableConnectionName(String proposedConnectionName, int testNumber)
+     public static String getAvailableConnectionName(String proposedConnectionName, int testNumber)
      {
         String name = proposedConnectionName;
         if (testNumber != 0) name += " (" + testNumber + ")";

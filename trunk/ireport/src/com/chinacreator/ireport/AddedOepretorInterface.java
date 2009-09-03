@@ -66,8 +66,34 @@ public interface AddedOepretorInterface {
 	 */
 	Object openRemoteFile(String fileName);
 
+	/**
+	 * 用户登陆
+	 * @param serverApp 登陆应用 比如 "http://192.168.11.110:8080/app3"
+	 * @param username 登陆用户名
+	 * @return password 登陆密码
+	 */
+	Object login(String serverApp,String username,String password);
 
+	/**
+	 * 用户注销
+	 * @return
+	 */
+	Object logout();
 
+	/**
+	 * 链路检测
+	 * @return
+	 */
+	Object linkCheck();
+
+	/**
+	 * 初始服务器模板文件到客户端，初始化策略为
+	 * 先查看服务器是端模板文件夹是否有模板文件，若没有尝试从服务器端获取
+	 * 若有则不在初始化客户端的时候获取。但是提供额外的功能去同步服务器端的模板
+	 * 该模板的初始化应该是异步的，成败不应该影响主程序的运行
+	 * @return
+	 */
+	Object initTemplate();
 }
 
 //end AddedOepretorInterface.java

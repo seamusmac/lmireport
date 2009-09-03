@@ -82,7 +82,7 @@ import org.xml.sax.SAXException;
 
 /**
  *
- * @author  Administrator
+ * @author admin
  */
 public class WizardDialog extends javax.swing.JDialog implements Runnable, LanguageChangedListener {
 //Modified by Felix Firgau on Feb 8th 2006
@@ -162,10 +162,10 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         jList2.setModel(new javax.swing.DefaultListModel());
         jList3.setModel(new javax.swing.DefaultListModel());
 
-        String templates_dir = MainFrame.IREPORT_HOME_DIR;  //System.getProperty("ireport.home",".");
-        templates_dir +=  File.separator + "templates";
-        //System.out.println("Templates: " + templates_dir);
-        //C:\\documenti\\progetti\\ireport\\iReport2\\templates
+        // LIMAO :这里开始加载模板
+        String templates_dir = MainFrame.IREPORT_TMP_TEMPLATE_DIR;
+        //templates_dir +=  File.separator + "templates";
+
         try {
             File f = new File(templates_dir);
             File[] templates_files = null;
@@ -179,8 +179,8 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                     }
                 });
             } else {
-                templates_dir = MainFrame.IREPORT_HOME_DIR;  //System.getProperty("ireport.home",".");
-                templates_dir +=  File.separator + "etc" + File.separator + "templates";
+                templates_dir = MainFrame.IREPORT_TMP_TEMPLATE_DIR;  //System.getProperty("ireport.home",".");
+                //templates_dir +=  File.separator + "etc" + File.separator + "templates";
                 f = new File(templates_dir);
                 if (f.exists() && f.isDirectory()) {
                     templates_files  = f.listFiles(new FilenameFilter() {

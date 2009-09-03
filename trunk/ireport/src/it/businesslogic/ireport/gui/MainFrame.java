@@ -1,35 +1,3 @@
-  /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
- * http://www.jaspersoft.com.
- *
- * Unless you have purchased a commercial license agreement from JasperSoft,
- * the following license terms apply:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as published by
- * the Free Software Foundation.
- *
- * This program is distributed WITHOUT ANY WARRANTY; and without the
- * implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see http://www.gnu.org/licenses/gpl.txt
- * or write to:
- *
- * Free Software Foundation, Inc.,
- * 59 Temple Place - Suite 330,
- * Boston, MA  USA  02111-1307
- *
- *
- *
- *
- * MainFrame.java
- *
- * Created on 5 febbraio 2003, 12.45
- *
- */
-
 package it.businesslogic.ireport.gui;
 import it.businesslogic.ireport.CompatibilitySupport;
 import it.businesslogic.ireport.CrosstabReportElement;
@@ -167,8 +135,6 @@ import org.xml.sax.SAXException;
 import com.chinacreator.ireport.AddedOperator;
 import com.chinacreator.ireport.IreportConstant;
 import com.chinacreator.ireport.IreportUtil;
-import com.chinacreator.ireport.rmi.IreportFile;
-import com.chinacreator.ireport.rmi.IreportRmiClient;
 /**
  * This class is the core of the GUI of iReport. From this class we control all
  * events related to the open and close files, handling of properties files,
@@ -179,23 +145,6 @@ import com.chinacreator.ireport.rmi.IreportRmiClient;
 public class MainFrame extends javax.swing.JFrame
         implements ReportListener, Runnable, LanguageChangedListener, StyleChangedListener, ReportDocumentStatusChangedListener
 {
-
-    ////////////////////////////
-
-//iR20     GhostGlassPane    glassPane = null;
-
-//iR20     public void installLayer()
-//iR20     {
-//iR20         glassPane = new GhostGlassPane();
-//iR20         setGlassPane(glassPane);
-//iR20
-//iR20
-//iR20         desktop.getContentPane().add( new IRLayerPane((JComponent)desktop.getContentPane(), glassPane), new Integer(230));
-//iR20     }
-
-
-
-    /////////////////////////////
 
     public int docCounter=0;
 
@@ -336,6 +285,10 @@ public class MainFrame extends javax.swing.JFrame
 
     public static String IREPORT_DEFAULT_HOME_DIR;
 
+    public static String IREPORT_TMP_TEMPLATE_DIR; //remote templet dir add by limao IREPORT_TMP_TEMPLET_DIR = IREPORT_TMP_DIR+remoteTemplet
+
+    public static String IREPORT_TMP_FILE_DIR;
+
     public static final int IREPORT_JAVA_VIEWER = 1;
 
     public static final int IREPORT_PDF_VIEWER = 2;
@@ -448,6 +401,15 @@ public class MainFrame extends javax.swing.JFrame
                 }
                 IREPORT_TMP_DIR = ireport_tmp_dir;
             }
+
+         // LIMAO : 初始化远程临时模板保存文件夹 modify by li.mao since 3.0 [2009-9-3 下午03:12:09]
+         if(IreportUtil.isBlank(IREPORT_TMP_TEMPLATE_DIR)){
+        	 IREPORT_TMP_TEMPLATE_DIR = System.getProperty("user.home") + File.separator + ".ireport" +File.separator+"remoteTemplet";
+         }
+         if(IreportUtil.isBlank(IREPORT_TMP_TEMPLATE_DIR)){
+        	 IREPORT_TMP_FILE_DIR = System.getProperty("user.home") + File.separator + ".ireport" +File.separator+"remoteFiles";
+         }
+
         }
 
         IREPORT_DEFAULT_HOME_DIR = IREPORT_HOME_DIR;
@@ -556,9 +518,8 @@ public class MainFrame extends javax.swing.JFrame
 /*        if (args.get("noPlaf") == null || args.get("noPlaf").equals("false"))
           PlafManager.setPreferredTheme("win32");*/
         if (args.get("noPlaf") == null || args.get("noPlaf").equals("false")) {
-        	//LIMAO: 皮肤只能为Metal 否则可能出现乱码或者样式
+        	//LIMAO: 皮肤只能为Metal 否则可能出现乱码或者样式错位
           String LAF = "Metal";
-          System.out.println("设置皮肤为:"+LAF);
           //Misc.setPLAF(properties.getProperty("LookAndFeel"));
           Misc.setPLAF(LAF);
           PlafManager.setPreferredTheme("win32");
@@ -724,7 +685,6 @@ public class MainFrame extends javax.swing.JFrame
         jComboBoxFont.setFont(new Font("宋体",Font.PLAIN,12));
         for (int i=0; i<fontFamilies.length; ++i)
         {
-        	System.out.println("SSS"+fontFamilies[i]);
             jComboBoxFont.addItem(fontFamilies[i]);
             if (fontFamilies[i].equalsIgnoreCase("SansSerif"))
             {
@@ -7965,26 +7925,20 @@ public class MainFrame extends javax.swing.JFrame
                 _mainFrame.setVisible(true);
             }
         });
+        // LIMAO ：重设数据源，移除配置文件已有“远程”数据源再添加“远程数据源”
+        AddedOperator.getInstance().addRemotDatasource();
+
         // LIMAO : 在远程启动的时候打开当前选择文件 modify by li.mao since 3.0 [2009-8-20 下午04:36:47]
-        IreportFile ireportFile = null;
-        try {
-        	ireportFile = IreportRmiClient.getInstance().rmiInterfactRemote.open("fgh.jrxml");
+        String remoteFileName = null; //该文件名需要外部传入
+        Object remoteFile = AddedOperator.getInstance().openRemoteFile(remoteFileName);
+        if(remoteFile!=null){
+        _mainFrame.openFile((File)remoteFile);
+        }
+        //-----------
 
-		if(ireportFile != null){
-			String path = "G:\\z\\"+ireportFile.getFileName();
-			File oldFile = new File(path);
-			if(oldFile.exists()){
-				oldFile.delete();
-			}
+        //LIMAO : 异步初始模板信息
+        AddedOperator.getInstance().initTemplate();
 
-			byte[] content = ireportFile.getContent();
-		    File f = IreportUtil.bytesToFile(path, content);
-
-		    _mainFrame.openFile(f);
-		  }
-        } catch (Exception e) {
-			e.printStackTrace();
-		}
     }
 
 
@@ -8752,6 +8706,7 @@ public class MainFrame extends javax.swing.JFrame
                     }
                     else if (nodeChild.getNodeType() == Node.ELEMENT_NODE && nodeChild.getNodeName().equals("iReportConnection")) {
                         // Take the CDATA...
+                    	System.out.println("开始加载连接....");
                         String connectionName = "";
                         String connectionClass = "";
                         HashMap hm = new HashMap();
@@ -10754,8 +10709,6 @@ public class MainFrame extends javax.swing.JFrame
         {
             cp_property += classpath.elementAt(i) +"\n";
         }
-
-        System.out.println("设定classpath:"+cp_property);
         getProperties().setProperty("classpath",cp_property);
     }
 
@@ -11365,8 +11318,8 @@ public class MainFrame extends javax.swing.JFrame
     }
 
 
-    // LIMAO :添加默认的数据源的,这里我们仅留JDBCConnection 和 JavaBeanDataSourceConnection
-
+    // LIMAO :添加默认的数据源类型,这里我们仅留JDBCConnection 和 JavaBeanDataSourceConnection
+    //没有包括xml远程数据源
     public void addDefaultConnectionImplementations()
     {
         addConnectionImplementation("it.businesslogic.ireport.connection.JDBCConnection");
@@ -11375,17 +11328,17 @@ public class MainFrame extends javax.swing.JFrame
         //addConnectionImplementation("it.businesslogic.ireport.connection.JRCSVDataSourceConnection");
         // addConnectionImplementation("it.businesslogic.ireport.connection.JRDataSourceProviderConnection");
         // addConnectionImplementation("it.businesslogic.ireport.connection.JRCustomDataSourceConnection");
-	       // addConnectionImplementation("it.businesslogic.ireport.connection.JREmptyDatasourceConnection");
+	    // addConnectionImplementation("it.businesslogic.ireport.connection.JREmptyDatasourceConnection");
 
         //把hibernate支持包去掉
         // addConnectionImplementation("it.businesslogic.ireport.connection.JRHibernateConnection");
 
         //把spring支持包去掉
-	       // addConnectionImplementation("it.businesslogic.ireport.connection.JRSpringLoadedHibernateConnection");
-	       // addConnectionImplementation("it.businesslogic.ireport.connection.EJBQLConnection");
-	       // addConnectionImplementation("it.businesslogic.ireport.connection.JRXMLADataSourceConnection");
-	       // addConnectionImplementation("it.businesslogic.ireport.connection.MondrianConnection");
-	       // addConnectionImplementation("it.businesslogic.ireport.connection.QueryExecuterConnection");
+	    // addConnectionImplementation("it.businesslogic.ireport.connection.JRSpringLoadedHibernateConnection");
+	    // addConnectionImplementation("it.businesslogic.ireport.connection.EJBQLConnection");
+	    // addConnectionImplementation("it.businesslogic.ireport.connection.JRXMLADataSourceConnection");
+	    // addConnectionImplementation("it.businesslogic.ireport.connection.MondrianConnection");
+	    // addConnectionImplementation("it.businesslogic.ireport.connection.QueryExecuterConnection");
     }
 
     public static java.util.Properties getBrandingProperties() {

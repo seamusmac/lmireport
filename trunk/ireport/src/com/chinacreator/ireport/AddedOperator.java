@@ -84,7 +84,7 @@ public class AddedOperator implements AddedOepretorInterface{
 		                  input = null ;
 		              }catch(Exception ex){
 		              }
-		           }
+		       }
 	           rf.setContent(content);
 	           IreportRmiClient.getInstance();
 	           IreportRmiClient.rmiInterfactRemote.save(rf);
@@ -314,8 +314,65 @@ public class AddedOperator implements AddedOepretorInterface{
 		}
 		return null;
 	}
+
+
+	public Object login(String serverApp, String username, String password) {
+		if(IreportUtil.isBlank(serverApp) || IreportUtil.isBlank(username) || IreportUtil.isBlank(password)){
+			return "必要信息未填写完整";
+		}
+
+		//开始login
+
+		return IreportConstant.SUCCESS;
+	}
+
+	public Object logout() {
+
+		return null;
+	}
+
 	public static void main(String[] args) {
-		getInstance().addRemotDatasource();
+		System.out.println(it.businesslogic.ireport.util.Misc.isValidUrl("http://192.168.11.110:8080/app3"));
+	}
+
+	public Object linkCheck() {
+		// FIXME Auto-generated method stub
+		return null;
+	}
+
+	public Object initTemplate() {
+		try {
+			Thread initT = new Thread(new Runnable(){
+				public void run() {
+					System.out.println("开始加载模板文件夹："+MainFrame.IREPORT_TMP_TEMPLATE_DIR);
+					File tmplateDir = new File(MainFrame.IREPORT_TMP_TEMPLATE_DIR);
+					if(!tmplateDir.exists()){
+						tmplateDir.mkdirs();
+					}
+					File[] fs = tmplateDir.listFiles();
+					if(fs==null || fs.length==0){
+						System.out.println("开始从服务器获取模板文件...");
+						//删除本地模板文件
+						for (int i = 0; i < fs.length; i++) {
+							if(fs[i].isFile()){
+								fs[i].delete();
+							}
+						}
+						//------
+						//加载服务器端模板
+						//从服务器端获取文件列表
+						//循环添加
+					}else{
+						System.out.println("探测到本地已经存在模板文件，若需要同步服务器模板信息，需要手动操作！");
+					}
+				}
+			});
+			initT.setDaemon(true);
+			initT.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 }
 

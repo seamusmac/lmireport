@@ -61,6 +61,10 @@ public class IreportUtil {
 	public static boolean isBlank(String str){
 		return str==null?true:str.trim().equals("");
 	}
+
+	public static boolean isNull(Object obj){
+		return obj==null;
+	}
 }
 
 //end IreportUtil.java

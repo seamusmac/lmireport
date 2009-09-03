@@ -1329,11 +1329,10 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
 
     public void loadTemplateFiles()
     {
+    	//LIMAO : 子报表模板初始化
         templates = new Vector();
-        String templates_dir = MainFrame.IREPORT_HOME_DIR;  //System.getProperty("ireport.home",".");
-        templates_dir +=  File.separator + "templates";
-        System.out.println("AAAAAAAAAAAAAATemplates: " + templates_dir);
-        //C:\\documenti\\progetti\\ireport\\iReport2\\templates
+        String templates_dir = MainFrame.IREPORT_TMP_TEMPLATE_DIR;
+
         try {
             File f = new File(templates_dir);
             File[] templates_files = null;
@@ -1347,8 +1346,8 @@ public class SubreportWizardNewReport extends javax.swing.JPanel implements Gene
                     }
                 });
             } else {
-                templates_dir = MainFrame.IREPORT_HOME_DIR;  //System.getProperty("ireport.home",".");
-                templates_dir +=  File.separator + "etc" + File.separator + "templates";
+                templates_dir = MainFrame.IREPORT_TMP_TEMPLATE_DIR;  //System.getProperty("ireport.home",".");
+                // templates_dir +=  File.separator + "etc" + File.separator + "templates";
                 f = new File(templates_dir);
                 if (f.exists() && f.isDirectory()) {
                     templates_files  = f.listFiles(new FilenameFilter() {

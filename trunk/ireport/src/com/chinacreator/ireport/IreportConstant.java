@@ -30,6 +30,10 @@ public final class IreportConstant {
 	public final static String SUCCESS = "SUCCESS";
 
 	public final static String FAIL = "FAIL";
+
+	public final static String REMOTE_SUFFIX = "(Ô¶³Ì)";
+
+	public final static String DEFAULT_DATASOURCE_NAME="bspf"+REMOTE_SUFFIX;
 }
 
 //end IreportConstant.java

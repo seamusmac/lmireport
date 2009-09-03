@@ -110,11 +110,8 @@ public class ReportClassLoader extends java.lang.ClassLoader {
         // Looking for jars or zip in lib directory not in classpath...
         String irHome = it.businesslogic.ireport.gui.MainFrame.getMainInstance().IREPORT_HOME_DIR;
 		if (irHome == null) irHome = System.getProperty("ireport.home",".");
-		System.out.println("IREPORTHOME:"+irHome);
 		File lib_dir = new File(irHome,"lib");
-		System.out.println("LIB_DIR£º"+lib_dir.getPath());
         String classpath = it.businesslogic.ireport.util.Misc.nvl(System.getProperty("java.class.path"),"");
-       System.out.println("CLASSPATH:"+classpath);
         if (!lib_dir.exists())
         {
             System.out.println("Cannot find lib in iReport home  directory ("+it.businesslogic.ireport.gui.MainFrame.getMainInstance().IREPORT_HOME_DIR+")");
@@ -172,10 +169,8 @@ public class ReportClassLoader extends java.lang.ClassLoader {
             File f = new File( cp.elementAt(i) + "" );
             if (!f.exists()) continue;
             try {
-            	System.out.println("ALL----dynamically " + f.getCanonicalPath() + " to ireport class path");
                 if (!fPathChachedItems.contains(f.getCanonicalPath()))
                 {
-                      System.out.println("Added dynamically " + f.getCanonicalPath() + " to ireport class path");
                       fPathChachedItems.add(f.getCanonicalPath());
                 }
             } catch (Exception ex)

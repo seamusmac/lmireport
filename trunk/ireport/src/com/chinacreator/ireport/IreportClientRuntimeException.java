@@ -17,26 +17,34 @@
  */
 package com.chinacreator.ireport;
 
-import it.businesslogic.ireport.gui.MainFrame;
-
-/**
+/** 	
  * @author ¿Ó√Ø
  * @since 3.0
- * @version $Id: Start.java Aug 3, 2009 11:44:04 AM $
+ * @version $Id: IreportClientRuntimeException.java 2009-9-3 œ¬ŒÁ02:42:29 $
  *
  */
-//begin Start.java
-public class Start {
+//begin IreportClientRuntimeException.java
+public class IreportClientRuntimeException extends RuntimeException {
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		MainFrame.main(null);
-		//Vector v = MainFrame.getMainInstance().getConnections();
-		//System.out.println(v==null?0:v.size());
+	public IreportClientRuntimeException() {
+		// FIXME Auto-generated constructor stub
+	}
+
+	public IreportClientRuntimeException(String message) {
+		super(message);
+		// FIXME Auto-generated constructor stub
+	}
+
+	public IreportClientRuntimeException(Throwable cause) {
+		super(cause);
+		// FIXME Auto-generated constructor stub
+	}
+
+	public IreportClientRuntimeException(String message, Throwable cause) {
+		super(message, cause);
+		// FIXME Auto-generated constructor stub
 	}
 
 }
 
-//end Start.java
+//end IreportClientRuntimeException.java
