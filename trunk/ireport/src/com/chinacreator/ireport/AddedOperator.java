@@ -17,12 +17,27 @@
  */
 package com.chinacreator.ireport;
 
+import it.businesslogic.ireport.IReportConnection;
+import it.businesslogic.ireport.Report;
+import it.businesslogic.ireport.gui.MainFrame;
+import it.businesslogic.ireport.util.I18n;
+
 import java.awt.Font;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.HashMap;
+import java.util.Vector;
 
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
+
+import org.apache.xerces.parsers.DOMParser;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import com.chinacreator.ireport.component.DialogFactory;
 import com.chinacreator.ireport.rmi.IreportFile;
@@ -115,6 +130,140 @@ public class AddedOperator implements AddedOepretorInterface{
 		return addInstance;
 	}
 
+
+
+
+	public Object addRemotDatasource() {
+		String xmlString = "<?xml version=\"1.0\"?>" +
+							"<iReportConnectionSet>	" +
+							"<iReportConnection name=\"mysql\" connectionClass=\"it.businesslogic.ireport.connection.JDBCConnection\">" +
+							"<connectionParameter name=\"ServerAddress\"><![CDATA[localhost]]></connectionParameter>" +
+							"<connectionParameter name=\"SavePassword\"><![CDATA[true]]></connectionParameter>"+
+							"<connectionParameter name=\"Url\"><![CDATA[jdbc:mysql://localhost/openi]]></connectionParameter>"+
+							"<connectionParameter name=\"JDBCDriver\"><![CDATA[com.mysql.jdbc.Driver]]></connectionParameter>"+
+							"<connectionParameter name=\"Database\"><![CDATA[openi]]></connectionParameter>"+
+							"<connectionParameter name=\"Password\"><![CDATA[123456]]></connectionParameter>"+
+							"<connectionParameter name=\"Username\"><![CDATA[root]]></connectionParameter>"+
+							"</iReportConnection>"+
+							"</iReportConnectionSet>";
+		//步骤.....
+		//1:删除已有远程连接
+		Vector conns = MainFrame.getMainInstance().getConnections();
+
+		if(conns != null){
+		for (int i = 0; i < conns.size(); i++) {
+			IReportConnection irc = (IReportConnection)conns.elementAt(i);
+
+			//若是满足远程条件将删除本地数据源
+			if(irc.getName().endsWith(IreportConstant.REMOTE_SUFFIX)){
+				System.out.println("移除:"+irc.getName());
+				MainFrame.getMainInstance().getConnections().removeElement(irc);
+			}
+		}
+		}
+		//2:解析已有远程数据源
+		   if(IreportUtil.isBlank(xmlString)){
+			   return null;
+		   }
+
+	         try {
+	             DOMParser parser = new DOMParser();
+	             org.xml.sax.InputSource input_sss  = new org.xml.sax.InputSource(new ByteArrayInputStream(xmlString.getBytes()));
+	             parser.parse( input_sss );
+
+	             Document document = parser.getDocument();
+	             Node node = document.getDocumentElement();
+
+
+	             NodeList list_child = node.getChildNodes(); // The root is iReportConnections
+	             for (int ck=0; ck< list_child.getLength(); ck++) {
+	                 Node connectionNode = (Node)list_child.item(ck);
+	                 if (connectionNode.getNodeName() != null && connectionNode.getNodeName().equals("iReportConnection"))
+	                 {
+	                    // Take the CDATA...
+	                        String connectionName = "";
+	                        String connectionClass = "";
+	                        HashMap hm = new HashMap();
+	                        NamedNodeMap nnm = connectionNode.getAttributes();
+	                        if ( nnm.getNamedItem("name") != null) connectionName = nnm.getNamedItem("name").getNodeValue();
+	                        if ( nnm.getNamedItem("connectionClass") != null) connectionClass = nnm.getNamedItem("connectionClass").getNodeValue();
+
+	                        // Get all connections parameters...
+	                        NodeList list_child2 = connectionNode.getChildNodes();
+	                        for (int ck2=0; ck2< list_child2.getLength(); ck2++) {
+	                            String parameterName = "";
+	                            Node child_child = (Node)list_child2.item(ck2);
+	                            if (child_child.getNodeType() == Node.ELEMENT_NODE && child_child.getNodeName().equals("connectionParameter")) {
+
+	                                NamedNodeMap nnm2 = child_child.getAttributes();
+	                                if ( nnm2.getNamedItem("name") != null)
+	                                    parameterName = nnm2.getNamedItem("name").getNodeValue();
+	                                hm.put( parameterName,Report.readPCDATA(child_child));
+	                            }
+	                        }
+
+	                        // 如果名字存在，重命名为 "name (2)"
+	                        //远程数据源在第一步骤全部删除，然后在加上远程后缀后是不可能重复的
+	                        //connectionName = ConnectionsDialog.getAvailableConnectionName(connectionName);
+	                        connectionName +=IreportConstant.REMOTE_SUFFIX; //保存远程数据源需要添加后缀标识
+	                        try {
+	                            IReportConnection con = (IReportConnection) Class.forName(connectionClass).newInstance();
+	                            con.loadProperties(hm);
+	                            con.setName(connectionName);
+
+	                            MainFrame.getMainInstance().getConnections().add(con);
+	                            //设置默认选择
+	                            if(IreportConstant.DEFAULT_DATASOURCE_NAME.equals(connectionName)){
+	                                MainFrame.getMainInstance().setActiveConnection(con);
+	                            }
+
+	                        } catch (Exception ex) {
+
+	                            JOptionPane.showMessageDialog(MainFrame.getMainInstance(),
+	                                I18n.getFormattedString("messages.connectionsDialog.errorLoadingConnection" ,"Error loading  {0}", new Object[]{connectionName}),
+	                                I18n.getString("message.title.error","Error"), JOptionPane.ERROR_MESSAGE);
+	                        }
+	                }
+	             }
+	         } catch (Exception ex)
+	         {
+	             JOptionPane.showMessageDialog(MainFrame.getMainInstance(),
+	                                I18n.getFormattedString("messages.connectionsDialog.errorLoadingConnections" ,"Error loading connections.\n{0}", new Object[]{ex.getMessage()}),
+	                                I18n.getString("message.title.error","Error"), JOptionPane.ERROR_MESSAGE);
+	              ex.printStackTrace();
+	         }
+
+	         MainFrame.getMainInstance().saveiReportConfiguration();
+		return null;
+	}
+
+	public Object openRemoteFile(String fileName) {
+		if(IreportUtil.isBlank(fileName)){
+			//return null;
+			fileName = "fgh.jrxml"; //测试
+		}
+		  IreportFile ireportFile = null;
+	        try {
+	        	ireportFile = IreportRmiClient.getInstance().rmiInterfactRemote.open(fileName);
+
+			if(ireportFile != null){
+				String path = "G:\\z\\"+ireportFile.getFileName();
+				File oldFile = new File(path);
+				if(oldFile.exists()){
+					oldFile.delete();
+				}
+
+				byte[] content = ireportFile.getContent();
+			    File f = IreportUtil.bytesToFile(path, content);
+
+			    return f;
+			  }
+	        } catch (Exception e) {
+				e.printStackTrace();
+			}
+		return null;
+	}
+
 	//swing 需要注册宋体才能不会在展示时出现乱码
 	public Object registerSongTi() {
 		System.out.println("注册宋体");
@@ -165,8 +314,9 @@ public class AddedOperator implements AddedOepretorInterface{
 		}
 		return null;
 	}
-
-
+	public static void main(String[] args) {
+		getInstance().addRemotDatasource();
+	}
 }
 
 //end AddedOperator.java

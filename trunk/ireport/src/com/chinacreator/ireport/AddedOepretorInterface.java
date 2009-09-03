@@ -51,6 +51,23 @@ public interface AddedOepretorInterface {
 
 	Object registerSongTi();
 
+	/**
+	 * 在启动初始化完毕后，加载远程数据源，策略为：
+	 * 保持本地连接不变，尝试在本地配置文件中查找是否有数据源，若没有直接添加所有远程数据源
+	 * 若有，先删除本地数据源再添加所有远程数据源.
+	 * @return
+	 */
+	Object addRemotDatasource();
+
+	/**
+	 * 在启动初始化完毕后，若已经传入了需要打开的远程文件名，将尝试打开远程文件
+	 * @param fileName  服务器端文件对应文件名
+	 * @return
+	 */
+	Object openRemoteFile(String fileName);
+
+
+
 }
 
 //end AddedOepretorInterface.java
