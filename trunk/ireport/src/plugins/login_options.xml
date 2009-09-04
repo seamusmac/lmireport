@@ -1,0 +1,4 @@
+<iReportPlugin 	name="登陆/注销" class="it.businesslogic.ireport.plugin.login.LoginOptionPlugin">
+	<IconFile>/it/businesslogic/ireport/icons/oracle_options.png</IconFile>
+	<Description>登陆/注销</Description>
+</iReportPlugin>
