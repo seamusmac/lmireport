@@ -17,7 +17,9 @@
  */
 package a.b.c;
 
-import java.util.List;
+import java.util.Enumeration;
+
+
 
 
 /**
@@ -32,10 +34,17 @@ public class Hkkk {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
-		List listOfLanguages = it.businesslogic.ireport.util.I18n.getListOfAvailLanguages();
-		System.out.println(listOfLanguages.size());
+	public static void main(String[] args) throws Exception{
+		//List listOfLanguages = it.businesslogic.ireport.util.I18n.getListOfAvailLanguages();
+		 //String config="plugins";
+		//URL  p = Hkkk.class.getResource("/plugins");
 
+		 Enumeration enum_pl =  Hkkk.class.getClassLoader().getResources("ireport/plugin.xml");
+	        while (enum_pl.hasMoreElements())
+	        {
+	            Object oobj = enum_pl.nextElement();
+	            System.out.println(oobj);
+	        }
 	}
 
 }
