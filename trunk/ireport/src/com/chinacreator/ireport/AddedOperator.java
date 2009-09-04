@@ -374,6 +374,25 @@ public class AddedOperator implements AddedOepretorInterface{
 		}
 		return null;
 	}
+
+	public Object initRemoteArgs(String[] args) {
+		if(args!=null && args.length>0){
+			for (int i = 0; i < args.length; i++) {
+				switch (i) {
+				case 0: //第一参数为rmi_ip
+					MyReportProperties.setProperties(IreportConstant.RMI_IP, args[i]);
+					break;
+				case 1: //第一参数为rmi_port
+					MyReportProperties.setProperties(IreportConstant.RMI_PORT, args[i]);
+					break;
+				case 2: //第一参数为report_id
+					MyReportProperties.setProperties(IreportConstant.REPORT_ID, args[i]);
+					break;
+				}
+			}
+		}
+		return null;
+	}
 }
 
 //end AddedOperator.java

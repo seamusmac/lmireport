@@ -34,6 +34,17 @@ public final class IreportConstant {
 	public final static String REMOTE_SUFFIX = "(Ô¶³Ì)";
 
 	public final static String DEFAULT_DATASOURCE_NAME="bspf"+REMOTE_SUFFIX;
+
+	public final static String USERNAME="USERNAME";
+
+	public final static String PASSWORD="PASSWORD";
+
+	public final static String RMI_IP="RMI_IP";
+
+	public final static String RMI_PORT="RMI_PORT";
+
+	public final static String REPORT_ID="REPORT_ID";
+
 }
 
 //end IreportConstant.java

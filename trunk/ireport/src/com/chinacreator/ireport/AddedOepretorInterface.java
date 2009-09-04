@@ -94,6 +94,15 @@ public interface AddedOepretorInterface {
 	 * @return
 	 */
 	Object initTemplate();
+
+	/**
+	 * 从外部传递过来的参数...
+	 * 注意顺序
+	 * @param args
+	 * @return
+	 */
+	Object initRemoteArgs(String[] args);
+
 }
 
 //end AddedOepretorInterface.java

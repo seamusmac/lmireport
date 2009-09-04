@@ -6,11 +6,13 @@ public class LoginOptionPlugin extends IReportPlugin {
 
 	@Override
 	public void call() {
-		 java.awt.EventQueue.invokeLater(new Runnable() {
-	            public void run() {
+
+		java.awt.EventQueue.invokeLater(new Runnable() {
+	         public void run() {
 	                new LoginOptions(it.businesslogic.ireport.gui.MainFrame.getMainInstance() , true).setVisible(true);
 	            }
 	        });
+
 	}
 
 }

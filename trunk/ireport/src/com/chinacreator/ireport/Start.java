@@ -32,7 +32,7 @@ public class Start {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-
+		AddedOperator.getInstance().initRemoteArgs(args);
 		MainFrame.main(null);
 	}
 

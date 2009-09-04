@@ -22,6 +22,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.rmi.Naming;
 
+import com.chinacreator.ireport.IreportConstant;
+import com.chinacreator.ireport.IreportUtil;
+import com.chinacreator.ireport.MyReportProperties;
+
 /**
  * @author 李茂
  * @since 3.0
@@ -32,14 +36,23 @@ import java.rmi.Naming;
 public class IreportRmiClient {
 	private static IreportRmiClient client = null;
 	public static IreportRmiInterface rmiInterfactRemote = null;
-	private static String ip = "127.0.0.1";//由外部传入
-	private static String port = "10086"; //由外部传入
-
-
+	private static String ip = null;
+	private static String port = null;
 
 	public static synchronized IreportRmiClient getInstance (){
 		try {
 		if(client == null){
+			 ip = MyReportProperties.getStringProperties(IreportConstant.RMI_IP);//由外部传入
+			 port =  MyReportProperties.getStringProperties(IreportConstant.RMI_PORT); //由外部传入
+			 if(IreportUtil.isBlank(ip)){
+				 ip="127.0.0.1";
+				 System.out.println("初始化未找到IP，使用本地IP：172.0.0.1");
+			 }
+			 if(IreportUtil.isBlank(port)){
+				 port="10086";
+				 System.out.println("初始化未找到PORT，使用PORT：10086");
+			 }
+			System.out.println("创建客户端RMI连接，IP："+ip+"端口："+port);
 			rmiInterfactRemote = (IreportRmiInterface) Naming.lookup("rmi://"+ip+":"+port+"/ireportRmiServer");
 			client = new IreportRmiClient();
 		}
