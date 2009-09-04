@@ -32,9 +32,8 @@ public class Start {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+
 		MainFrame.main(null);
-		//Vector v = MainFrame.getMainInstance().getConnections();
-		//System.out.println(v==null?0:v.size());
 	}
 
 }
