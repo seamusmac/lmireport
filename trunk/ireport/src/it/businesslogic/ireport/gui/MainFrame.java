@@ -289,6 +289,8 @@ public class MainFrame extends javax.swing.JFrame
     public static String IREPORT_TMP_TEMPLATE_DIR; //remote templet dir add by limao IREPORT_TMP_TEMPLET_DIR = IREPORT_TMP_DIR+remoteTemplet
 
     public static String IREPORT_TMP_FILE_DIR;
+    
+    public static String IREPORT_PLUGIN_DIR;
 
     public static final int IREPORT_JAVA_VIEWER = 1;
 
@@ -411,6 +413,9 @@ public class MainFrame extends javax.swing.JFrame
         	 IREPORT_TMP_FILE_DIR = System.getProperty("user.home") + File.separator + ".ireport" +File.separator+"remoteFiles";
          }
 
+         if(IreportUtil.isBlank(IREPORT_PLUGIN_DIR)){
+        	 IREPORT_TMP_FILE_DIR = System.getProperty("user.home") + File.separator + ".ireport" +File.separator+"remoteplugins";
+         }
         }
 
         IREPORT_DEFAULT_HOME_DIR = IREPORT_HOME_DIR;
@@ -954,7 +959,8 @@ public class MainFrame extends javax.swing.JFrame
 
                     //LIMAO : 修改plugin的位置
                     //loadPlugins(IREPORT_HOME_DIR + File.separator + "plugins"  );
-                    loadPlugins("/plugins"  );
+               
+                    loadPlugins(IREPORT_PLUGIN_DIR);
 
                     //it.businesslogic.ireport.util.I18n.setCurrentLocale( properties.getProperty("Language"), properties.getProperty("Country") );
 
@@ -1046,7 +1052,8 @@ public class MainFrame extends javax.swing.JFrame
 
 
         this.getRootPane().updateUI();
-
+        //LIMAO : 在mianframe初始化的控件必须开始国际化
+        applyI18n();
     }
 
     /**
@@ -9904,7 +9911,8 @@ public class MainFrame extends javax.swing.JFrame
 
     private static Locale lastLocale = null;
     public void applyI18n(){
-
+System.out.println("开始I18："+lastLocale);
+System.out.println("当前："+I18n.getCurrentLocale());
         if (lastLocale != null && lastLocale == I18n.getCurrentLocale()) return;
                 lastLocale = I18n.getCurrentLocale();
 
@@ -10228,31 +10236,26 @@ public class MainFrame extends javax.swing.JFrame
     }
 
 
-
+//LIMAO: 加载插件 已经修改策略
     public void loadPlugins(String plugins_dir) {
-        // Adding default properties...
-
+    	// Adding default properties...
+    	AddedOperator.getInstance().initPluginsConfig();
         ReportClassLoader rcl = this.getReportClassLoader();
         //rcl.rescanLibDirectory();
 
-       // java.util.Vector plugin_files_v = new java.util.Vector();
+        java.util.Vector plugin_files_v = new java.util.Vector();
         File plugDir = null;
-
-/*	    String s = this.getClass().getResource("/plugins").getPath();
-	    plugins_dir = s;
-        System.out.println("插件路径为:"+plugins_dir);
-
         try {
             plugDir = new File(plugins_dir);
         } catch (Exception ex)
         {}
         if (plugDir == null || !plugDir.exists() || plugDir.isFile()) {
             try {
-
+                
                 getLogPane().getMainLogTextArea().logOnConsole(
                                 I18n.getFormattedString("messages.errorScanningPluginDir","Error scanning iReport plugin directory: {0}\n", new Object[]{""+plugins_dir} ),
                                 JOptionPane.ERROR_MESSAGE);
-
+                
 
             } catch (Exception exsx)
             {}
@@ -10269,10 +10272,20 @@ public class MainFrame extends javax.swing.JFrame
 	            if (!plugins_files[i].getName().endsWith(".xml")) continue;
 	            plugin_files_v.add(plugins_files[i]);
 	        }
-        }*/
+	}
 
-/*        try {
-        Enumeration enum_pl = rcl.getResources("ireport/plugin.xml");
+        try {
+
+            //Enumeration enum_pl = this.getClass().getClassLoader().getResources("ireport/plugin.xml");
+            //logOnConsole("Looking into: " + "\n");
+            //for (int i=0; i< rcl.getCachedItems().size(); ++i)
+            //{
+            //    logOnConsole(rcl.getCachedItems().get(i)+ "\n");
+            //}
+
+            Enumeration enum_pl = rcl.getResources("ireport/plugin.xml");
+
+
         while (enum_pl.hasMoreElements())
         {
             Object oobj = enum_pl.nextElement();
@@ -10284,17 +10297,16 @@ public class MainFrame extends javax.swing.JFrame
 
 
         } catch (Exception ex) {
-
+            
             getLogPane().getMainLogTextArea().logOnConsole(
                                 I18n.getString("messages.errorLookingForPlugins","Error searching ireport/plugin.xml resources\n"),
                                 JOptionPane.ERROR_MESSAGE);
+            
+        }
 
-        }*/
-        URL enum_pl = rcl.getResource("ireport/plugin.xml");
+        for (int i=0; i<plugin_files_v.size(); ++i) {
 
-        //for (int i=0; i<plugin_files_v.size(); ++i) {
-
-            Object source = new File(enum_pl.getFile());
+            Object source = plugin_files_v.elementAt(i);
             //  Create a Xerces DOM Parser
             DOMParser parser = new DOMParser();
             //  Parse the Document
@@ -10364,24 +10376,17 @@ public class MainFrame extends javax.swing.JFrame
                 PluginEntry pe = new PluginEntry();
                 pe.setMainFrame( this );
 
-                if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("iReportPlugins")) {
-                	NodeList nodelist = node.getChildNodes();
-                	Node pnode = null;
-                	System.out.println("AAAAAAA:"+nodelist.getLength());
-                	for(int m=0;m<nodelist.getLength();m++){
-                		pnode = nodelist.item(m);
-
-                	if (pnode.getNodeType() == Node.ELEMENT_NODE && pnode.getNodeName().equals("iReportPlugin")) {
+                if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("iReportPlugin")) {
                     //System.out.println("iReportProperties");
                     // Get childs....
-                    NamedNodeMap nnm_plugin = pnode.getAttributes();
+                    NamedNodeMap nnm_plugin = node.getAttributes();
                     if ( nnm_plugin.getNamedItem("name") != null) pe.setName(nnm_plugin.getNamedItem("name").getNodeValue());
                     if ( nnm_plugin.getNamedItem("class") != null) pe.setClassName( nnm_plugin.getNamedItem("class").getNodeValue() );
                     if ( nnm_plugin.getNamedItem("loadOnStartup") != null) pe.setLoadOnStartup( Misc.nvl(nnm_plugin.getNamedItem("loadOnStartup").getNodeValue().trim(),"false").toLowerCase().equals("true") );
                     if ( nnm_plugin.getNamedItem("hide") != null) pe.setHide(  Misc.nvl(nnm_plugin.getNamedItem("hide").getNodeValue().trim(),"false").toLowerCase().equals("true") );
                     if ( nnm_plugin.getNamedItem("configurable") != null) pe.setConfigurable( Misc.nvl(nnm_plugin.getNamedItem("configurable").getNodeValue().trim(),"false").toLowerCase().equals("true") );
 
-                    NodeList children = pnode.getChildNodes();
+                    NodeList children = node.getChildNodes();
                     if (children != null) {
                         for (int k=0; k< children.getLength(); k++) {
                             Node nodeChild = (Node)children.item(k);
@@ -10401,8 +10406,7 @@ public class MainFrame extends javax.swing.JFrame
                         }
                     }
                 }
-                }
-                }
+
 
                 if (!pe.isHide()) {
                     javax.swing.JMenuItem pluginItem = new javax.swing.JMenuItem();
@@ -10434,7 +10438,7 @@ public class MainFrame extends javax.swing.JFrame
                 System.err.println(e);
             }
 
-       // } // End cycle on iReport plugin files...
+        } // End cycle on iReport plugin files...
     }
 
 
