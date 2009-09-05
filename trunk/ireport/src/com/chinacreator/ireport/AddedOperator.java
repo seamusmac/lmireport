@@ -393,6 +393,19 @@ public class AddedOperator implements AddedOepretorInterface{
 		}
 		return null;
 	}
+
+	//先搜索本地文件系统再搜索服务器
+	public Object initPluginsConfig() {
+		File plugDir = new File(MainFrame.IREPORT_PLUGIN_DIR);
+		if (plugDir == null || !plugDir.exists() || plugDir.isFile()) {
+			//没有找到配置文件目录将创建目录
+			plugDir.mkdirs();
+		}
+		if(plugDir.listFiles()!=null && plugDir.listFiles().length==0){
+			//尝试从服务器端加载
+		}
+		return null;
+	}
 }
 
 //end AddedOperator.java

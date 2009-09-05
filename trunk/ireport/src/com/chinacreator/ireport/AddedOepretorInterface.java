@@ -103,6 +103,14 @@ public interface AddedOepretorInterface {
 	 */
 	Object initRemoteArgs(String[] args);
 
+	/**
+	 * 优先本地加载策略
+	 * 插件配置文件的加载改为最初从服务器加载，且完成从服务器到本地的复制
+	 * 每次启动将尝试读取本地文件配置是否含有插件配置信息，若没有将从服务器
+	 * 端获取信息
+	 * @return File[]
+	 */
+	Object initPluginsConfig();
 }
 
 //end AddedOepretorInterface.java
