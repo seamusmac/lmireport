@@ -75,12 +75,12 @@ public class IReportTCPServer implements Runnable {
     
     public static void runServer()
     {             
-      if (MainFrame.getMainInstance().getProperties().getProperty( "enableRMIServer" ,"false").equals("true"))
-      {
+     // if (MainFrame.getMainInstance().getProperties().getProperty( "enableRMIServer" ,"false").equals("true"))
+     // {
         Thread t = new Thread( IReportTCPServer.getMainInstance() );
         t.start();
         //SwingUtilities.invokeLater( IReportServerImpl.getMainInstance() );
-      }
+     // }
     }
     
     public void run() {

@@ -100,6 +100,7 @@ public class ReportClassLoader extends java.lang.ClassLoader {
     /**
      *  Add to search paths list as no relodable jar/zip all new .jar,.zip not already in classpath
      */
+     //LIMAO: 移除对$IREPORT_HOME/lib
     public void rescanLibDirectory()
     {
         try {
@@ -110,11 +111,15 @@ public class ReportClassLoader extends java.lang.ClassLoader {
         // Looking for jars or zip in lib directory not in classpath...
         String irHome = it.businesslogic.ireport.gui.MainFrame.getMainInstance().IREPORT_HOME_DIR;
 		if (irHome == null) irHome = System.getProperty("ireport.home",".");
-		File lib_dir = new File(irHome,"lib");
-        String classpath = it.businesslogic.ireport.util.Misc.nvl(System.getProperty("java.class.path"),"");
+		//File lib_dir = new File(irHome,"lib");
+		
+		String libpath = it.businesslogic.ireport.gui.MainFrame.getMainInstance().IREPORT_USER_HOME_DIR+"/lib";
+		File lib_dir = new File(libpath);
+		String classpath = it.businesslogic.ireport.util.Misc.nvl(System.getProperty("java.class.path"),"");
+        System.out.println("LEI:"+classpath);
         if (!lib_dir.exists())
         {
-            System.out.println("Cannot find lib in iReport home  directory ("+it.businesslogic.ireport.gui.MainFrame.getMainInstance().IREPORT_HOME_DIR+")");
+            System.out.println("在目录："+libpath+"为类路径，需要的jar包可以添加于此");
             return;
         }
 
