@@ -408,13 +408,16 @@ public class MainFrame extends javax.swing.JFrame
          // LIMAO : 初始化远程临时模板保存文件夹 modify by li.mao since 3.0 [2009-9-3 下午03:12:09]
          if(IreportUtil.isBlank(IREPORT_TMP_TEMPLATE_DIR)){
         	 IREPORT_TMP_TEMPLATE_DIR = System.getProperty("user.home") + File.separator + ".ireport" +File.separator+"remoteTemplet";
+        	 System.out.println("报表模板临时存储文件夹："+IREPORT_TMP_TEMPLATE_DIR);
          }
-         if(IreportUtil.isBlank(IREPORT_TMP_TEMPLATE_DIR)){
+         if(IreportUtil.isBlank(IREPORT_TMP_FILE_DIR)){
         	 IREPORT_TMP_FILE_DIR = System.getProperty("user.home") + File.separator + ".ireport" +File.separator+"remoteFiles";
+        	 System.out.println("报表临时存储文件为："+IREPORT_TMP_FILE_DIR);
          }
 
          if(IreportUtil.isBlank(IREPORT_PLUGIN_DIR)){
-        	 IREPORT_TMP_FILE_DIR = System.getProperty("user.home") + File.separator + ".ireport" +File.separator+"remoteplugins";
+        	 IREPORT_PLUGIN_DIR = System.getProperty("user.home") + File.separator + ".ireport" +File.separator+"remoteplugins";
+        	 System.out.println("报表插件目录为："+IREPORT_PLUGIN_DIR);
          }
         }
 
