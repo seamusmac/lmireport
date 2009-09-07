@@ -112,14 +112,15 @@ public class ReportClassLoader extends java.lang.ClassLoader {
         String irHome = it.businesslogic.ireport.gui.MainFrame.getMainInstance().IREPORT_HOME_DIR;
 		if (irHome == null) irHome = System.getProperty("ireport.home",".");
 		//File lib_dir = new File(irHome,"lib");
-		
+
 		String libpath = it.businesslogic.ireport.gui.MainFrame.getMainInstance().IREPORT_USER_HOME_DIR+"/lib";
 		File lib_dir = new File(libpath);
 		String classpath = it.businesslogic.ireport.util.Misc.nvl(System.getProperty("java.class.path"),"");
-        System.out.println("LEI:"+classpath);
+
         if (!lib_dir.exists())
         {
-            System.out.println("在目录："+libpath+"为类路径，需要的jar包可以添加于此");
+        	lib_dir.mkdirs();
+        	System.out.println("在目录："+libpath+"为类路径，需要的jar包可以添加于此");
             return;
         }
 

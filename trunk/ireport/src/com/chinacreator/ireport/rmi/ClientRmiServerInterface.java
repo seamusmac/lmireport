@@ -15,38 +15,35 @@
  * the License.
  *
  */
-package com.chinacreator.ireport;
+package com.chinacreator.ireport.rmi;
+
+import java.io.File;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 /**
  * @author 李茂
  * @since 3.0
- * @version $Id: IreportConstant.java 2009-8-21 下午02:45:51 $
+ * @version $Id: ClientRmiServerInterface.java 2009-9-7 上午09:54:40 $
  *
  */
-//begin IreportConstant.java
-public final class IreportConstant {
-	public final static String FONT_SONGTI = "宋体";
+//begin ClientRmiServerInterface.java
+public interface ClientRmiServerInterface extends Remote{
+	/**
+	 * 链路检测，若可到达连接返回true否则false
+	 * 场景：在服务端启动时可能需要使用到
+	 * @return
+	 */
+	boolean linkCheck() throws RemoteException;
 
-	public final static String SUCCESS = "SUCCESS";
-
-	public final static String FAIL = "FAIL";
-
-	public final static String REMOTE_SUFFIX = "(远程)";
-
-	public final static String DEFAULT_DATASOURCE_NAME="bspf"+REMOTE_SUFFIX;
-
-	public final static String USERNAME="USERNAME";
-
-	public final static String PASSWORD="PASSWORD";
-
-	public final static String RMI_IP="RMI_IP";
-
-	public final static String RMI_PORT="RMI_PORT";
-
-	public final static String REPORT_ID="REPORT_ID";
-
-	public final static String CLIENT_RMI_PORT="10087"; //客户端服务器的RMI端口
-
+	/**
+	 * 若客户端已经启动了一个ireport实例，当客户端尝试再次打开ireport时，将
+	 * 被服务器器探知到，且不再在客户端打开新的ireport实例，而新打开的文件将通过
+	 * 该命令在已经开启的ireport的实例中打开该文件
+	 * @param file
+	 * @return
+	 */
+	Object openFile(File file) throws RemoteException;
 }
 
-//end IreportConstant.java
+//end ClientRmiServerInterface.java

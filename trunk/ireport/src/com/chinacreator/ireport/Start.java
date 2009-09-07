@@ -29,9 +29,10 @@ import it.businesslogic.ireport.gui.MainFrame;
 public class Start {
 
 	/**
-	 * @param args 
+	 * @param args
 	 */
 	public static void main(String[] args) {
+	    AddedOperator.getInstance().beforeIreportLoadCheck();
 		AddedOperator.getInstance().initRemoteArgs(args);
 		MainFrame.main(null);
 	}

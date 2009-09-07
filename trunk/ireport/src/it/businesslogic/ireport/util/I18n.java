@@ -32,28 +32,32 @@
 
 package it.businesslogic.ireport.util;
 
-import it.businesslogic.ireport.gui.MainFrame;
-
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.MissingResourceException;
+import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
 /**
  *
- * @author  ertano
+ * @author  limao
+ *
  */
+//FIXME : 利用本来的国际化资源策略,在打包后使用webstrart启动会找不到键，而不能达到国际化的目的
+//所以这里修改成为了直接读取properties文件的形式，但是这样失去了语言切换的功能
 public class I18n
 {
 
     public static final String localPackageName = "it/businesslogic/ireport/locale/";
     public static final String baseName = "Ireport";
     private static java.util.ResourceBundle oLanguage = null;
+    private static Properties p = null;
 
     public static java.util.Vector languageChangedListeners = null;
 
@@ -140,7 +144,7 @@ public class I18n
             while( it.hasNext() )
             {
                 String n = (String)it.next();
-
+                System.out.println(n);
                 // From
                 //    'it/businesslogic/ireport/locale/Ireport_en.properties'
                 //   or
@@ -274,7 +278,7 @@ public class I18n
     // Default to 中文
     // LIMAO : modify by li.mao since 3.0 [2009-8-21 上午11:05:49]
 
-    private static Locale currentLocale = Locale.ENGLISH;
+    private static Locale currentLocale = Locale.CHINA;
 
     public static void setCurrentLocale( String language )
     {
@@ -303,7 +307,7 @@ public class I18n
 
     public static void setCurrentLocale( Locale locale )
     {
-        currentLocale=locale;
+    	currentLocale=locale;
         oLanguage = null;
 
         Enumeration enum_listeners = languageChangedListeners.elements();
@@ -357,14 +361,22 @@ public class I18n
         {
             currentLocale = Locale.getDefault();
         }
-        if(oLanguage == null)
-        {
-            oLanguage = java.util.ResourceBundle.getBundle( localPackageName + baseName,
-                    currentLocale);
-        }
-
+        //if(oLanguage == null)
+        //{
+            //LIMAO :  MODIFY
+        /*	oLanguage = java.util.ResourceBundle.getBundle( localPackageName + baseName,
+                    currentLocale);*/
+        	//oLanguage = java.util.ResourceBundle.getBundle( localPackageName + baseName+"_zh_CN");
+        //}
         try {
-            return oLanguage.getString(cID);
+    	p = new Properties();
+    	InputStream in =null;
+
+    		in = Thread.currentThread().getContextClassLoader().getResourceAsStream(localPackageName + "Ireport_zh_CN.properties");
+
+		p.load(in);
+
+            return p.getProperty(cID);
         } catch (Exception ex)
         {
             return cID;
@@ -375,24 +387,38 @@ public class I18n
     {
         try
         {
-            if(oLanguage == null)
+            if(p == null)
             {
-                if (MainFrame.getMainInstance() != null)
+            /*    if (MainFrame.getMainInstance() != null)
                 {
                     oLanguage = java.util.ResourceBundle.getBundle( localPackageName + baseName,
                         currentLocale, MainFrame.getMainInstance().getReportClassLoader());
+                    System.out.println("国家："+currentLocale);
+                    System.out.println("文件名A："+localPackageName + baseName);
                 }
                 else
                 {
-                    oLanguage = java.util.ResourceBundle.getBundle( localPackageName + baseName,
-                        currentLocale);
-                }
+                    //if("en".equals(currentLocale)){
+                    //	oLanguage = java.util.ResourceBundle.getBundle( localPackageName + baseName+"_en");
+                    //}else{
+                    	oLanguage = java.util.ResourceBundle.getBundle( localPackageName + baseName+"_zh_CN");
+                   // }
+
+                    System.out.println("文件名-----B："+localPackageName + baseName+"_zh_CN");
+                }*/
+            	p = new Properties();
+            	InputStream in =null;
+            	in = Thread.currentThread().getContextClassLoader().getResourceAsStream(localPackageName + "Ireport_zh_CN.properties");
+    			p.load(in);
+
             }
-            return oLanguage.getString(cID);
+            return p.getProperty(cID);
+            //return oLanguage.getString(cID);
         }
         catch (MissingResourceException ex)
         {
-            System.out.println("Can't find the translation for key = " + cID +": using default (" + defaultValue + ")");
+            //LIMAO : 忽略提示 看着烦
+        	 System.out.println("Can't find the translation for key = " + cID +": using default (" + defaultValue + ")");
         }
         catch (Exception ex)
         {
@@ -407,4 +433,5 @@ public class I18n
         //return it.businesslogic.ireport.gui.MainFrame.getProperties().getProperty("Language");
         return "";
     }
+
 }

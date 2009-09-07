@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,7 +25,7 @@
  *
  *
  * IReportTCPServer.java
- * 
+ *
  * Created on August 17, 2006, 3:00 PM
  *
  */
@@ -37,22 +37,26 @@ import it.businesslogic.ireport.gui.JReportFrame;
 import it.businesslogic.ireport.gui.MainFrame;
 import it.businesslogic.ireport.gui.WizardDialog;
 import it.businesslogic.ireport.util.PageSize;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.net.Socket;
+
 import javax.swing.SwingUtilities;
+
+import com.chinacreator.ireport.IreportConstant;
 
 /**
  *
  * @author gtoffoli
  */
 public class IReportTCPServer implements Runnable {
-    
+
   static IReportTCPServer mainInstance = null;
-  
+
   public static IReportTCPServer getMainInstance()
   {
       if (mainInstance == null)
@@ -64,17 +68,17 @@ public class IReportTCPServer implements Runnable {
               ex.printStackTrace();
           }
       }
-      
+
       return mainInstance;
   }
-  
+
     /** Creates a new instance of IReportTCPServer */
     public IReportTCPServer() {
     }
-    
-    
+
+
     public static void runServer()
-    {             
+    {
      // if (MainFrame.getMainInstance().getProperties().getProperty( "enableRMIServer" ,"false").equals("true"))
      // {
         Thread t = new Thread( IReportTCPServer.getMainInstance() );
@@ -82,7 +86,7 @@ public class IReportTCPServer implements Runnable {
         //SwingUtilities.invokeLater( IReportServerImpl.getMainInstance() );
      // }
     }
-    
+
     public void run() {
 
         ServerSocket serverSocket = null;
@@ -91,15 +95,15 @@ public class IReportTCPServer implements Runnable {
 
         Socket clientSocket = null;
 
-        int port = 2100;
-        try {
+        int port = Integer.parseInt(IreportConstant.CLIENT_RMI_PORT);
+       /* try {
             port = Integer.parseInt( MainFrame.getMainInstance().getProperties().getProperty( "RMIServerPort" ,"2100"));
         }
         catch (Exception ex)
         {
             ex.printStackTrace();
-        }
-        
+        }*/
+
         try {
 
             serverSocket = new ServerSocket( port );
@@ -130,23 +134,23 @@ public class IReportTCPServer implements Runnable {
                     os.close();
                     clientSocket.close();
                 } else {
-                    
+
                      os.write( new String("+OK Give me five!").getBytes() );
                      os.close();
                      clientSocket.close();
-                     
+
                     try {
-                        
+
                         SwingUtilities.invokeAndWait( new Runnable()
                         {
                             public void run()
                             {
-                        
-                        
+
+
                     try {
                            if (line.toUpperCase().startsWith("PING"))
                            {
-                               
+
                            }
                            else if (line.toUpperCase().startsWith("WIZARD "))
                            {
@@ -165,7 +169,7 @@ public class IReportTCPServer implements Runnable {
                                throw new Exception("Unknow command: " + line);
                            }
                            //os.write( new String("+OK Give me five!").getBytes() );
-                           
+
                     } catch (Throwable tr)
                     {
                            tr.printStackTrace();
@@ -178,7 +182,7 @@ public class IReportTCPServer implements Runnable {
                     } catch (InvocationTargetException ex) {
                         ex.printStackTrace();
                     }
-                    
+
                 }
             } catch (IOException e) {
 	    }
@@ -186,22 +190,22 @@ public class IReportTCPServer implements Runnable {
 
 
     }
-    
-    
+
+
     // ---------------------------------------------------------------------------------
-    
+
      public boolean runWizard(String destFile)
   {
   	MainFrame mainFrame = MainFrame.getMainInstance();
-  	
+
   	if (mainFrame == null) return false;
-  	
-        
-        
+
+
+
 	mainFrame.logOnConsole("Invocato wizard");
 	mainFrame.logOnConsole("Pronto ad invocare la nuova finestra..." + Thread.currentThread().getName());
-	
-        
+
+
         try {
                 // TODO
                 // Set the project directory as current directory;
@@ -239,15 +243,15 @@ public class IReportTCPServer implements Runnable {
               System.out.println(ex.getMessage());
                 ex.printStackTrace();
         }
-        
+
 
       return true;
   }
-  
+
   private Report createBlankReport()
   {
       Report newReport = new Report();
-      
+
         newReport.setName(it.businesslogic.ireport.util.I18n.getString("untitledReport", "untitled_report_")+"1");
         newReport.setUsingMultiLineExpressions(false); //this.isUsingMultiLineExpressions());
         newReport.setWidth(  PageSize.A4.x);
@@ -259,10 +263,10 @@ public class IReportTCPServer implements Runnable {
         newReport.setColumnCount(1);
         newReport.setColumnWidth( newReport.getWidth() - newReport.getLeftMargin() - newReport.getRightMargin() );
         newReport.setColumnSpacing(0);
-        
+
         return newReport;
   }
-  
+
     /**
    * Used to check if iReport is alive
    */
@@ -270,7 +274,7 @@ public class IReportTCPServer implements Runnable {
   {
       return true;
   }
-  
+
   /**
    * Used to show the main window and bring the iReport window on top...
    */
@@ -283,7 +287,7 @@ public class IReportTCPServer implements Runnable {
       }
       return MainFrame.getMainInstance().requestFocusInWindow();
   }
-  
+
   /**
    * Open the file passed as parameter...
    */

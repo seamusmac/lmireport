@@ -27,7 +27,11 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 
 import javax.swing.JOptionPane;
@@ -134,7 +138,8 @@ public class AddedOperator implements AddedOepretorInterface{
 
 
 	public Object addRemotDatasource() {
-		String xmlString = "<?xml version=\"1.0\"?>" +
+		try {
+		/*String xmlString = "<?xml version=\"1.0\"?>" +
 							"<iReportConnectionSet>	" +
 							"<iReportConnection name=\"mysql\" connectionClass=\"it.businesslogic.ireport.connection.JDBCConnection\">" +
 							"<connectionParameter name=\"ServerAddress\"><![CDATA[localhost]]></connectionParameter>" +
@@ -145,15 +150,16 @@ public class AddedOperator implements AddedOepretorInterface{
 							"<connectionParameter name=\"Password\"><![CDATA[123456]]></connectionParameter>"+
 							"<connectionParameter name=\"Username\"><![CDATA[root]]></connectionParameter>"+
 							"</iReportConnection>"+
-							"</iReportConnectionSet>";
+							"</iReportConnectionSet>";*/
+		 IreportRmiClient.getInstance();
+		 String xmlString = IreportRmiClient.rmiInterfactRemote.getDataSourceList();
 		//步骤.....
 		//1:删除已有远程连接
-		Vector conns = MainFrame.getMainInstance().getConnections();
+		 Vector conns = MainFrame.getMainInstance().getConnections();
 
 		if(conns != null){
 		for (int i = 0; i < conns.size(); i++) {
 			IReportConnection irc = (IReportConnection)conns.elementAt(i);
-
 			//若是满足远程条件将删除本地数据源
 			if(irc.getName().endsWith(IreportConstant.REMOTE_SUFFIX)){
 				System.out.println("移除:"+irc.getName());
@@ -166,7 +172,6 @@ public class AddedOperator implements AddedOepretorInterface{
 			   return null;
 		   }
 
-	         try {
 	             DOMParser parser = new DOMParser();
 	             org.xml.sax.InputSource input_sss  = new org.xml.sax.InputSource(new ByteArrayInputStream(xmlString.getBytes()));
 	             parser.parse( input_sss );
@@ -237,17 +242,21 @@ public class AddedOperator implements AddedOepretorInterface{
 		return null;
 	}
 
-	public Object openRemoteFile(String fileName) {
-		if(IreportUtil.isBlank(fileName)){
-			//return null;
-			fileName = "fgh.jrxml"; //测试
-		}
-		  IreportFile ireportFile = null;
-	        try {
+	public Object openRemoteFile() {
+		try {
+			String fileName = MyReportProperties.getStringProperties(IreportConstant.REPORT_ID);
+			if(IreportUtil.isBlank(fileName)){
+				return null;
+			}
+			if(!fileName.toLowerCase().endsWith(".jrxml")){
+				fileName+=".jrxml";
+			}
+
+		    IreportFile ireportFile = null;
 	        	ireportFile = IreportRmiClient.getInstance().rmiInterfactRemote.open(fileName);
 
 			if(ireportFile != null){
-				String path = "G:\\z\\"+ireportFile.getFileName();
+				String path = MainFrame.getMainInstance().IREPORT_TMP_FILE_DIR+"/"+ireportFile.getFileName();
 				File oldFile = new File(path);
 				if(oldFile.exists()){
 					oldFile.delete();
@@ -331,9 +340,6 @@ public class AddedOperator implements AddedOepretorInterface{
 		return null;
 	}
 
-	public static void main(String[] args) {
-		System.out.println(it.businesslogic.ireport.util.Misc.isValidUrl("http://192.168.11.110:8080/app3"));
-	}
 
 	public Object linkCheck() {
 		// FIXME Auto-generated method stub
@@ -344,8 +350,8 @@ public class AddedOperator implements AddedOepretorInterface{
 		try {
 			Thread initT = new Thread(new Runnable(){
 				public void run() {
-					System.out.println("开始加载模板文件夹："+MainFrame.IREPORT_TMP_TEMPLATE_DIR);
-					File tmplateDir = new File(MainFrame.IREPORT_TMP_TEMPLATE_DIR);
+					System.out.println("开始加载模板文件夹："+MainFrame.getMainInstance().IREPORT_TMP_TEMPLATE_DIR);
+					File tmplateDir = new File(MainFrame.getMainInstance().IREPORT_TMP_TEMPLATE_DIR);
 					if(!tmplateDir.exists()){
 						tmplateDir.mkdirs();
 					}
@@ -378,6 +384,7 @@ public class AddedOperator implements AddedOepretorInterface{
 	public Object initRemoteArgs(String[] args) {
 		if(args!=null && args.length>0){
 			for (int i = 0; i < args.length; i++) {
+				System.out.println("********参数"+(i+1)+":["+args[i]+"]********");
 				switch (i) {
 				case 0: //第一参数为rmi_ip
 					MyReportProperties.setProperties(IreportConstant.RMI_IP, args[i]);
@@ -400,16 +407,53 @@ public class AddedOperator implements AddedOepretorInterface{
 			File plugDir = new File(MainFrame.getMainInstance().IREPORT_PLUGIN_DIR);
 			if (plugDir == null || !plugDir.exists() || plugDir.isFile()) {
 				//没有找到配置文件目录将创建目录
+				System.out.println("未找到插件文件夹："+plugDir.getPath()+"，创建该文件夹");
 				plugDir.mkdirs();
 			}
 			if(plugDir.listFiles()!=null && plugDir.listFiles().length==0){
 				//尝试从服务器端加载
+				IreportRmiClient.getInstance();
+				List<IreportFile>  fs = IreportRmiClient.rmiInterfactRemote.getAllPlugins();
+		        for (int i = 0; i < fs.size(); i++) {
+		        	IreportFile irf= fs.get(i);
+		        	File f = IreportUtil.bytesToFile(MainFrame.getMainInstance().IREPORT_PLUGIN_DIR+"/"+irf.getFileName(), irf.getContent());
+					f.mkdir();
+					System.out.println("成功加载配置插件文件:"+f.getPath());
+		        }
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	
+
 		return null;
+	}
+
+	public Object beforeIreportLoadCheck() {
+		boolean b = false;
+		ServerSocket ss =null;
+		try {
+			 ss = new ServerSocket(Integer.parseInt(IreportConstant.CLIENT_RMI_PORT));
+		} catch (Exception e) {
+			//若有异常表示端口被占用，客户端将终止退出
+			DialogFactory.showErrorMessageDialog(null, "端口"+IreportConstant.CLIENT_RMI_PORT+"已经被占用，你是不是已经启动了一个ireport实例?", "错误");
+			b = true;
+			e.printStackTrace();
+		}finally{
+			if(ss!=null){
+				try {ss.close();} catch (IOException e) {}
+			}
+		}
+
+		if(b){
+			System.out.println("端口被占用，系统退出！");
+			System.exit(0);
+		}
+
+		return null;
+	}
+
+	public static void main(String[] args) {
+		System.out.println(Locale.getDefault());
 	}
 }
 

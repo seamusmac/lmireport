@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,7 +25,7 @@
  *
  *
  * IReportServerImpl.java
- * 
+ *
  */
 
 package it.businesslogic.ireport.rmi;
@@ -38,18 +38,21 @@ import it.businesslogic.ireport.gui.JReportFrame;
 import it.businesslogic.ireport.gui.MainFrame;
 import it.businesslogic.ireport.gui.WizardDialog;
 import it.businesslogic.ireport.util.PageSize;
-import java.io.File;
-import java.rmi.*;
-import java.rmi.server.*;
-import java.rmi.registry.*;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
+
+import java.rmi.Naming;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.server.UnicastRemoteObject;
+
+import com.chinacreator.ireport.IreportConstant;
+import com.chinacreator.ireport.rmi.ClientRmiServerInterface;
+import com.chinacreator.ireport.rmi.ClientRmiServerInterfaceImpl;
 
 public class IReportServerImpl extends UnicastRemoteObject
                              implements IReportServer, Runnable
 {
   static IReportServerImpl mainInstance = null;
-  
+
   public static IReportServerImpl getMainInstance()
   {
       if (mainInstance == null)
@@ -61,60 +64,49 @@ public class IReportServerImpl extends UnicastRemoteObject
               ex.printStackTrace();
           }
       }
-      
+
       return mainInstance;
   }
-  
-  IReportServerImpl() throws RemoteException
+
+ public IReportServerImpl() throws RemoteException
   {
      super();
   }
 
- 
+
 
   public static void runServer()
-  {             
-      //if (MainFrame.getMainInstance().getProperties().getProperty( "enableRMIServer" ,"false").equals("true"))
-      //{
-        System.setSecurityManager(new RMISecurityManager());
+  {
         Thread t = new Thread( IReportServerImpl.getMainInstance() );
         t.start();
-      //}
+
   }
-  
+
   public void run()
   {
-    //set the security manager
+
     try
       {
-        int port = 2100;
+        int port = Integer.parseInt(IreportConstant.CLIENT_RMI_PORT);
+
         try {
-            port = Integer.parseInt( MainFrame.getMainInstance().getProperties().getProperty( "RMIServerPort" ,"2100"));
-        }
-        catch (Exception ex)
-        {
-            ex.printStackTrace();
-        }
-      	Registry reg =LocateRegistry.createRegistry( port ); 
-      	
-	//put the local instance in the registry
-        //Naming.rebind("iReportServer" , Server);
-	reg.bind("iReportServer" , this);
-        System.out.println("RMI iReportServer waiting on port " + port + ".....");
+        	ClientRmiServerInterface ireportRemote = ClientRmiServerInterfaceImpl.getInstance();
+   		    LocateRegistry.createRegistry(port);
+            Naming.bind("rmi://127.0.0.1:"+port+"/ireportClientRmiServer", ireportRemote);
+            System.out.println("report客户端RMI服务器监听于端口："+port);
+   		} catch (Exception e) {
+   			e.printStackTrace();
+   		}
       }
-    catch (java.rmi.AlreadyBoundException abe)
-    {
-    	System.out.println("Service already bound! Is another iReport instance running?");
-    }
-    catch (RemoteException re)
+    catch (Exception re)
       {
          System.out.println("Remote exception: " + re.toString());
       }
 
   }
-  
+
   // --------------------------------------------------------------------------------------
-  
+
   /**
    * Used to check if iReport is alive
    */
@@ -122,7 +114,7 @@ public class IReportServerImpl extends UnicastRemoteObject
   {
       return true;
   }
-  
+
   /**
    * Used to show the main window and bring the iReport window on top...
    */
@@ -135,7 +127,7 @@ public class IReportServerImpl extends UnicastRemoteObject
       }
       return MainFrame.getMainInstance().requestFocusInWindow();
   }
-  
+
   /**
    * Open the file passed as parameter...
    */
@@ -150,20 +142,20 @@ public class IReportServerImpl extends UnicastRemoteObject
            return false;
       }
   }
-  
+
 
   public boolean runWizard(String destFile)
   {
   	MainFrame mainFrame = MainFrame.getMainInstance();
-  	
+
   	if (mainFrame == null) return false;
-  	
-        
-        
+
+
+
 	mainFrame.logOnConsole("Invocato wizard");
 	mainFrame.logOnConsole("Pronto ad invocare la nuova finestra..." + Thread.currentThread().getName());
-	
-        
+
+
         try {
                 // TODO
                 // Set the project directory as current directory;
@@ -201,15 +193,15 @@ public class IReportServerImpl extends UnicastRemoteObject
               System.out.println(ex.getMessage());
                 ex.printStackTrace();
         }
-        
+
 
       return true;
   }
-  
+
   private Report createBlankReport()
   {
       Report newReport = new Report();
-      
+
         newReport.setName(it.businesslogic.ireport.util.I18n.getString("untitledReport", "untitled_report_")+"1");
         newReport.setUsingMultiLineExpressions(false); //this.isUsingMultiLineExpressions());
         newReport.setWidth(  PageSize.A4.x);
@@ -221,11 +213,19 @@ public class IReportServerImpl extends UnicastRemoteObject
         newReport.setColumnCount(1);
         newReport.setColumnWidth( newReport.getWidth() - newReport.getLeftMargin() - newReport.getRightMargin() );
         newReport.setColumnSpacing(0);
-        
+
         return newReport;
   }
-  
-  
+
+  public static void main(String[] args) {
+	try {
+		IReportServerImpl.runServer();
+	} catch (Exception e) {
+		// FIXME Auto-generated catch block
+		e.printStackTrace();
+	}
+}
+
 }
 
 

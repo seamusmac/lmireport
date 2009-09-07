@@ -61,10 +61,9 @@ public interface AddedOepretorInterface {
 
 	/**
 	 * 在启动初始化完毕后，若已经传入了需要打开的远程文件名，将尝试打开远程文件
-	 * @param fileName  服务器端文件对应文件名
 	 * @return
 	 */
-	Object openRemoteFile(String fileName);
+	Object openRemoteFile();
 
 	/**
 	 * 用户登陆
@@ -111,6 +110,15 @@ public interface AddedOepretorInterface {
 	 * @return File[]
 	 */
 	Object initPluginsConfig();
+
+	/**
+	 * 在ireport加载的时候需要判断，客户端是否已经启用的一个ireport实例
+	 * 若已经启动将不再启动实例，这种情况的存在在于客户端启动不是通过页面启动
+	 * 的时候出现的，若是在页面启动，页面先会判断客户端是否已经启动ireport实例
+	 * 若已经启动将不会从服务器加载ireport应用，而尝试直接连接客户端ireport。
+	 * @return
+	 */
+	Object beforeIreportLoadCheck();
 }
 
 //end AddedOepretorInterface.java

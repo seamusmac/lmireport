@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,7 +25,7 @@
  *
  *
  * TranslationStatusDialog.java
- * 
+ *
  * Created on March 27, 2006, 8:06 PM
  *
  */
@@ -35,14 +35,17 @@ package it.businesslogic.ireport.plugin.locale;
 
 import it.businesslogic.ireport.IReportConnection;
 import it.businesslogic.ireport.gui.MainFrame;
+import it.businesslogic.ireport.util.I18n;
 import it.businesslogic.ireport.util.LocaleAdapter;
 import it.businesslogic.ireport.util.Misc;
-import java.io.File;
-import java.io.FileOutputStream;
+
+import java.sql.PreparedStatement;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
+
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
@@ -50,25 +53,22 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import it.businesslogic.ireport.util.I18n;
-import java.sql.PreparedStatement;
-import java.util.Enumeration;
 
 /**
  *
  * @author  gtoffoli
  */
 public class TranslationStatusDialog extends javax.swing.JDialog {
-    
+
     /** Creates new form TranslationStatusDialog */
     public TranslationStatusDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
+
         TableColumnModel tcm = jTableLanguages.getColumnModel();
         TableColumn tc = tcm.getColumn(1);
         tc.setCellRenderer(new ProgressBarCellRenderer());
-        
+
         DefaultListSelectionModel dsm = new DefaultListSelectionModel();
         dsm.setSelectionMode( dsm.SINGLE_SELECTION );
         dsm.addListSelectionListener( new ListSelectionListener() {
@@ -77,17 +77,17 @@ public class TranslationStatusDialog extends javax.swing.JDialog {
             }
         });
         jTableLanguages.setSelectionModel( dsm );
-        
-        
+
+
         applyI18n();
-        
+
         updateStatus();
-        
+
         this.jButtonInsertDb.setVisible(false);
-        
+
         pack();
         Misc.centerFrame(this);
-        
+
         javax.swing.KeyStroke escape =  javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0, false);
             javax.swing.Action escapeAction = new javax.swing.AbstractAction() {
                 public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -99,33 +99,34 @@ public class TranslationStatusDialog extends javax.swing.JDialog {
             getRootPane().getActionMap().put("ESCAPE", escapeAction);
 
 
-        
+
             //to make the default button ...
             this.getRootPane().setDefaultButton(this.jButtonOk);
     }
-    
-    
+
+
     public void updateStatus()
     {
-        
+
         List listOfLanguages = it.businesslogic.ireport.util.I18n.getListOfAvailLanguages();
-        
+
         DefaultTableModel dtm = (DefaultTableModel)jTableLanguages.getModel();
         dtm.setRowCount(0);
-        
+
         //dtm.addRow(new Object[]{"Default",null,null});
-        
+
         Properties props_default = new Properties();
         try {
-            props_default.load( MainFrame.getMainInstance().getReportClassLoader().getResourceAsStream("it/businesslogic/ireport/locale/Ireport.properties") );
+        	System.out.println("我开始加载资源文件咯~~");
+            props_default.load( MainFrame.getMainInstance().getClass().getResourceAsStream("it/businesslogic/ireport/locale/Ireport.properties") );
         } catch (Exception ex)
         {
             ex.printStackTrace();
         }
-        
+
         jLabelLocalizableString.setText( I18n.getFormattedString("translationStatusDialog.localizableStrings","Localizable strings: {0}", new Object[]{new Integer( props_default.size() - 1 )} ));
-        
-        
+
+
         for (int i=0; i< listOfLanguages.size(); ++i)
         {
             Locale lang = (Locale)listOfLanguages.get(i);
@@ -133,38 +134,38 @@ public class TranslationStatusDialog extends javax.swing.JDialog {
             String language = lang.getLanguage();
             String country = lang.getCountry();
             String variant = lang.getVariant();
-        
+
             String language_name = (language.length() > 0) ? "_" + language : "";
             language_name += (country.length() > 0) ? "_" + country : "";
             language_name += (variant.length() > 0) ? "_" + variant : "";
-            
+
             language_name = "Ireport" + language_name + ".properties";
-            
+
             int percentage_language = getLanguageCompletation(props_default,language_name);
             /*
-            if( lang.getCountry().equals(selectedCountry) && 
+            if( lang.getCountry().equals(selectedCountry) &&
                 lang.getLanguage().equals(selectedLanguage) &&
                 lang.getVariant().equals(selectedVariant) ) {
                         def_language = "" + adapter;
             }
             */
-            
+
             dtm.addRow(new Object[]{adapter,new Integer(percentage_language),language_name});
         }
-        
-        
-        
+
+
+
     }
-    
+
     public int getLanguageCompletation(Properties defaultTranslations, String language)
     {
         Properties props2 = new Properties();
         try {
         props2.load( MainFrame.getMainInstance().getReportClassLoader().getResourceAsStream("it/businesslogic/ireport/locale/" + language ) );
         } catch (Exception ex){}
-        
-        
-        
+
+
+
         double size = 0;
         Iterator namesIterator = defaultTranslations.keySet().iterator();
         size = defaultTranslations.size();
@@ -185,7 +186,7 @@ public class TranslationStatusDialog extends javax.swing.JDialog {
         if (translated == 0) return 0;
         return (int)((translated/size)*100);
     }
-    
+
     /** This method is called from within the constructor to
      * initialize the form
      * WARNING: Do NOT modify this code. The content of this method is
@@ -320,7 +321,7 @@ public class TranslationStatusDialog extends javax.swing.JDialog {
             Misc.saveTemporaryLocale(qld.getLocaleProperties(),"Ireport_" + qld.getLocale_code() + ".properties");
             this.updateStatus();
         }
-        
+
     }//GEN-LAST:event_jButtonExportToJBjButtonDetailsActionPerformed2
 
     private void jButtonInsertDbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonInsertDbActionPerformed
@@ -336,7 +337,7 @@ public class TranslationStatusDialog extends javax.swing.JDialog {
 
             conn = c.getConnection();
             conn.createStatement().execute("delete from translations where app_id=1");
-            
+
             stmt = conn.prepareStatement("insert into translations (app_id, language_id, s_key, s_value) values(1,?,?,?);");
 
             // 1. Add default keys...
@@ -352,15 +353,15 @@ public class TranslationStatusDialog extends javax.swing.JDialog {
             {
                 String key = (""+enum_keys.nextElement()).trim();
                 String val = props_default.getProperty(key);
-            
+
                 stmt.setString(1,"");
                 stmt.setString(2,key);
                 stmt.setString(3,val);
                 stmt.executeUpdate();
             }
-            
+
             List listOfLanguages = it.businesslogic.ireport.util.I18n.getListOfAvailLanguages();
-            
+
             System.out.println("Languages: " + listOfLanguages.size());
             for (int k=0; k<listOfLanguages.size(); ++k)
             {
@@ -369,15 +370,15 @@ public class TranslationStatusDialog extends javax.swing.JDialog {
                 String language = lang.getLanguage();
                 String country = lang.getCountry();
                 String variant = lang.getVariant();
-        
+
                 String language_id =  language;
                 language_id += (country.length() > 0) ? "_" + country : "";
                 language_id += (variant.length() > 0) ? "_" + variant : "";
-            
-                String language_name = "Ireport" + ( (language.length() > 0) ? "_" : "") + language_id + ".properties"; 
-                
+
+                String language_name = "Ireport" + ( (language.length() > 0) ? "_" : "") + language_id + ".properties";
+
                 System.out.println("Working on " + language_name);
-                
+
                 // 2. Add keys for each langauge
                 Properties props2 = new Properties();
                 try {
@@ -409,15 +410,15 @@ public class TranslationStatusDialog extends javax.swing.JDialog {
         {
             if (conn != null) try {conn.close();} catch (Exception ex) { }
         }
-        
-        
+
+
     }//GEN-LAST:event_jButtonInsertDbActionPerformed
 
     private void jButtonOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonOkActionPerformed
-        
+
         this.setVisible(false);
         this.dispose();
-        
+
     }//GEN-LAST:event_jButtonOkActionPerformed
 
     private void jTableLanguagesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTableLanguagesMouseClicked
@@ -433,11 +434,11 @@ public class TranslationStatusDialog extends javax.swing.JDialog {
 
         if (jTableLanguages.getSelectedRow() < 0) return;
         int row = jTableLanguages.getSelectedRow();
-        
+
         LocaleAdapter adapter = (LocaleAdapter)jTableLanguages.getValueAt(jTableLanguages.getSelectedRow(), 0);
-        
+
         TranslationStatusDetailDialog tsdd = new TranslationStatusDetailDialog(this,true);
-        
+
         Properties props_default = new Properties();
         try {
             props_default.load( MainFrame.getMainInstance().getReportClassLoader().getResourceAsStream("it/businesslogic/ireport/locale/Ireport.properties") );
@@ -445,16 +446,16 @@ public class TranslationStatusDialog extends javax.swing.JDialog {
         {
             ex.printStackTrace();
         }
-        
+
         if (props_default != null)
         {
             tsdd.setLanguage( ""+ jTableLanguages.getValueAt(jTableLanguages.getSelectedRow(), 2),props_default);
             tsdd.setVisible(true);
-        } 
-        
-        
+        }
+
+
     }//GEN-LAST:event_jButtonDetailsActionPerformed
-    
+
     /**
      * @param args the command line arguments
      */
@@ -465,7 +466,7 @@ public class TranslationStatusDialog extends javax.swing.JDialog {
             }
         });
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButtonDetails;
     private javax.swing.JButton jButtonExportToJB;
@@ -476,18 +477,18 @@ public class TranslationStatusDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTableLanguages;
     // End of variables declaration//GEN-END:variables
-    
+
     public void applyI18n(){
                 // Start autogenerated code ----------------------
                 jButtonDetails.setText(I18n.getString("translationStatusDialog.buttonDetails","Details..."));
                 jButtonOk.setText(I18n.getString("translationStatusDialog.buttonOk","Close"));
                 jLabelLocalizableString.setText( I18n.getFormattedString("translationStatusDialog.buttonOk","Close", new Object[]{new Integer(0)} ));
                 // End autogenerated code ----------------------
-                
+
                 jTableLanguages.getColumnModel().getColumn(0).setHeaderValue(I18n.getString("translationStatusDialog.table.Language","Language") );
                 jTableLanguages.getColumnModel().getColumn(1).setHeaderValue(I18n.getString("translationStatusDialog.table.Status","Status") );
                 jTableLanguages.getColumnModel().getColumn(2).setHeaderValue(I18n.getString("translationStatusDialog.table.File","File name") );
-    
+
                 jButtonExportToJB.setText(I18n.getString("translationStatusDialog.buttonExportToJB","Import from JasperBabylon"));
     }
 }

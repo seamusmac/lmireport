@@ -39,7 +39,16 @@ public interface IreportRmiInterface extends Remote{
 	IreportFile open(String fileName)throws RemoteException;
 
 	//获取数据源列表
-	List<DataSouceInfo> getDataSourceList()throws RemoteException;
+	String getDataSourceList()throws RemoteException;
+
+	List<IreportFile> getAllPlugins() throws RemoteException;
+
+	/**
+	 * 获得所有模板信息
+	 * @return
+	 * @throws RemoteException
+	 */
+	List<IreportFile> getAllTemplates() throws RemoteException;
 }
 
 //end IreportRmiInterface.java
