@@ -39,6 +39,8 @@ public final class IreportConstant {
 
 	public final static String PASSWORD="PASSWORD";
 
+	public final static String IP="IP";
+
 	public final static String RMI_IP="RMI_IP";
 
 	public final static String RMI_PORT="RMI_PORT";
@@ -46,6 +48,8 @@ public final class IreportConstant {
 	public final static String REPORT_ID="REPORT_ID";
 
 	public final static String CLIENT_RMI_PORT="10087"; //客户端服务器的RMI端口
+
+	public final static String SESSION_SUFFIX="session_";
 
 }
 

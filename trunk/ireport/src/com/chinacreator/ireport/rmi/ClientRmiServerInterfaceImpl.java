@@ -17,6 +17,9 @@
  */
 package com.chinacreator.ireport.rmi;
 
+import it.businesslogic.ireport.gui.JReportFrame;
+import it.businesslogic.ireport.gui.MainFrame;
+
 import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -48,15 +51,37 @@ public class ClientRmiServerInterfaceImpl extends UnicastRemoteObject implements
 		super();
 	}
 	public boolean linkCheck() throws RemoteException{
-		// FIXME Auto-generated method stub
-		return false;
+		return true;
 	}
 
-	public Object openFile(File file) throws RemoteException{
-		// FIXME Auto-generated method stub
+	public Object openFile(IreportSession session,File file) throws RemoteException{
+		setVisible(true);
+		new Thread(new Runnable(){
+
+			public void run() {
+				File file1 = new File("G:\\z\\fgh.jrxml");
+			      try {
+			          JReportFrame jrf = MainFrame.getMainInstance().openFile( file1 );
+			          jrf.setSelected(true);
+			      } catch (Exception ex){
+			          ex.printStackTrace();
+			      }
+
+			}
+
+		}).start();
 		return null;
 	}
 
+	  public boolean setVisible(boolean b)
+	  {
+	      MainFrame.getMainInstance().setVisible(b);
+	      if (MainFrame.getMainInstance().getState() == java.awt.Frame.ICONIFIED)
+	      {
+	            MainFrame.getMainInstance().setState( java.awt.Frame.NORMAL );
+	      }
+	      return MainFrame.getMainInstance().requestFocusInWindow();
+	  }
 }
 
 //end ClientRmiServerInterfaceImpl.java

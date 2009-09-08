@@ -17,6 +17,10 @@
  */
 package com.chinacreator.ireport;
 
+import it.businesslogic.ireport.gui.JReportFrame;
+
+import javax.swing.JInternalFrame;
+
 /**
  * @author 李茂
  * @since 3.0
@@ -47,7 +51,7 @@ public interface AddedOepretorInterface {
 
 	Object beforeClose();
 
-	Object afterClose();
+	Object afterClose(String closeFilePath);
 
 	Object registerSongTi();
 
@@ -119,6 +123,23 @@ public interface AddedOepretorInterface {
 	 * @return
 	 */
 	Object beforeIreportLoadCheck();
+
+	/**
+	 * 该方法是在用户关闭应用时回调的一个函数
+	 * 该函数主要处理的业务逻辑为接触服务器端对应文件的锁定
+	 * @param jif
+	 * @return
+	 */
+	Object beforeCloseApplication(JInternalFrame[] jif);
+
+	/**
+	 * 在界面关闭某个JReportFrame调用的方法
+	 * 他的效果相当于 ”close“
+	 * 所以在完成这个动作时应该解除当前报表的锁定
+	 * @param jrf
+	 * @return
+	 */
+	Object afterCloseJReportFrame(JReportFrame jrf);
 }
 
 //end AddedOepretorInterface.java

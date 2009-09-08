@@ -19,6 +19,7 @@ package com.chinacreator.ireport;
 
 import it.businesslogic.ireport.IReportConnection;
 import it.businesslogic.ireport.Report;
+import it.businesslogic.ireport.gui.JReportFrame;
 import it.businesslogic.ireport.gui.MainFrame;
 import it.businesslogic.ireport.util.I18n;
 
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
 
+import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
@@ -46,6 +48,7 @@ import org.w3c.dom.NodeList;
 import com.chinacreator.ireport.component.DialogFactory;
 import com.chinacreator.ireport.rmi.IreportFile;
 import com.chinacreator.ireport.rmi.IreportRmiClient;
+import com.chinacreator.ireport.rmi.IreportSession;
 
 /**
  * @author 李茂
@@ -59,9 +62,21 @@ import com.chinacreator.ireport.rmi.IreportRmiClient;
 public class AddedOperator implements AddedOepretorInterface{
 
 	public static AddedOepretorInterface addInstance = null;
-	public Object afterClose() {
-		//log.debug("************开始执行afterClose***********");
-		//log.debug("************介绍执行afterClose***********");
+	public Object afterClose(String closeFilePath) {
+		String id = null;
+		try {
+			 IreportRmiClient.getInstance();
+			 File f = new File(closeFilePath);
+			 String repid = IreportUtil.getIdFromReport(f.getName());
+			 if(IreportUtil.isBlank(repid)){
+				 DialogFactory.showErrorMessageDialog(null, "关闭时取到的报表ID为空！", "错误");
+			 }
+	         id = IreportRmiClient.rmiInterfactRemote.unLockReport(closeFilePath);
+		} catch (Exception e) {
+			e.printStackTrace();
+			DialogFactory.showErrorMessageDialog(null, "关闭时取消["+id+"]锁定时出错，你可能要手动解除锁定！\n"+e.getMessage(), "错误");
+		}
+
 		return null;
 	}
 
@@ -139,18 +154,6 @@ public class AddedOperator implements AddedOepretorInterface{
 
 	public Object addRemotDatasource() {
 		try {
-		/*String xmlString = "<?xml version=\"1.0\"?>" +
-							"<iReportConnectionSet>	" +
-							"<iReportConnection name=\"mysql\" connectionClass=\"it.businesslogic.ireport.connection.JDBCConnection\">" +
-							"<connectionParameter name=\"ServerAddress\"><![CDATA[localhost]]></connectionParameter>" +
-							"<connectionParameter name=\"SavePassword\"><![CDATA[true]]></connectionParameter>"+
-							"<connectionParameter name=\"Url\"><![CDATA[jdbc:mysql://localhost/openi]]></connectionParameter>"+
-							"<connectionParameter name=\"JDBCDriver\"><![CDATA[com.mysql.jdbc.Driver]]></connectionParameter>"+
-							"<connectionParameter name=\"Database\"><![CDATA[openi]]></connectionParameter>"+
-							"<connectionParameter name=\"Password\"><![CDATA[123456]]></connectionParameter>"+
-							"<connectionParameter name=\"Username\"><![CDATA[root]]></connectionParameter>"+
-							"</iReportConnection>"+
-							"</iReportConnectionSet>";*/
 		 IreportRmiClient.getInstance();
 		 String xmlString = IreportRmiClient.rmiInterfactRemote.getDataSourceList();
 		//步骤.....
@@ -253,10 +256,24 @@ public class AddedOperator implements AddedOepretorInterface{
 			}
 
 		    IreportFile ireportFile = null;
-	        	ireportFile = IreportRmiClient.getInstance().rmiInterfactRemote.open(fileName);
 
+	        IreportSession session = new IreportSession();
+	        session.setIp(MyReportProperties.getStringProperties(IreportConstant.IP));
+	        session.setRepid(fileName.split("\\.")[0]);
+	        session.setUsername(MyReportProperties.getStringProperties(IreportConstant.USERNAME));
+
+	        //可能存在打开的多个文件，都需要保存一份到本地，在保存的时候需要用到
+	        MyReportProperties.setProperties(IreportConstant.SESSION_SUFFIX+session.getRepid(), session);
+
+	        ireportFile = IreportRmiClient.getInstance().rmiInterfactRemote.open(session,fileName);
 			if(ireportFile != null){
+				String tmp_file_path = MainFrame.getMainInstance().IREPORT_TMP_FILE_DIR;
+				File tmp_file = new File(tmp_file_path);
+				if(!tmp_file.exists()){
+					tmp_file.mkdirs();
+				}
 				String path = MainFrame.getMainInstance().IREPORT_TMP_FILE_DIR+"/"+ireportFile.getFileName();
+				System.out.println("报表文件夹存放于："+path);
 				File oldFile = new File(path);
 				if(oldFile.exists()){
 					oldFile.delete();
@@ -268,8 +285,10 @@ public class AddedOperator implements AddedOepretorInterface{
 			    return f;
 			  }
 	        } catch (Exception e) {
+
 				e.printStackTrace();
-			}
+				DialogFactory.showErrorMessageDialog(null, "打开远程报表文件失败！\n信息:"+e.getMessage() , "错误");
+	        }
 		return null;
 	}
 
@@ -389,15 +408,23 @@ public class AddedOperator implements AddedOepretorInterface{
 				case 0: //第一参数为rmi_ip
 					MyReportProperties.setProperties(IreportConstant.RMI_IP, args[i]);
 					break;
-				case 1: //第一参数为rmi_port
+				case 1: //第2参数为rmi_port
 					MyReportProperties.setProperties(IreportConstant.RMI_PORT, args[i]);
 					break;
-				case 2: //第一参数为report_id
+				case 2: //第3参数为report_id
 					MyReportProperties.setProperties(IreportConstant.REPORT_ID, args[i]);
 					break;
+
+				case 3: //第4参数为username
+					MyReportProperties.setProperties(IreportConstant.USERNAME, args[i]);
+					break;
+				case 4: //第5参数为ip
+					MyReportProperties.setProperties(IreportConstant.IP, args[i]);
+					break;
 				}
-			}
+
 		}
+			}
 		return null;
 	}
 
@@ -454,6 +481,69 @@ public class AddedOperator implements AddedOepretorInterface{
 
 	public static void main(String[] args) {
 		System.out.println(Locale.getDefault());
+	}
+
+
+	public Object beforeCloseApplication(JInternalFrame[] jif) {
+		if(jif == null){
+			return null;
+		}
+		JReportFrame jf = null;
+		boolean isError = false;
+		for (int i = 0; i < jif.length; i++) {
+			if(jif[i]!=null && jif[i] instanceof JReportFrame){
+
+				jf = (JReportFrame) jif[i];
+				String path = jf.getReport().getFilename();
+
+				String repid = IreportUtil.getIdFromReportPath(path);
+
+				if(IreportUtil.isRemoteFile(repid)){
+				try {
+					 String id = IreportRmiClient.rmiInterfactRemote.unLockReport(repid);
+					 if(IreportUtil.isBlank(id)){isError = true;}
+				} catch (Exception e) {
+					e.printStackTrace();
+					isError = true;
+				}
+				}
+
+			}
+			if(isError){
+			DialogFactory.showErrorMessageDialog(null, "解除锁定出错!", "错误");
+			}
+		}
+		return null;
+	}
+
+	public Object afterCloseJReportFrame(final JReportFrame jrf) {
+		System.out.println("aftercloseFrame");
+		new Thread( new Runnable(){
+			public void run() {
+				if(jrf == null ){return;}
+				String path  = jrf.getReport().getFilename();
+				String repid = IreportUtil.getIdFromReportPath(path);
+				System.out.println("::::"+repid);
+				boolean isError = false;
+				if(IreportUtil.isRemoteFile(repid)){
+					System.out.println("ahahahahah");
+					try {
+						 String id = IreportRmiClient.rmiInterfactRemote.unLockReport(repid);
+						 if(IreportUtil.isBlank(id)){isError = true;}
+					} catch (Exception e) {
+						e.printStackTrace();
+						isError = true;
+					}
+					}
+				if(isError){
+					DialogFactory.showErrorMessageDialog(null, "解除["+repid+"]锁定出错!", "错误");
+				}
+
+			}
+
+		}).start();
+
+		return null;
 	}
 }
 

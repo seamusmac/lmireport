@@ -20,6 +20,8 @@ package com.chinacreator.ireport;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author ¿Ó√Ø
@@ -29,6 +31,8 @@ import java.io.FileOutputStream;
  */
 //begin IreportUtil.java
 public class IreportUtil {
+	private static Pattern  p = Pattern.compile("\\d{20}");
+
 	public static File bytesToFile(String filePath,byte[] content){
 		try {
 			if(isBlank(filePath)){
@@ -64,6 +68,46 @@ public class IreportUtil {
 
 	public static boolean isNull(Object obj){
 		return obj==null;
+	}
+
+	public static boolean isRemoteFile(String fileName){
+
+		if(IreportUtil.isBlank(fileName)){
+			return false;
+		}
+
+		if(fileName.toLowerCase().endsWith(".jrxml")){
+			fileName = fileName.split("\\.")[0];
+		}
+		 Matcher m = p.matcher(fileName);
+		 boolean b = m.matches();
+		 return b;
+
+	}
+
+	public static String getIdFromReport(String reportName){
+		if(isBlank(reportName)){
+			return "";
+		}
+		if(reportName.toLowerCase().endsWith(".jrxml")){
+			return reportName.split("\\.")[0];
+		}
+		return reportName;
+	}
+
+	public static String getIdFromReportPath(String reportPath){
+		String reportName = new File(reportPath).getName();
+		if(isBlank(reportName)){
+			return "";
+		}
+		if(reportName.toLowerCase().endsWith(".jrxml")){
+			return reportName.split("\\.")[0];
+		}
+		return reportName;
+	}
+
+	public static void main(String[] args) {
+		System.out.println(isRemoteFile("20090820160844234589.jrxml"));
 	}
 }
 

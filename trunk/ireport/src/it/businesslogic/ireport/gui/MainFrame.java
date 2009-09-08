@@ -75,6 +75,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -406,7 +408,7 @@ public class MainFrame extends javax.swing.JFrame
 
          // LIMAO : 初始化远程临时模板保存文件夹 modify by li.mao since 3.0 [2009-9-3 下午03:12:09]
          if(IreportUtil.isBlank(IREPORT_TMP_TEMPLATE_DIR)){
-        	 IREPORT_TMP_TEMPLATE_DIR = System.getProperty("user.home") + File.separator + ".ireport" +File.separator+"remoteTemplet";
+        	 IREPORT_TMP_TEMPLATE_DIR = System.getProperty("user.home") + File.separator + ".ireport" +File.separator+"remoteTemplate";
         	 System.out.println("报表模板临时存储文件夹："+IREPORT_TMP_TEMPLATE_DIR);
          }
          if(IreportUtil.isBlank(IREPORT_TMP_FILE_DIR)){
@@ -444,6 +446,7 @@ public class MainFrame extends javax.swing.JFrame
 
     public MainFrame() {
         this(new HashMap());
+
     }
     /** Creates new form MainFrame */
     @SuppressWarnings("unchecked")
@@ -780,8 +783,8 @@ public class MainFrame extends javax.swing.JFrame
         crosstabStructureView = createView("crosstabStructure",it.businesslogic.ireport.util.I18n.getString("crosstabStructure","Crosstab structure"), false, true, crosstabStructurePanel);
 
         jPanelMaster.add(defaultDockingPort, BorderLayout.CENTER);
+	    jPanelMaster.updateUI();
 
-        jPanelMaster.updateUI();
 
         // ------------- ALL TASK THAT DOES NOT NEED TO BE IN THE EDT
 
@@ -1059,6 +1062,13 @@ public class MainFrame extends javax.swing.JFrame
 
 
         this.getRootPane().updateUI();
+        this.getMainInstance().addWindowListener(
+        		new WindowAdapter(){
+        			public void windowClosing(WindowEvent evt) {
+        				System.out.println("guanbile guanbile guanbile guanbile ");
+        			}
+        		}
+        		);
         //LIMAO : 在mianframe初始化的控件必须开始国际化
         applyI18n();
     }
@@ -2171,13 +2181,9 @@ public class MainFrame extends javax.swing.JFrame
         Filler1.setMinimumSize(new java.awt.Dimension(0, 22));
         Filler1.setPreferredSize(new java.awt.Dimension(0, 22));
         jToolBarConnections.add(Filler1);
-
         jToolBarText.add(jToolBarConnections);
-
         jPanel1.add(jToolBarText, java.awt.BorderLayout.NORTH);
-
         jPanel2.setLayout(new java.awt.BorderLayout());
-
         Filler.setBackground(new java.awt.Color(255, 255, 255));
         Filler.setIcon(new javax.swing.ImageIcon(getClass().getResource("/it/businesslogic/ireport/icons/menu/null.gif"))); // NOI18N
         Filler.setBorderPainted(false);
@@ -4677,14 +4683,20 @@ public class MainFrame extends javax.swing.JFrame
         {
             JReportFrame jrf = (JReportFrame)frames.get(i);
             try {
-                jMDIMenuBar.closeFrame(jrf );
+                //LIMAO : 这里是退出某个报表文件
+            	jMDIMenuBar.closeFrame(jrf );
+            	File f = new File(jrf.getReport().getFilename());
+                if(IreportUtil.isRemoteFile(f.getName())){
+                AddedOperator.getInstance().afterClose(jrf.getReport().getFilename());
+                }
+
             } catch (Exception ex)
             {};
         }
     }//GEN-LAST:event_jMenuItemCloseFromListActionPerformed
 
     private void jMenuItemCloseAllExceptThisActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemCloseAllExceptThisActionPerformed
-
+    	System.out.println("kkkkkkkkkkkkkkkkkkkkk");
         if (this.getActiveReportFrame() == null) return;
         JInternalFrame activeF = this.getActiveReportFrame();
         JInternalFrame[] frames = this.jMDIDesktopPane.getAllFrames();
@@ -4698,7 +4710,7 @@ public class MainFrame extends javax.swing.JFrame
     }//GEN-LAST:event_jMenuItemCloseAllExceptThisActionPerformed
 
     private void jMenuItemCloseAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemCloseAllActionPerformed
-
+    	System.out.println("MMMMMMMMMMMMMMMMMMMMM");
         JInternalFrame[] frames = jMDIDesktopPane.getAllFrames();
         for (int i=0; i<frames.length; ++i)
         {
@@ -4712,7 +4724,7 @@ public class MainFrame extends javax.swing.JFrame
     }//GEN-LAST:event_jMenuItemCloseAllActionPerformed
 
     private void jMenuItemCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemCloseActionPerformed
-
+    	System.out.println("llllllllllllllllllllllll");
         jMDIMenuBar.closeFrame( this.getActiveReportFrame() );
 
     }//GEN-LAST:event_jMenuItemCloseActionPerformed
@@ -5188,7 +5200,8 @@ public class MainFrame extends javax.swing.JFrame
 
    private void jMenuItemQuitActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_jMenuItemQuitActionPerformed
    {//GEN-HEADEREND:event_jMenuItemQuitActionPerformed
-       this.closeApplication();
+       System.out.println("uuuuuuuuuuuuuuuuuuuu");
+	   this.closeApplication();
    }//GEN-LAST:event_jMenuItemQuitActionPerformed
 
    public void paint(java.awt.Graphics g)
@@ -7037,8 +7050,14 @@ public class MainFrame extends javax.swing.JFrame
 
             // LIMAO : modify by li.mao since 3.0 [2009-8-20 下午05:28:50]
             //将文件添加到服务器
+            //这里需要做判断，有两种情况
+            //1:本地创建的保存
+            //2:远程客户端的保存
+            //在出现第一种情况的时候需要判断，然后再取消保存到服务器的步骤
+            File f = new File(jrf.getReport().getFilename());
+            if(IreportUtil.isRemoteFile(f.getName())){
             AddedOperator.getInstance().afterSave(jrf.getReport().getFilename());
-
+            }
     }
 
     /**
@@ -7793,6 +7812,8 @@ public class MainFrame extends javax.swing.JFrame
                     return;
             }
         }
+        //LIMAO : 在关闭应用后应该，系统会自动提示保存，保存完毕后关闭时应该接触既有锁定
+        AddedOperator.getInstance().beforeCloseApplication(jMDIDesktopPane.getAllFrames());
         this.dispose();
         if(!isEmbedded()) {
             System.exit(0);
@@ -11405,6 +11426,7 @@ public class MainFrame extends javax.swing.JFrame
             elementPropertiesDialog.updateLinkTypes();
         }
     }
+
 
 
 }//end class MainFrame

@@ -17,33 +17,39 @@
  */
 package com.chinacreator.ireport.rmi;
 
-import java.io.File;
-import java.rmi.Remote;
-import java.rmi.RemoteException;
+import java.io.Serializable;
 
 /**
  * @author 李茂
  * @since 3.0
- * @version $Id: ClientRmiServerInterface.java 2009-9-7 上午09:54:40 $
+ * @version $Id: IreportSession.java 2009-9-8 上午11:51:51 $
  *
  */
-//begin ClientRmiServerInterface.java
-public interface ClientRmiServerInterface extends Remote{
-	/**
-	 * 链路检测，若可到达连接返回true否则false
-	 * 场景：在服务端启动时可能需要使用到
-	 * @return
-	 */
-	boolean linkCheck() throws RemoteException;
+//begin IreportSession.java
+public class IreportSession implements Serializable{
+	private String username;
+	private String ip;
+	private String repid;
+	public String getUsername() {
+		return username;
+	}
+	public void setUsername(String username) {
+		this.username = username;
+	}
+	public String getIp() {
+		return ip;
+	}
+	public void setIp(String ip) {
+		this.ip = ip;
+	}
+	public String getRepid() {
+		return repid;
+	}
+	public void setRepid(String repid) {
+		this.repid = repid;
+	}
 
-	/**
-	 * 若客户端已经启动了一个ireport实例，当客户端尝试再次打开ireport时，将
-	 * 被服务器器探知到，且不再在客户端打开新的ireport实例，而新打开的文件将通过
-	 * 该命令在已经开启的ireport的实例中打开该文件
-	 * @param file
-	 * @return
-	 */
-	Object openFile(IreportSession session,File file) throws RemoteException;
+
 }
 
-//end ClientRmiServerInterface.java
+//end IreportSession.java

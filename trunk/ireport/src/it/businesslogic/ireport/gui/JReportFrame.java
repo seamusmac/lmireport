@@ -31,36 +31,88 @@
  */
 
 package it.businesslogic.ireport.gui;
-import bsh.Interpreter;
+import it.businesslogic.ireport.Band;
+import it.businesslogic.ireport.BreakReportElement;
+import it.businesslogic.ireport.ChartReportElement;
+import it.businesslogic.ireport.ChartReportElement2;
 import it.businesslogic.ireport.CrosstabReportElement;
+import it.businesslogic.ireport.DesignVerifyerThread;
 import it.businesslogic.ireport.FrameReportElement;
+import it.businesslogic.ireport.GraphicReportElement;
 import it.businesslogic.ireport.IReportFont;
+import it.businesslogic.ireport.LineReportElement;
+import it.businesslogic.ireport.OperationType;
+import it.businesslogic.ireport.Report;
+import it.businesslogic.ireport.ReportClassLoader;
+import it.businesslogic.ireport.ReportElement;
+import it.businesslogic.ireport.ReportElementFactory;
+import it.businesslogic.ireport.ReportElementType;
+import it.businesslogic.ireport.StaticTextReportElement;
+import it.businesslogic.ireport.Style;
 import it.businesslogic.ireport.SubReportElement;
+import it.businesslogic.ireport.TextFieldReportElement;
+import it.businesslogic.ireport.TextReportElement;
 import it.businesslogic.ireport.TransformationType;
+import it.businesslogic.ireport.UndoOperation;
 import it.businesslogic.ireport.chart.gui.ChartSelectionJDialog;
-import it.businesslogic.ireport.crosstab.gui.CrosstabEditor;
-import it.businesslogic.ireport.gui.event.*;
-import it.businesslogic.ireport.gui.event.ReportBandChangedEvent;
-import it.businesslogic.ireport.gui.wizard.SubreportWizard;
-import it.businesslogic.ireport.undo.*;
-import it.businesslogic.ireport.util.*;
-import it.businesslogic.ireport.*;
 import it.businesslogic.ireport.crosstab.CrosstabCell;
+import it.businesslogic.ireport.crosstab.gui.CrosstabEditor;
 import it.businesslogic.ireport.crosstab.gui.CrosstabEditorPanel;
 import it.businesslogic.ireport.crosstab.gui.CrosstabWizardDialog;
 import it.businesslogic.ireport.gui.command.FormatCommand;
+import it.businesslogic.ireport.gui.event.ReportBandChangedEvent;
+import it.businesslogic.ireport.gui.event.ReportBandsSelectionEvent;
+import it.businesslogic.ireport.gui.event.ReportElementChangedEvent;
+import it.businesslogic.ireport.gui.event.ReportElementsSelectionEvent;
+import it.businesslogic.ireport.gui.event.ReportObjectsSelectionEvent;
+import it.businesslogic.ireport.gui.wizard.SubreportWizard;
+import it.businesslogic.ireport.undo.BandDraggedOperation;
+import it.businesslogic.ireport.undo.ChangeEmentsOrderOperation;
+import it.businesslogic.ireport.undo.DeleteElementsOperation;
+import it.businesslogic.ireport.undo.GroupEmentsOperation;
+import it.businesslogic.ireport.undo.GroupPositionedElement;
+import it.businesslogic.ireport.undo.InsertElementOperation;
+import it.businesslogic.ireport.undo.PasteStyleOperation;
+import it.businesslogic.ireport.undo.PositionedElement;
+import it.businesslogic.ireport.undo.ReplacedElementsOperation;
+import it.businesslogic.ireport.undo.TransformElementsOperation;
+import it.businesslogic.ireport.undo.UnGroupEmentsOperation;
+import it.businesslogic.ireport.util.I18n;
+import it.businesslogic.ireport.util.Java2DUtil;
+import it.businesslogic.ireport.util.LanguageChangedEvent;
+import it.businesslogic.ireport.util.LanguageChangedListener;
+import it.businesslogic.ireport.util.Misc;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
+import java.awt.Paint;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
+import java.awt.TexturePaint;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.geom.*;
-import java.util.*;
-import java.awt.*;
-import java.awt.image.*;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.URL;
-import javax.swing.ImageIcon;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Vector;
+
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
@@ -68,6 +120,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
+
+import bsh.Interpreter;
+
+import com.chinacreator.ireport.AddedOperator;
 
 /**
  *
@@ -104,14 +160,14 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
     boolean first_draw_band=true;
     boolean firstXORDraw = false ; //= false;   // why not true?
     boolean firstXORDrawTransforming = false;
-    
+
     boolean paintedXORDrawAlign = false;
     java.util.List paintedAlignLines = new java.util.ArrayList();
 
     int tabs = 0;
 
     private java.util.List reportProblems = new java.util.ArrayList();
-    
+
     private TexturePaint mGridTexture = null;
 
     /**
@@ -137,10 +193,10 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
     private java.awt.Stroke selectionStroke = null;
 
     private JRulePanel jVerticalRule = null;
-    
+
     private java.util.List verticalObjectsLines = new java.util.ArrayList();
     private java.util.List horizontalObjectsLines = new java.util.ArrayList();
-    
+
     // Menus...
     private javax.swing.JMenuItem jCustomElementPropertiesMenuItem = null;
     private javax.swing.JMenu jMenuAlign;
@@ -189,7 +245,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
     private javax.swing.JMenuItem jMenuItemOrganize;
     private javax.swing.JMenuItem jMenuItemRightMargin;
     private javax.swing.JMenuItem jMenuItemLeftMargin;
-    
+
     private javax.swing.JMenuItem jMenuItemEditExpression;
 
     private JTextPane floatingTextArea = new JTextPane(); //JTextArea();
@@ -198,12 +254,12 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
     private java.util.List openedNodesDocumentStructure = null;
 
     private TextReportElement onlineEditingTextReportElement = null;
-    
+
     private DesignVerifyerThread designVerifyerThread = null;
-    
+
     private Vector selectedBands = new Vector();
     private Vector selectedObjects = new Vector();
-    
+
     private static int MAGNETIC_POWER = 5;
 
 
@@ -220,18 +276,18 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
     Point transformation_origin=null;
     Point transformation_origin_end=null;
     Point transformation_undo_delta=null;
-    
+
     // Used to draw matching lines...
     int matchedVerticalLine = -1;
     int matchedHorizontalLine = -1;
 
-    
+
 
     /** Creates new form JReportFrame */
     public JReportFrame(Report report) {
 
         initComponents();
-        
+
         jMenuItemEditExpression = new JMenuItem();
         jMenuItemEditExpression.setIcon(new javax.swing.ImageIcon(""));
         jMenuItemEditExpression.setText("Edit expression");
@@ -252,7 +308,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
         jPanelVRule.add(jVerticalRule, java.awt.BorderLayout.CENTER);
         jVerticalRule.repaint();
 
-        
+
         jCustomElementPropertiesMenuItem = new javax.swing.JMenuItem();
         jCustomElementPropertiesMenuItem.setText(it.businesslogic.ireport.util.I18n.getString("customElementProperties", "Custom Element Properties"));
         jCustomElementPropertiesMenuItem.addActionListener(new java.awt.event.ActionListener() {
@@ -260,10 +316,10 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
                 jCustomElementPropertiesMenuItemActionPerformed(evt);
             }
         });
-        
+
         jPopupMenuElement.add(jCustomElementPropertiesMenuItem);
         jPopupMenuElement.add(new javax.swing.JSeparator());
-        
+
         addFormatItemsToMenu(jPopupMenuElement);
         this.windowID = id++;
 
@@ -298,7 +354,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
             });
 
        floatingTextArea.addKeyListener(Misc.ARABIC_KEY_LISTENER);
-            
+
 
 
         floatingTextArea.getDocument().addDocumentListener( new javax.swing.event.DocumentListener() {
@@ -1074,10 +1130,10 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
         } catch (Exception ex){
             return false;
         }
-        
+
         return true;
     }
-    
+
     private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
 
 
@@ -1238,7 +1294,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
 
       }
 
-    private void jMenuItemEditExpressionActionPerformed(java.awt.event.ActionEvent evt) {                                                                
+    private void jMenuItemEditExpressionActionPerformed(java.awt.event.ActionEvent evt) {
 
         if (getSelectedElements().size() > 0)
         {
@@ -1261,7 +1317,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
             }
         }
     }
-    
+
     private void jMenuItemElementChartPropertiesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemElementChartPropertiesActionPerformed
 
         if (getSelectedElements().size() > 0)
@@ -2032,7 +2088,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
         sr.setSubReportElement((SubReportElement)re);
         sr.startWizard();
         if (sr.getBaseWizardPanel().getDialogResult() != JOptionPane.OK_OPTION) ok=false;
-        
+
       }
       else if ( newObjectType == ReportElementType.CHART_ELEMENT  ) {
 
@@ -2139,7 +2195,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
                 int band_h = report.getBandYLocation(band_dragging_band) +10;
 
                 int available_height = Misc.getMaxBandHeight(report, band_dragging_band);
-                
+
                 if (available_height < requestedHeight)
                 {
                     final int available_height_f = available_height;
@@ -2150,9 +2206,9 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
                             JOptionPane.showMessageDialog(MainFrame.getMainInstance(), "The band height has beed adjusted to fit the report requirements\n(max hight allowed for this band: " + available_height_f + ", requested: " + newHeight_f + ").","Alert", JOptionPane.WARNING_MESSAGE);
                         }
                     });
-                    
+
                 }
-                
+
                 okHeight = Math.max(0, Math.min(available_height, requestedHeight));
 
                 //System.out.println("Requested: " + requestedHeight + " " + available_height);
@@ -2367,7 +2423,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
         if (trasforming) {
             trasforming = false;
             paintedAlignLines.clear();
-            
+
             jPanelReport.setCursor( Cursor.getDefaultCursor());
 
             if (transformation_type != TransformationType.TRANSFORMATION_MOVE || resistenceExceeded == true) {
@@ -2602,22 +2658,22 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
             {
 
                 ReportElement re = (ReportElement)report.getElements().elementAt(i);
-                
+
                 int treshold = 1;
                 if (re instanceof LineReportElement) treshold = 2;
                 treshold = Math.max(treshold, (int)getZoomFactor());
-                
+
                 Rectangle onScreenRect = new Rectangle(
-                                getZoomedDim(re.getPosition().x-10)+10- jHorizontalScrollBar.getValue() - treshold, 
+                                getZoomedDim(re.getPosition().x-10)+10- jHorizontalScrollBar.getValue() - treshold,
                                 getZoomedDim(re.getPosition().y-10)+10- jVerticalScrollBar.getValue() - treshold,
-                                getZoomedDim(re.getWidth()) + 2*treshold, 
+                                getZoomedDim(re.getWidth()) + 2*treshold,
                                 getZoomedDim(re.getHeight()) + 2*treshold);
                 if (re instanceof BreakReportElement)
                 {
                     onScreenRect.x =  0;
                     onScreenRect.width = getReport().getWidth();
                 }
-                
+
                 if (onScreenRect.contains( evt.getX(), evt.getY() ) )
                 {
                 /*
@@ -2629,8 +2685,8 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
                           ))
                      )
                 {
-                */  
-                    
+                */
+
                     if (selectedElements.size()>0 && re == ((ReportElement)selectedElements.firstElement())) return;
                     // 1.<Cancel old corona...
 
@@ -2638,7 +2694,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
                     //{
                     //    setSelectedElement(null);
                     //}
-                    
+
                     if ((( evt.getModifiers() & evt.SHIFT_MASK ) == 0) || selectedElements.size()==0)
                     {
                         //getSelectedElements().removeAllElements();
@@ -2763,13 +2819,13 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
                 {
                     jMenuItemElementOpenSubreport.setVisible(true);
                 }
-                
+
                 if (getSelectedElements().elementAt(0) instanceof TextFieldReportElement)
                 {
                     jMenuItemEditExpression.setVisible(true);
                 }
-                
-                
+
+
 
                 this.jMenuItemCopy.setEnabled(true);
                 this.jMenuItemCut.setEnabled(true);
@@ -3143,7 +3199,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
 
         if (drag_selection_mode == true) {
             Graphics2D gg = (Graphics2D)jPanelReport.getGraphics();
-            
+
             //gg.setXORMode(ReportElement.getAlphaColor(Color.GREEN, 60));
             Stroke s = gg.getStroke();
             gg.setStroke(selectionStroke);
@@ -3155,10 +3211,10 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
             //    gg.drawImage(offscreenImage,0,0,null);
             //}
 
-            
+
             // Draw the new rectangle...
             // Create the maximum rectangle...
-            
+
             if (drag_selection_end == null)
             {
                 drag_selection_end = new Point(drag_selection_origin.x, drag_selection_origin.y);
@@ -3167,35 +3223,35 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
             int rx2 = drag_selection_end.x;
             int ry1 = drag_selection_origin.y;
             int ry2 = drag_selection_end.y;
-            
-            
+
+
             Rectangle2D r_old = new Rectangle2D.Double(Math.min(rx1,rx2), Math.min(ry1, ry2),
                                                    Math.abs(rx1-rx2), Math.abs(ry1-ry2));
-            
+
             drag_selection_end = new java.awt.Point(evt.getX(), evt.getY());
             rx2 = drag_selection_end.x;
             ry2 = drag_selection_end.y;
-            
+
             r_old.add( new Rectangle2D.Double(Math.min(rx1,rx2), Math.min(ry1, ry2),
                                                    Math.abs(rx1-rx2), Math.abs(ry1-ry2)) );
-            
+
             offscreenImage2g.setClip(r_old);
-            
+
             offscreenImage2g.drawImage(offscreenImage,0,0,null);
             offscreenImage2g.setColor(ReportElement.getAlphaColor(Color.BLUE, 60));
             offscreenImage2g.fillRect((int)Math.min( drag_selection_origin.x, drag_selection_end.x),
                     (int)Math.min( drag_selection_origin.y, drag_selection_end.y),
                     (int)Math.abs( drag_selection_origin.x - drag_selection_end.x),
                     (int)Math.abs( drag_selection_origin.y - drag_selection_end.y));
-            
+
             offscreenImage2g.setColor(ReportElement.getAlphaColor(Color.BLUE, 255));
             offscreenImage2g.drawRect((int)Math.min( drag_selection_origin.x, drag_selection_end.x),
                     (int)Math.min( drag_selection_origin.y, drag_selection_end.y),
                     (int)Math.abs( drag_selection_origin.x - drag_selection_end.x)-1,
                     (int)Math.abs( drag_selection_origin.y - drag_selection_end.y)-1);
-            
+
            gg.setClip(r_old);
-            
+
             gg.drawImage(offscreenImage2,0,0,null);
             //gg.setPaintMode();
             first_draw_selection_rect = false;
@@ -3354,7 +3410,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
                 //gg.drawRect( newObjectOrigin.x+delta_x, newObjectOrigin.y+delta_y, Math.abs(delta_from_origin), Math.abs(evt.getY()-newObjectOrigin.y));
             }
             firstXORDraw = false;
-            
+
             //mouse.x = mouse.x + delta_from_origin;
             //mouse.y = evt.getY();
             //return;
@@ -3365,10 +3421,10 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
 
             if (transformation_type >=0 && trasforming) {
                 Graphics gg = jPanelReport.getGraphics();
-                
+
                 gg.setXORMode(Color.WHITE);
                 int iteration = 0;
-                
+
                 if (!firstXORDrawTransforming) {
                     // redraw old rectangles...
                     // transformation_origin
@@ -3404,7 +3460,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
                     //}
 
                     Enumeration e = getSelectedElements().elements();
-                    
+
                     while (e.hasMoreElements()) {
                         iteration++;
                         ReportElement re = (ReportElement)e.nextElement();
@@ -3479,10 +3535,10 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
                                 }
                         }
                     }
-                } 
-                
-                
-                
+                }
+
+
+
 
                     /*
                     if (Math.abs( transformation_origin_end.x - evt.getX())%(getGridSize()*getZoomFactor())  == 0)
@@ -3512,7 +3568,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
                         {
                             resistenceExceeded = true;
                         }
-                        
+
                         if (resistenceExceeded) {
                             // Search the closest x,y that match a grid intersection...
 
@@ -3591,14 +3647,14 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
                                 redrawReferenceGuides(gg);
                             }
                     }
-                    
+
                     firsElementBound = bounds;
                 }
 
                 firstXORDrawTransforming = false;
-                
+
                 // Check if we are aligned with other objects....
-                
+
                 gg.setPaintMode();
             }
         }
@@ -3934,7 +3990,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
  //iR20       {
  //iR20           g.drawImage(background.getImage(), 0,0, this);
  //iR20       }
-        
+
         // Due to optimize document drawing, we use a cache. Redraw void doc only if it+
         // is dirty...
         /*
@@ -4297,7 +4353,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
         //System.out.println("redrawAll: (clip=" + g2.getClipRect() + ")");
         //for(int i=0; i<number; i++)
         //{
-        
+
         //System.out.println("redrawAll: (clip=" + g2.getClipRect() + ")");
         //g2.setClip(this.getWidth()-150, 0, 150, this.getHeight());
         redrawAll(g2, g2.getClipRect(), 0);
@@ -4313,7 +4369,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
 
     /**
      * Return the point in component coordinate as
-     * point inside the report.  
+     * point inside the report.
      */
     public Point getLogicalPoint(Point p)
     {
@@ -4322,7 +4378,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
         newP.y = getReversedZoomedDim(p.y-10+jVerticalScrollBar.getValue());
         return newP;
     }
-    
+
     /**
      * Return true if the point in component coordinate is inside the document...
      */
@@ -4332,20 +4388,20 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
         return (newP.x >=0 && newP.x < getReport().getWidth() &&
                 newP.y >=0 && newP.y < getReport().getDesignHeight());
     }
-    
+
 //iR20    private ImageIcon background = new javax.swing.ImageIcon(ImageIcon.class.getResource("/it/businesslogic/ireport/gui/wp.jpg" ));
-    
+
     private void redrawAll(Graphics2D g, Rectangle clipRect, int margin) {
-       
-        
+
+
         if (isRedrawWithBufferedImage())
         {
             g.setClip(clipRect);
             g.drawImage(offscreenImage,0,0,null);
             return;
         }
-        
-        
+
+
         //g.clearRect(0,0,offscreenImage.getWidth(), offscreenImage.getHeight());
         //System.out.println("redraw all "+clipRect);
         if (clipRect ==null) {
@@ -4358,7 +4414,7 @@ public class JReportFrame extends JMDIFrame implements LanguageChangedListener {
         //g.setClip(clipRect);
 
         g.clearRect(0,0, (int) clipRect.getWidth(),  (int) clipRect.getHeight());
-        
+
 /*
                                  = new Rectangle( getZoomedDim2(clipRect.x-10 - margin)+ margin +10 + jHorizontalScrollBar.getValue(),
                                         getZoomedDim2(clipRect.y-10 - margin)+ margin +10 + jVerticalScrollBar.getValue(),
@@ -4561,14 +4617,14 @@ realRect = new Rectangle(
         } else {
             getMainFrame().setCutCopyEnabled(false);
         }
-        
-       
-        
+
+
+
         if (makerefreshAll) {
             jPanelReport.repaint();
         }
-        
-       
+
+
 
                /*
                 MainForm mf = (MainForm)this.getMDIParent();
@@ -4583,24 +4639,24 @@ realRect = new Rectangle(
                 }
                 */
 
-        
+
         if (fireEvent) {
             ReportElementsSelectionEvent rece = new ReportElementsSelectionEvent(this, this.getSelectedElements()) ;
 
             this.fireReportListenerReportElementsSelectionChanged(rece );
-            
+
             getMainFrame().getElementPropertiesDialog().updateSelection();
-        
+
         }
-        
-        
+
+
     }
 
     public void updateObjectMagnetics()
     {
         verticalObjectsLines.clear();
         horizontalObjectsLines.clear();
-        
+
         if (MainFrame.getMainInstance().getMagnetEnabled())
         {
             Enumeration enum_rep = getReport().getElements().elements();
@@ -4632,7 +4688,7 @@ realRect = new Rectangle(
 
             Integer in = new Integer(getReport().getLeftMargin()+10);
             if (!verticalObjectsLines.contains(in)) verticalObjectsLines.add(in);
-            
+
             in = new Integer(getReport().getWidth() - getReport().getLeftMargin()+10);
             if (!verticalObjectsLines.contains(in)) verticalObjectsLines.add(in);
 
@@ -4643,16 +4699,16 @@ realRect = new Rectangle(
             try {
                    MAGNETIC_POWER = Integer.parseInt(this.getMainFrame().getProperties().getProperty("MagneticPower","5"));
             } catch (Exception ex){}
-        
+
         }
         else
         {
             MAGNETIC_POWER = 0;
         }
-    
+
     }
-    
-    
+
+
     public void setSelectedElement(ReportElement el) {
         setSelectedElement(el, true);
     }
@@ -4952,7 +5008,7 @@ realRect = new Rectangle(
      *
      */
     public void fireReportListenerReportElementsSelectionChanged(it.businesslogic.ireport.gui.event.ReportElementsSelectionEvent event) {
-        
+
         if (listenerList == null) return;
         Object[] listeners = listenerList.getListenerList ();
         for (int i = listeners.length-2; i>=0; i-=2) {
@@ -4961,36 +5017,36 @@ realRect = new Rectangle(
             }
         }
     }
-    
+
     /** Notifies all registered listeners about the event.
      *
      * @param event The event to be fired
      *
      */
     public void fireReportListenerReportBandsSelectionChanged(it.businesslogic.ireport.gui.event.ReportBandsSelectionEvent event) {
-        
+
         if (listenerList == null) return;
         Object[] listeners = listenerList.getListenerList();
         for (int i = listeners.length-2; i>=0; i-=2) {
             if (listeners[i]==it.businesslogic.ireport.gui.event.ReportListener.class) {
-                
+
                 ((it.businesslogic.ireport.gui.event.ReportListener)listeners[i+1]).reportBandsSelectionChanged(event);
             }
         }
     }
-    
+
     /** Notifies all registered listeners about the event.
      *
      * @param event The event to be fired
      *
      */
     public void fireReportListenerReportObjectsSelectionChanged(it.businesslogic.ireport.gui.event.ReportObjectsSelectionEvent event) {
-        
+
         if (listenerList == null) return;
         Object[] listeners = listenerList.getListenerList();
         for (int i = listeners.length-2; i>=0; i-=2) {
             if (listeners[i]==it.businesslogic.ireport.gui.event.ReportListener.class) {
-                
+
                 ((it.businesslogic.ireport.gui.event.ReportListener)listeners[i+1]).reportObjectsSelectionChanged(event);
             }
         }
@@ -5422,7 +5478,7 @@ realRect = new Rectangle(
             }
             addedElements.add(re);
         }
-        
+
         fireReportListenerReportElementsChanged(new ReportElementChangedEvent(this, crReportElement, addedElements , ReportElementChangedEvent.ADDED));
 
         if (crReportElement != null)
@@ -6401,13 +6457,13 @@ realRect = new Rectangle(
 
         re.setBand( bname );
 
-        
+
 
         report.getElements().addElement(re);
-        
+
         fireReportListenerReportElementsChanged(new ReportElementChangedEvent(this, re , ReportElementChangedEvent.ADDED));
         addUndoOperation( new  InsertElementOperation(this, re) );
-        
+
         setSelectedElement(re);
         jPanelReport.setCursor( Cursor.getDefaultCursor());
         getMainFrame().setActiveTool(0);
@@ -6494,8 +6550,8 @@ realRect = new Rectangle(
                 // Set base characteristics...
                 tfre.copyBaseReportElement(tfre, re);
                 // Set Text characteristics...
-                
-                ((StaticTextReportElement)re).getIReportFont().clone( tfre.getIReportFont() ); 
+
+                ((StaticTextReportElement)re).getIReportFont().clone( tfre.getIReportFont() );
                 /*
                 tfre.setBold(((TextReportElement)re).isBold() );
                 tfre.setUnderline( ((TextReportElement)re).isUnderline() );
@@ -6861,7 +6917,7 @@ realRect = new Rectangle(
         }
         // Pass all undo tasks to the undo cluster.
         addUndoOperation(undoOp);
-        
+
         fireReportListenerReportBandChanged(new ReportBandChangedEvent(this,band, ReportBandChangedEvent.CHANGED));
     }
 
@@ -7091,7 +7147,7 @@ realRect = new Rectangle(
         jMenuItemElementCrosstabProperties.setText(I18n.getString("jReportFrame.menuItemElementCrosstabProperties","Crosstab properties"));
         jMenuItemElementOpenSubreport.setText(I18n.getString("jReportFrame.menuItemElementOpenSubreport","Open subreport"));
         jMenuItemEditExpression.setText(I18n.getString("jReportFrame.menuItemElementEditExpression","Edit Expression"));
-        
+
         // End autogenerated code ----------------------
         jMenuItemPasteOnBand.setText(it.businesslogic.ireport.util.I18n.getString("pasteHere", "Paste here"));
         jMenuItemBandProperties.setText(it.businesslogic.ireport.util.I18n.getString("bandProperties", "Band properties"));
@@ -7204,15 +7260,15 @@ realRect = new Rectangle(
             for (int i=0; i<verticalObjectsLines.size(); ++i)
             {
                 int line = ((Integer)verticalObjectsLines.get(i)).intValue();
-                
-                if (x < line + MAGNETIC_POWER && x > line - MAGNETIC_POWER) 
+
+                if (x < line + MAGNETIC_POWER && x > line - MAGNETIC_POWER)
                 {
                     matchedVerticalLine = line;
                     return line;
                 }
             }
         }
-        
+
         return x;
     }
 
@@ -7271,7 +7327,7 @@ realRect = new Rectangle(
     {
         // If using grid....
         int optimizedy = y;
-        
+
         matchedHorizontalLine = -1;
 
         if (magneticLines != null)
@@ -7282,7 +7338,7 @@ realRect = new Rectangle(
                 if (y < line + MAGNETIC_POWER && y > line - MAGNETIC_POWER) return line;
             }
         }
-        
+
         if (isSnapToGrid())
         {
             optimizedy = y - 10;
@@ -7294,21 +7350,21 @@ realRect = new Rectangle(
         }
 
         // Snap to objects...
-        
+
         if (horizontalObjectsLines != null)
         {
             for (int i=0; i<horizontalObjectsLines.size(); ++i)
             {
                 int line = ((Integer)horizontalObjectsLines.get(i)).intValue();
-                
-                if (y < line + MAGNETIC_POWER && y > line - MAGNETIC_POWER) 
+
+                if (y < line + MAGNETIC_POWER && y > line - MAGNETIC_POWER)
                 {
                     matchedHorizontalLine = line;
                     return line;
                 }
             }
         }
-        
+
         // If using magnetic lines....
         // Check for magnetic lines....
 
@@ -7324,7 +7380,8 @@ realRect = new Rectangle(
      */
     public boolean closingFrame(boolean force)
     {
-            if (force) return true;
+
+    	if (force) return true;
             JReportFrame jrf = this;
             MainFrame.getMainInstance().setActiveReportForm( jrf );
 
@@ -7344,9 +7401,13 @@ realRect = new Rectangle(
                 {
                     case javax.swing.JOptionPane.YES_OPTION:
                         saveIt = true;
+                        //LIMAO : 关闭JReportFrame需要的额外业务操作
+                        AddedOperator.getInstance().afterCloseJReportFrame(jrf);
                         break;
                     case javax.swing.JOptionPane.NO_OPTION:
                         saveIt = false;
+                        //LIMAO : 关闭JReportFrame需要的额外业务操作
+                        AddedOperator.getInstance().afterCloseJReportFrame(jrf);
                         break;
                     default:
                         return false;
@@ -7359,6 +7420,7 @@ realRect = new Rectangle(
                 MainFrame.getMainInstance().jMenuItemSaveActionPerformed(ae);
                 if (jrf.getReport().isModified()) return false;
             }
+
             return true;
     }
 
@@ -7408,8 +7470,8 @@ realRect = new Rectangle(
     public void setReportProblems(java.util.List reportProblems) {
         this.reportProblems = reportProblems;
     }
-    
-    
+
+
     public Vector getSelectedBands() {
         return selectedBands;
     }
@@ -7418,7 +7480,7 @@ realRect = new Rectangle(
         this.selectedBands = selectedBands;
         fireReportListenerReportBandsSelectionChanged(new ReportBandsSelectionEvent(this, null, getSelectedBands() ));
     }
-    
+
     /**
      *  Returns the objects selected in the document structure
      */
@@ -7435,22 +7497,22 @@ realRect = new Rectangle(
     }
 
     private java.util.List getAlignMatches(Rectangle bounds) {
-        
+
         java.util.List list = new java.util.ArrayList();
-        
+
         java.util.List listHorizontals = new java.util.ArrayList();
         java.util.List listVerticals = new java.util.ArrayList();
-        
+
         // 1. transform the bound in a real rectangle...
         int originX = getLogicalDim(bounds.x-10+jHorizontalScrollBar.getValue())+10;
         int originY = getLogicalDim(bounds.y-10+jVerticalScrollBar.getValue())+10;
         int width  =  getLogicalDim(bounds.width);
         int height =  getLogicalDim(bounds.height);
 
-        
+
         if (matchedVerticalLine > 0)
         {
-            
+
             int minY = originY;
             int maxY = originY + height;
             // find the minimum value for X where Y = matchedVerticalLine....
@@ -7459,7 +7521,7 @@ realRect = new Rectangle(
             {
                 ReportElement re = (ReportElement)enum_ele.nextElement();
                 if (getSelectedElements().contains(re)) continue;
-            
+
                 if (re.getPosition().x == matchedVerticalLine ||
                     re.getPosition().x + re.getWidth() == matchedVerticalLine) // Same X
                 {
@@ -7472,13 +7534,13 @@ realRect = new Rectangle(
                              10 - jVerticalScrollBar.getValue() + getZoomedDim(minY-10)-20,
                              x,
                              10 - jVerticalScrollBar.getValue() + getZoomedDim(maxY-10)+20);
-            list.add(line);  
+            list.add(line);
             matchedVerticalLine = -1;
         }
-        
+
         if (matchedHorizontalLine > 0)
         {
-            
+
             int minX = originX;
             int maxX = originX + width;
             // find the minimum value for X where Y = matchedVerticalLine....
@@ -7487,7 +7549,7 @@ realRect = new Rectangle(
             {
                 ReportElement re = (ReportElement)enum_ele.nextElement();
                 if (getSelectedElements().contains(re)) continue;
-            
+
                 if (re.getPosition().y == matchedHorizontalLine ||
                     re.getPosition().y + re.getHeight() == matchedHorizontalLine) // Same Y
                 {
@@ -7500,19 +7562,19 @@ realRect = new Rectangle(
                              y,
                              getZoomedDim(maxX-10) + 10 - jVerticalScrollBar.getValue()+20,
                              y);
-            list.add(line);  
+            list.add(line);
             matchedHorizontalLine = -1;
         }
-        
+
         return list;
     }
-    
+
     public void redrawReferenceGuides(Graphics gg)
     {
         if (paintedAlignLines.size() > 0)
         {
             try {
-                
+
                 gg.setXORMode(new Color(112,91,22));
                 Stroke st = ((Graphics2D)gg).getStroke();
                 ((Graphics2D)gg).setStroke( ReportElement.getPenStroke("Dotted",null,1) );
@@ -7529,7 +7591,7 @@ realRect = new Rectangle(
 
             }
         }
-        
+
         gg.setXORMode(Color.WHITE);
     }
 
@@ -7548,9 +7610,9 @@ realRect = new Rectangle(
         offscreenImage2g = grenv.createGraphics(offscreenImage2 );
         this.paintReportPanel(g2d);
         g2d.dispose();
-        
+
         //jPanelReport.getGraphics().drawImage(offscreenImage,0,0,null);
-        
+
         //jPanelReport.getGraphics().drawLine(0,0,400,400);
     }
 
@@ -7562,7 +7624,7 @@ realRect = new Rectangle(
     }
 
     public void setRedrawWithBufferedImage(boolean b) {
-        
+
         if (b && !isRedrawWithBufferedImage())
         {
             initOffscreenImage();
@@ -7570,11 +7632,11 @@ realRect = new Rectangle(
         this.redrawWithBufferedImage = redrawWithBufferedImage;
     }
 
-    public void jCustomElementPropertiesMenuItemActionPerformed(ActionEvent evt) {      
-      
+    public void jCustomElementPropertiesMenuItemActionPerformed(ActionEvent evt) {
+
       if (this.getSelectedElements().size() == 0) return;
       PropertiesDialog pd = new PropertiesDialog(MainFrame.getMainInstance(), true);
-      
+
       ReportElement re = (ReportElement)getSelectedElements().get(0);
       pd.setProperties(re.getElementProperties());
       pd.setCanUseExpression(true);

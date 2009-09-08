@@ -36,7 +36,7 @@ public interface IreportRmiInterface extends Remote{
 	void save(IreportFile ireportFile)throws RemoteException;
 
 	//打开远程文件
-	IreportFile open(String fileName)throws RemoteException;
+	IreportFile open(IreportSession session,String fileName)throws RemoteException;
 
 	//获取数据源列表
 	String getDataSourceList()throws RemoteException;
@@ -49,6 +49,13 @@ public interface IreportRmiInterface extends Remote{
 	 * @throws RemoteException
 	 */
 	List<IreportFile> getAllTemplates() throws RemoteException;
+
+	/**
+	 * 解除服务器端对应报表ID的锁
+	 * @param repId
+	 * @return
+	 */
+	String unLockReport(String repId)throws RemoteException;
 }
 
 //end IreportRmiInterface.java
