@@ -220,7 +220,7 @@ public class MainFrame extends javax.swing.JFrame
     private int activeStyleClipboard = 0;
     private boolean catchFormActivated = true;
     private boolean embeddedIreport = false;
-    private boolean usingWS = false;
+    private boolean usingWS = true;
 
     private LibraryPanel libraryPanel = null;
     private CrosstabMeasuresView crosstabMeasuresView = null;
@@ -381,7 +381,8 @@ public class MainFrame extends javax.swing.JFrame
         // Setting iReport directory
         if ( ireport_home == null) {
             ireport_home =  System.getProperty("ireport.home",".");
-            IREPORT_HOME_DIR = ireport_home;
+            //IREPORT_HOME_DIR = ireport_home;
+            IREPORT_HOME_DIR = System.getProperty("user.home") + File.separator + ".ireport";;
             setHomeDirectory(IREPORT_HOME_DIR);
         }
         else {
@@ -5200,7 +5201,6 @@ public class MainFrame extends javax.swing.JFrame
 
    private void jMenuItemQuitActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_jMenuItemQuitActionPerformed
    {//GEN-HEADEREND:event_jMenuItemQuitActionPerformed
-       System.out.println("uuuuuuuuuuuuuuuuuuuu");
 	   this.closeApplication();
    }//GEN-LAST:event_jMenuItemQuitActionPerformed
 

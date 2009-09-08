@@ -34,6 +34,9 @@ package it.businesslogic.ireport.gui;
 import it.businesslogic.ireport.*;
 import  javax.swing.tree.*;
 import  javax.swing.*;
+
+import com.chinacreator.ireport.IreportUtil;
+
 import  java.awt.*;
 /**
  *
@@ -79,23 +82,31 @@ public class ProjectExplorerTreeCellRenderer extends DefaultTreeCellRenderer {
                         hasFocus);
              
         if (!((DefaultMutableTreeNode)value).isRoot() && leaf && isDirty(value)) {
-            setIcon(dirtyDocumentIcon);
+        	setIcon(dirtyDocumentIcon);
             setToolTipText(null);
+            if(!IreportUtil.isRemoteFile(value.toString())){
+            	this.setForeground(Color.BLUE);
+            }
         } else if (!((DefaultMutableTreeNode)value).isRoot() && leaf && !isDirty(value)) {
-            setIcon(documentIcon);
+            //LIMAO : 修改树节点字体颜色
+        	setIcon(documentIcon);
             setToolTipText(null);
+            if(!IreportUtil.isRemoteFile(value.toString())){
+            	this.setForeground(Color.BLUE);
+            }
         } 
         else if (( ((DefaultMutableTreeNode)value).isRoot() || !leaf) && expanded)
         {
-             setIcon(folderOpenedIcon);
+        	setIcon(folderOpenedIcon);
             setToolTipText(null); //no tool tip
+           
         }
         else if (( ((DefaultMutableTreeNode)value).isRoot() || !leaf) && !expanded)
         {
-            setIcon(folderClosedIcon);
+        	setIcon(folderClosedIcon);
             setToolTipText(null); //no tool tip
         } 
-
+        
         return this;
     }
 
