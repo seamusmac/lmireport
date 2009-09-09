@@ -2813,6 +2813,7 @@ public class MainFrame extends javax.swing.JFrame
         });
         jMenuFile.add(jMenuItemSaveAs);
 
+        //LIMAO : 这里添加菜单添加到服务器功能
         jMenuItemSaveAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/it/businesslogic/ireport/icons/menu/saveall.png"))); // NOI18N
         jMenuItemSaveAll.setText("Save all");
         jMenuItemSaveAll.addActionListener(new java.awt.event.ActionListener() {
