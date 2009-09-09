@@ -32,7 +32,7 @@ public class Start {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		args = new String[]{"127.0.0.1","10086","20090820160844234589","maodie","192.168.11.110"};
+		//args = new String[]{"192.168.11.110","10086","20090820160844234589","系统管理员","127.0.0.1"};
 	    AddedOperator.getInstance().beforeIreportLoadCheck();
 		AddedOperator.getInstance().initRemoteArgs(args);
 

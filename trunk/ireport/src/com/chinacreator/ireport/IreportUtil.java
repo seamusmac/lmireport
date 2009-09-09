@@ -20,8 +20,14 @@ package com.chinacreator.ireport;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.net.InetAddress;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.chinacreator.ireport.rmi.ReportLock;
 
 /**
  * @author 李茂
@@ -106,8 +112,79 @@ public class IreportUtil {
 		return reportName;
 	}
 
+	public static String getLocalIp(){
+		try {
+			InetAddress ia=InetAddress.getLocalHost();
+		    String ip=ia.getHostAddress();
+		    return ip;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "";
+		}
+
+	}
+
+	//是不是你当前所锁定的记录
+	public static boolean isYourLock(ReportLock r){
+		System.out.println("RRRR:"+r);
+		if(r==null){
+			return false;
+		}
+		System.out.println("RIP:"+r.getOpen_user_ip());
+		if(getLocalIp().equals(r.getOpen_user_ip()) && r.getStatues().equals("Y")){
+			return true;
+		}
+		return false;
+
+	}
+
+	public static ReportLock getReportLock(String repid){
+
+		   ReportLock r = new ReportLock();
+	       r.setLock_id(IreportUtil.getPrimaryKey());
+	       r.setRep_id(repid);
+	       r.setOpen_time(new Date());
+	       r.setOpen_user(MyReportProperties.getStringProperties(IreportConstant.USERNAME));
+	       r.setRep_type(IreportConstant.REPORT_TYPE_JASPERREPORT);
+	       r.setStatues(IreportConstant.LOCK);//打开即锁定
+	       r.setRep_ref_file("");
+	       r.setTime_out_time(IreportUtil.addDate(new Date(),IreportConstant.DEFAULT_LOCK_LIMIT_HOURE));
+	       r.setOpen_user_ip(getLocalIp());
+	       r.setRep_name(repid+".jrxml");
+	       return r;
+	}
+
+	public static String getPrimaryKey(){
+		return System.currentTimeMillis()+"";
+	}
+
+	public static String dateFormat(String format,Date date){
+		SimpleDateFormat sf=new SimpleDateFormat(format);
+		return sf.format(date);
+	}
+
+	public static String defaultDateFormat(Date date){
+		if(date==null){
+			return null;
+		}
+		return dateFormat("yyyy-MM-dd HH:mm:ss",date);
+
+	}
+
+	public static Date addDate(Date date,int hours){
+		Calendar c = Calendar.getInstance();
+		if(date == null){
+			c.setTime(new Date());
+		}else{
+			c.setTime(date);
+		}
+
+		c.add(Calendar.HOUR_OF_DAY, hours);
+		return new Date(c.getTimeInMillis());
+	}
+
 	public static void main(String[] args) {
-		System.out.println(isRemoteFile("20090820160844234589.jrxml"));
+		System.out.println(getLocalIp());
 	}
 }
 

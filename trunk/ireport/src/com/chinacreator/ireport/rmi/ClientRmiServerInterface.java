@@ -17,7 +17,6 @@
  */
 package com.chinacreator.ireport.rmi;
 
-import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
@@ -43,7 +42,13 @@ public interface ClientRmiServerInterface extends Remote{
 	 * @param file
 	 * @return
 	 */
-	Object openFile(IreportSession session,File file) throws RemoteException;
+	Object openFile(IreportSession session,IreportFile file) throws RemoteException;
+
+	/**
+	 * 打开客户端窗口
+	 * @return
+	 */
+	Object openCilentDialog(String text,String title,int messageType)throws RemoteException;
 }
 
 //end ClientRmiServerInterface.java

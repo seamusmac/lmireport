@@ -24,6 +24,11 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
+import javax.swing.JOptionPane;
+
+import com.chinacreator.ireport.IreportUtil;
+import com.chinacreator.ireport.component.DialogFactory;
+
 /**
  * @author 李茂
  * @since 3.0
@@ -54,22 +59,39 @@ public class ClientRmiServerInterfaceImpl extends UnicastRemoteObject implements
 		return true;
 	}
 
-	public Object openFile(IreportSession session,File file) throws RemoteException{
-		setVisible(true);
-		new Thread(new Runnable(){
+	public Object openFile(final IreportSession session,final IreportFile file) throws RemoteException{
 
-			public void run() {
-				File file1 = new File("G:\\z\\fgh.jrxml");
+		//new Thread(new Runnable(){
+			//public void run() {
+
 			      try {
-			          JReportFrame jrf = MainFrame.getMainInstance().openFile( file1 );
+			    	  File f = new File(MainFrame.getMainInstance().IREPORT_TMP_FILE_DIR+File.separator+file.getFileName());
+			    	  if(f.exists()){
+			        	  f.delete();
+			          }
+			    	  File remoteFile = IreportUtil.bytesToFile(MainFrame.getMainInstance().IREPORT_TMP_FILE_DIR+File.separator+file.getFileName(), file.getContent());
+			    	  if(!remoteFile.exists()){
+			    		  remoteFile.createNewFile();
+			    	  }
+			    	  System.out.println("远程文件保存在:"+remoteFile.getPath());
+			    	  System.out.println("远程文件大小为:"+ file.getContent().length);
+			    	  JReportFrame jrf = MainFrame.getMainInstance().openFile( remoteFile );
+			          IreportRmiClient.getInstance();
+			          boolean b = IreportRmiClient.getRmiRemoteInterface().lockReport(IreportUtil.getReportLock(IreportUtil.getIdFromReport(file.getFileName())));
+			          if(!b){
+			        	  DialogFactory.showErrorMessageDialog(null, "锁定服务器端文件出错，你的后续修改将对服务器文件无效", "锁定错误");
+			          }
+			          setVisible(true);
 			          jrf.setSelected(true);
+
 			      } catch (Exception ex){
 			          ex.printStackTrace();
 			      }
 
-			}
+			//}
 
-		}).start();
+		//}).start();
+
 		return null;
 	}
 
@@ -82,6 +104,10 @@ public class ClientRmiServerInterfaceImpl extends UnicastRemoteObject implements
 	      }
 	      return MainFrame.getMainInstance().requestFocusInWindow();
 	  }
+	public Object openCilentDialog(String text,String title, int messageType) {
+		JOptionPane.showMessageDialog(MainFrame.getMainInstance(), text, title, messageType);
+		return null;
+	}
 }
 
 //end ClientRmiServerInterfaceImpl.java

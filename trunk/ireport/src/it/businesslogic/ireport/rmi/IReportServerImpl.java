@@ -45,6 +45,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 
 import com.chinacreator.ireport.IreportConstant;
+import com.chinacreator.ireport.IreportUtil;
 import com.chinacreator.ireport.rmi.ClientRmiServerInterface;
 import com.chinacreator.ireport.rmi.ClientRmiServerInterfaceImpl;
 
@@ -92,7 +93,7 @@ public class IReportServerImpl extends UnicastRemoteObject
         try {
         	ClientRmiServerInterface ireportRemote = ClientRmiServerInterfaceImpl.getInstance();
    		    LocateRegistry.createRegistry(port);
-            Naming.bind("rmi://127.0.0.1:"+port+"/ireportClientRmiServer", ireportRemote);
+            Naming.bind("rmi://"+IreportUtil.getLocalIp()+":"+port+"/ireportClientRmiServer", ireportRemote);
             System.out.println("report客户端RMI服务器监听于端口："+port);
    		} catch (Exception e) {
    			e.printStackTrace();

@@ -220,7 +220,7 @@ public class MainFrame extends javax.swing.JFrame
     private int activeStyleClipboard = 0;
     private boolean catchFormActivated = true;
     private boolean embeddedIreport = false;
-    private boolean usingWS = true;
+    private boolean usingWS = false;
 
     private LibraryPanel libraryPanel = null;
     private CrosstabMeasuresView crosstabMeasuresView = null;
@@ -9938,8 +9938,6 @@ public class MainFrame extends javax.swing.JFrame
 
     private static Locale lastLocale = null;
     public void applyI18n(){
-		System.out.println("开始I18："+lastLocale);
-		System.out.println("当前："+I18n.getCurrentLocale());
         if (lastLocale != null && lastLocale == I18n.getCurrentLocale()) return;
         lastLocale = I18n.getCurrentLocale();
 

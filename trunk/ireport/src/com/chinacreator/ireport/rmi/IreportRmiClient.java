@@ -46,7 +46,7 @@ public class IreportRmiClient {
 			 port =  MyReportProperties.getStringProperties(IreportConstant.RMI_PORT); //由外部传入
 			 if(IreportUtil.isBlank(ip)){
 				 ip="127.0.0.1";
-				 System.out.println("初始化未找到IP，使用本地IP：172.0.0.1");
+				 System.out.println("初始化未找到IP，使用本地IP：127.0.0.1");
 			 }
 			 if(IreportUtil.isBlank(port)){
 				 port="10086";

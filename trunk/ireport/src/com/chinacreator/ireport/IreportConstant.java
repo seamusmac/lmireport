@@ -51,6 +51,12 @@ public final class IreportConstant {
 
 	public final static String SESSION_SUFFIX="session_";
 
+	public final static String REPORT_TYPE_JASPERREPORT = "6";
+
+	public final static String LOCK = "Y";
+	public final static String UN_LOCK = "N";
+
+	public final static int DEFAULT_LOCK_LIMIT_HOURE=1;
 }
 
 //end IreportConstant.java

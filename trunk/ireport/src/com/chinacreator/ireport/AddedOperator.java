@@ -39,6 +39,8 @@ import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -49,6 +51,7 @@ import com.chinacreator.ireport.component.DialogFactory;
 import com.chinacreator.ireport.rmi.IreportFile;
 import com.chinacreator.ireport.rmi.IreportRmiClient;
 import com.chinacreator.ireport.rmi.IreportSession;
+import com.chinacreator.ireport.rmi.ReportLock;
 
 /**
  * @author 李茂
@@ -60,9 +63,10 @@ import com.chinacreator.ireport.rmi.IreportSession;
 
 //所有后期添加的操作方法都从这里调用
 public class AddedOperator implements AddedOepretorInterface{
-
+	private static Log logger = LogFactory.getLog(AddedOperator.class);
 	public static AddedOepretorInterface addInstance = null;
 	public Object afterClose(String closeFilePath) {
+		logger.info("**********开始afterClose***********");
 		String id = null;
 		try {
 			 IreportRmiClient.getInstance();
@@ -71,12 +75,14 @@ public class AddedOperator implements AddedOepretorInterface{
 			 if(IreportUtil.isBlank(repid)){
 				 DialogFactory.showErrorMessageDialog(null, "关闭时取到的报表ID为空！", "错误");
 			 }
-	         id = IreportRmiClient.rmiInterfactRemote.unLockReport(closeFilePath);
+
+
+	         id = IreportRmiClient.rmiInterfactRemote.unLockReport(IreportUtil.getLocalIp(),closeFilePath);
 		} catch (Exception e) {
 			e.printStackTrace();
 			DialogFactory.showErrorMessageDialog(null, "关闭时取消["+id+"]锁定时出错，你可能要手动解除锁定！\n"+e.getMessage(), "错误");
 		}
-
+		logger.info("结束afterClose");
 		return null;
 	}
 
@@ -87,8 +93,17 @@ public class AddedOperator implements AddedOepretorInterface{
 
 	//在正常的保存后我们需要做额外的处理，需要尝试将这个文件保存到服务器
 	public Object afterSave(String saveFilePath) {
-		 System.out.println("************开始执行afterSave***********");
+		logger.info("************开始执行afterSave***********");
 		 try {
+			   IreportRmiClient.getInstance();
+			   String repid = IreportUtil.getIdFromReportPath(saveFilePath);
+			   ReportLock r = IreportRmiClient.rmiInterfactRemote.getCurrentLock(repid);
+
+			   //若当前该报表的锁不是你的，你是不允许保存操作的
+			   if(!IreportUtil.isYourLock(r)){
+				   DialogFactory.showErrorMessageDialog(null, "服务器该文件锁不属于你控制，你不能进行服务器保存操作", "错误提示");
+				   return null;
+			   }
 	           String filePath =  saveFilePath;
 	           File f = new File(filePath);
 	           IreportFile rf = new IreportFile();
@@ -104,15 +119,17 @@ public class AddedOperator implements AddedOepretorInterface{
 		              }catch(Exception ex){
 		              }
 		       }
+
+
 	           rf.setContent(content);
-	           IreportRmiClient.getInstance();
+
 	           IreportRmiClient.rmiInterfactRemote.save(rf);
 	            } catch (Exception e) {
 					e.printStackTrace();
 					DialogFactory.showErrorMessageDialog(null, "在进行服务器文件保存时出现异常:"+e.getMessage(), "错误提示");
 
 		}
-	   System.out.println("************结束执行afterSave***********");
+	            logger.info("************结束执行afterSave***********");
 		return null;
 	}
 
@@ -143,9 +160,11 @@ public class AddedOperator implements AddedOepretorInterface{
 
 	//不需要同步锁
 	public static AddedOepretorInterface getInstance(){
+
 		if(addInstance == null){
 			addInstance =  new AddedOperator();
 		}
+
 		return addInstance;
 	}
 
@@ -153,10 +172,12 @@ public class AddedOperator implements AddedOepretorInterface{
 
 
 	public Object addRemotDatasource() {
+
+		logger.info("添加远程数据源信息addRemotDatasource");
 		new Thread(new Runnable(){
 
 			public void run() {
-				
+
 				try {
 					 IreportRmiClient.getInstance();
 					 String xmlString = IreportRmiClient.rmiInterfactRemote.getDataSourceList();
@@ -247,23 +268,26 @@ public class AddedOperator implements AddedOepretorInterface{
 				         }
 
 				         MainFrame.getMainInstance().saveiReportConfiguration();
-				         
+
 			}
-			
+
 		}).start();
-		
+		logger.info("结束addRemotDatasource");
 		return null;
 	}
 
 	public Object openRemoteFile() {
+		logger.info("开始openRemoteFile");
 		try {
 			String fileName = MyReportProperties.getStringProperties(IreportConstant.REPORT_ID);
 			if(IreportUtil.isBlank(fileName)){
+			logger.warn(">>>>>>>>>>未找到远程服务器文件");
 				return null;
 			}
 			if(!fileName.toLowerCase().endsWith(".jrxml")){
 				fileName+=".jrxml";
 			}
+			logger.info("=============尝试打开远程服务器文件"+fileName+"==========");
 
 		    IreportFile ireportFile = null;
 
@@ -274,16 +298,18 @@ public class AddedOperator implements AddedOepretorInterface{
 
 	        //可能存在打开的多个文件，都需要保存一份到本地，在保存的时候需要用到
 	        MyReportProperties.setProperties(IreportConstant.SESSION_SUFFIX+session.getRepid(), session);
-
+	        logger.info("开始执行远程调用open");
 	        ireportFile = IreportRmiClient.getInstance().rmiInterfactRemote.open(session,fileName);
-			if(ireportFile != null){
+	        logger.info("结束执行远程调用open，获得为："+ireportFile);
+	        if(ireportFile != null){
+	        	logger.info("ireportFile为："+ireportFile.getFileName()+"::::"+ireportFile.getContent().length);
 				String tmp_file_path = MainFrame.getMainInstance().IREPORT_TMP_FILE_DIR;
 				File tmp_file = new File(tmp_file_path);
 				if(!tmp_file.exists()){
 					tmp_file.mkdirs();
 				}
 				String path = MainFrame.getMainInstance().IREPORT_TMP_FILE_DIR+"/"+ireportFile.getFileName();
-				System.out.println("报表文件夹存放于："+path);
+				logger.info("报表文件夹存放于："+path);
 				File oldFile = new File(path);
 				if(oldFile.exists()){
 					oldFile.delete();
@@ -293,18 +319,22 @@ public class AddedOperator implements AddedOepretorInterface{
 			    File f = IreportUtil.bytesToFile(path, content);
 
 			    return f;
+			  }else{
+				  logger.warn(">>>>>>>>>>从服务器端获得的文件为空");
 			  }
 	        } catch (Exception e) {
+	        	logger.error(e);
 	        	log("打开远程报表文件失败。", JOptionPane.ERROR_MESSAGE);
 				e.printStackTrace();
 				//DialogFactory.showErrorMessageDialog(null, "打开远程报表文件失败！\n信息:"+e.getMessage() , "错误");
 	        }
+	        logger.info("结束openRemoteFile");
 		return null;
 	}
 
 	//swing 需要注册宋体才能不会在展示时出现乱码
 	public Object registerSongTi() {
-		System.out.println("注册宋体");
+		logger.info("开始registerSongTi");
 		try{
 		Font font =  new Font("宋体",Font.PLAIN,12);
     	UIManager.put("Button.font",font);
@@ -348,8 +378,10 @@ public class AddedOperator implements AddedOepretorInterface{
     	UIManager.put("JComboBox", font);
     	UIManager.put("JTextField", font);
     	} catch (Exception e) {
+    		logger.error(e);
 			e.printStackTrace();
 		}
+    	logger.info("结束registerSongTi");
 		return null;
 	}
 
@@ -376,6 +408,7 @@ public class AddedOperator implements AddedOepretorInterface{
 	}
 
 	public Object initTemplate() {
+		logger.info("开始initTemplate");
 		try {
 			Thread initT = new Thread(new Runnable(){
 				public void run() {
@@ -407,10 +440,12 @@ public class AddedOperator implements AddedOepretorInterface{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		logger.info("结束initTemplate");
 		return null;
 	}
 
 	public Object initRemoteArgs(String[] args) {
+		logger.info("开始initRemoteArgs");
 		if(args!=null && args.length>0){
 			for (int i = 0; i < args.length; i++) {
 				System.out.println("********参数"+(i+1)+":["+args[i]+"]********");
@@ -429,17 +464,23 @@ public class AddedOperator implements AddedOepretorInterface{
 					MyReportProperties.setProperties(IreportConstant.USERNAME, args[i]);
 					break;
 				case 4: //第5参数为ip
-					MyReportProperties.setProperties(IreportConstant.IP, args[i]);
+					if(args[i]==null || "127.0.0.1".equals(args[i])){
+						MyReportProperties.setProperties(IreportConstant.IP, IreportUtil.getLocalIp());
+					}else{
+						MyReportProperties.setProperties(IreportConstant.IP, args[i]);
+					}
 					break;
 				}
 
 		}
 			}
+		logger.info("结束initRemoteArgs");
 		return null;
 	}
 
 	//先搜索本地文件系统再搜索服务器
 	public Object initPluginsConfig() {
+		logger.info("开始initPluginsConfig");
 		try {
 			File plugDir = new File(MainFrame.getMainInstance().IREPORT_PLUGIN_DIR);
 			if (plugDir == null || !plugDir.exists() || plugDir.isFile()) {
@@ -461,11 +502,12 @@ public class AddedOperator implements AddedOepretorInterface{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+		logger.info("结束initPluginsConfig");
 		return null;
 	}
 
 	public Object beforeIreportLoadCheck() {
+		logger.info("开始beforeIreportLoadCheck");
 		boolean b = false;
 		ServerSocket ss =null;
 		try {
@@ -485,7 +527,7 @@ public class AddedOperator implements AddedOepretorInterface{
 			System.out.println("端口被占用，系统退出！");
 			System.exit(0);
 		}
-
+		logger.info("结束beforeIreportLoadCheck");
 		return null;
 	}
 
@@ -495,6 +537,7 @@ public class AddedOperator implements AddedOepretorInterface{
 
 
 	public Object beforeCloseApplication(JInternalFrame[] jif) {
+		logger.info("开始beforeCloseApplication");
 		if(jif == null){
 			return null;
 		}
@@ -510,7 +553,7 @@ public class AddedOperator implements AddedOepretorInterface{
 
 				if(IreportUtil.isRemoteFile(repid)){
 				try {
-					 String id = IreportRmiClient.rmiInterfactRemote.unLockReport(repid);
+					 String id = IreportRmiClient.rmiInterfactRemote.unLockReport(IreportUtil.getLocalIp(),repid);
 					 if(IreportUtil.isBlank(id)){isError = true;}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -523,39 +566,40 @@ public class AddedOperator implements AddedOepretorInterface{
 			DialogFactory.showErrorMessageDialog(null, "解除锁定出错!", "错误");
 			}
 		}
+		logger.info("结束beforeCloseApplication");
 		return null;
 	}
 
 	public Object afterCloseJReportFrame(final JReportFrame jrf) {
-		System.out.println("aftercloseFrame");
+		logger.info("开始afterCloseJReportFrame");
 		new Thread( new Runnable(){
 			public void run() {
+				String errMsg = "";
 				if(jrf == null ){return;}
 				String path  = jrf.getReport().getFilename();
 				String repid = IreportUtil.getIdFromReportPath(path);
-				System.out.println("::::"+repid);
 				boolean isError = false;
 				if(IreportUtil.isRemoteFile(repid)){
-					System.out.println("ahahahahah");
 					try {
-						 String id = IreportRmiClient.rmiInterfactRemote.unLockReport(repid);
+						 String id = IreportRmiClient.rmiInterfactRemote.unLockReport(IreportUtil.getLocalIp(),repid);
 						 if(IreportUtil.isBlank(id)){isError = true;}
 					} catch (Exception e) {
+						errMsg = e.getMessage();
 						e.printStackTrace();
 						isError = true;
 					}
 					}
 				if(isError){
-					DialogFactory.showErrorMessageDialog(null, "解除["+repid+"]锁定出错!", "错误");
+					DialogFactory.showErrorMessageDialog(null, "解除["+repid+"]锁定出错!\n"+errMsg, "错误");
 				}
-
+				log("已经解除"+repid+".jrxml文件在服务器端的锁定", JOptionPane.INFORMATION_MESSAGE);
 			}
 
 		}).start();
-
+		logger.info("结束afterCloseJReportFrame");
 		return null;
 	}
-	
+
 	public static void log(String text,int type){
 		MainFrame.getMainInstance().getLogPane().getMainLogTextArea().logOnConsole(text, type);
 	}
