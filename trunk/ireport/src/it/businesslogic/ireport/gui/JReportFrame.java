@@ -7397,6 +7397,7 @@ realRect = new Rectangle(
 
                 int ret = javax.swing.JOptionPane.showConfirmDialog(this, message, caption, javax.swing.JOptionPane.YES_NO_CANCEL_OPTION);
 
+
                 switch(ret)
                 {
                     case javax.swing.JOptionPane.YES_OPTION:
@@ -7412,6 +7413,9 @@ realRect = new Rectangle(
                     default:
                         return false;
                 }
+            }else{
+            	//LIMAO: 保存了再关闭
+            	 AddedOperator.getInstance().afterCloseJReportFrame(jrf);
             }
 
             if (saveIt)

@@ -29,7 +29,9 @@ import java.io.Serializable;
 public class IreportFile implements Serializable {
 	private String fileName;
 	private byte[] content;
+	private String creator;
 
+	private String note;
 	public String getFileName() {
 		return fileName;
 	}
@@ -41,6 +43,18 @@ public class IreportFile implements Serializable {
 	}
 	public void setContent(byte[] content) {
 		this.content = content;
+	}
+	public String getCreator() {
+		return creator;
+	}
+	public void setCreator(String creator) {
+		this.creator = creator;
+	}
+	public String getNote() {
+		return note;
+	}
+	public void setNote(String note) {
+		this.note = note;
 	}
 
 

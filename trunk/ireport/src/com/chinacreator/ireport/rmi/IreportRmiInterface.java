@@ -71,6 +71,20 @@ public interface IreportRmiInterface extends Remote{
 	 * @return
 	 */
 	boolean lockReport(ReportLock rl) throws RemoteException;
+
+	/**
+	 * 将客户端新建的文件保存到服务器
+	 * @param ife
+	 * @return
+	 */
+	String addNewReport(IreportFile ife)throws RemoteException;
+
+	/**
+	 * 执行服务器端的某个方法
+	 * @param businessCode 自定义某值对应某方法业务操作完全由自己定义
+	 * @return
+	 */
+	Object invokeServerMethod(int businessCode,Object... obj)throws RemoteException;
 }
 
 //end IreportRmiInterface.java

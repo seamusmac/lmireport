@@ -1066,7 +1066,6 @@ public class MainFrame extends javax.swing.JFrame
         this.getMainInstance().addWindowListener(
         		new WindowAdapter(){
         			public void windowClosing(WindowEvent evt) {
-        				System.out.println("guanbile guanbile guanbile guanbile ");
         			}
         		}
         		);
@@ -7953,9 +7952,12 @@ public class MainFrame extends javax.swing.JFrame
         // Clear previus loaded boundle
         I18n.setCurrentLocale(java.util.Locale.getDefault());
 
+
         MainFrame.reportClassLoader.rescanLibDirectory();
         Thread.currentThread().setContextClassLoader( MainFrame.reportClassLoader );
         final MainFrame _mainFrame = new MainFrame(map);
+        // LIMAO ：重设数据源，移除配置文件已有“远程”数据源再添加“远程数据源”
+        AddedOperator.getInstance().addRemotDatasource();
         SwingUtilities.invokeLater( new Runnable()
         {
             public void run()
@@ -7963,8 +7965,7 @@ public class MainFrame extends javax.swing.JFrame
                 _mainFrame.setVisible(true);
             }
         });
-        // LIMAO ：重设数据源，移除配置文件已有“远程”数据源再添加“远程数据源”
-        AddedOperator.getInstance().addRemotDatasource();
+
 
         // LIMAO : 在远程启动的时候打开当前选择文件 modify by li.mao since 3.0 [2009-8-20 下午04:36:47]
 
@@ -10293,7 +10294,8 @@ public class MainFrame extends javax.swing.JFrame
 
 	        for (int i=0; i<plugins_files.length; ++i)
 	        {
-	            if (!plugins_files[i].getName().endsWith(".xml")) continue;
+	            System.out.println("KKKKK:"+plugins_files[i].getPath());
+	        	if (!plugins_files[i].getName().endsWith(".xml")) continue;
 	            plugin_files_v.add(plugins_files[i]);
 	        }
 	}

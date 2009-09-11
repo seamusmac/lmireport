@@ -57,6 +57,8 @@ public final class IreportConstant {
 	public final static String UN_LOCK = "N";
 
 	public final static int DEFAULT_LOCK_LIMIT_HOURE=1;
+
+	public final static String EFORM_TREE_SELECT = "EFORM_TREE_SELECT";
 }
 
 //end IreportConstant.java

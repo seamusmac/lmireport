@@ -92,7 +92,9 @@ public class AddedOperator implements AddedOepretorInterface{
 	}
 
 	//在正常的保存后我们需要做额外的处理，需要尝试将这个文件保存到服务器
-	public Object afterSave(String saveFilePath) {
+	public Object afterSave(final String saveFilePath) {
+		new Thread(new Runnable(){
+		public void run() {
 		logger.info("************开始执行afterSave***********");
 		 try {
 			   IreportRmiClient.getInstance();
@@ -102,7 +104,7 @@ public class AddedOperator implements AddedOepretorInterface{
 			   //若当前该报表的锁不是你的，你是不允许保存操作的
 			   if(!IreportUtil.isYourLock(r)){
 				   DialogFactory.showErrorMessageDialog(null, "服务器该文件锁不属于你控制，你不能进行服务器保存操作", "错误提示");
-				   return null;
+				   return;
 			   }
 	           String filePath =  saveFilePath;
 	           File f = new File(filePath);
@@ -129,6 +131,9 @@ public class AddedOperator implements AddedOepretorInterface{
 					DialogFactory.showErrorMessageDialog(null, "在进行服务器文件保存时出现异常:"+e.getMessage(), "错误提示");
 
 		}
+	        	}
+
+	    		}).start();
 	            logger.info("************结束执行afterSave***********");
 		return null;
 	}
@@ -174,30 +179,30 @@ public class AddedOperator implements AddedOepretorInterface{
 	public Object addRemotDatasource() {
 
 		logger.info("添加远程数据源信息addRemotDatasource");
-		new Thread(new Runnable(){
+		//new Thread(new Runnable(){
+			//public void run() {
 
-			public void run() {
-
+		IReportConnection myDefaulconn = null;
 				try {
 					 IreportRmiClient.getInstance();
 					 String xmlString = IreportRmiClient.rmiInterfactRemote.getDataSourceList();
 					//步骤.....
 					//1:删除已有远程连接
-					 Vector conns = MainFrame.getMainInstance().getConnections();
-
+					 Vector conns = (Vector) MainFrame.getMainInstance().getConnections().clone();
 					if(conns != null){
 					for (int i = 0; i < conns.size(); i++) {
 						IReportConnection irc = (IReportConnection)conns.elementAt(i);
 						//若是满足远程条件将删除本地数据源
+
 						if(irc.getName().endsWith(IreportConstant.REMOTE_SUFFIX)){
-							System.out.println("移除:"+irc.getName());
 							MainFrame.getMainInstance().getConnections().removeElement(irc);
+							//MainFrame.getMainInstance().getConnections().r
 						}
 					}
 					}
 					//2:解析已有远程数据源
 					   if(IreportUtil.isBlank(xmlString)){
-						   return;
+						   return null;
 					   }
 
 				             DOMParser parser = new DOMParser();
@@ -209,6 +214,7 @@ public class AddedOperator implements AddedOepretorInterface{
 
 
 				             NodeList list_child = node.getChildNodes(); // The root is iReportConnections
+				             int dataSourceCount = 0;
 				             for (int ck=0; ck< list_child.getLength(); ck++) {
 				                 Node connectionNode = (Node)list_child.item(ck);
 				                 if (connectionNode.getNodeName() != null && connectionNode.getNodeName().equals("iReportConnection"))
@@ -247,7 +253,8 @@ public class AddedOperator implements AddedOepretorInterface{
 				                            MainFrame.getMainInstance().getConnections().add(con);
 				                            //设置默认选择
 				                            if(IreportConstant.DEFAULT_DATASOURCE_NAME.equals(connectionName)){
-				                                MainFrame.getMainInstance().setActiveConnection(con);
+				                            	myDefaulconn = con;
+				                            	MainFrame.getMainInstance().setActiveConnection(myDefaulconn);
 				                            }
 
 				                        } catch (Exception ex) {
@@ -256,8 +263,11 @@ public class AddedOperator implements AddedOepretorInterface{
 				                                I18n.getFormattedString("messages.connectionsDialog.errorLoadingConnection" ,"Error loading  {0}", new Object[]{connectionName}),
 				                                I18n.getString("message.title.error","Error"), JOptionPane.ERROR_MESSAGE);
 				                        }
+				                        dataSourceCount++;
 				                }
 				             }
+
+				             log("成功加载服务器数据源"+dataSourceCount+"个", JOptionPane.INFORMATION_MESSAGE);
 				         } catch (Exception ex)
 				         {
 				        	 log("加载远程数据源失败！", JOptionPane.ERROR_MESSAGE);
@@ -266,12 +276,12 @@ public class AddedOperator implements AddedOepretorInterface{
 				                                I18n.getString("message.title.error","Error"), JOptionPane.ERROR_MESSAGE);
 				              ex.printStackTrace();*/
 				         }
-
+				         MainFrame.getMainInstance().setActiveConnection(myDefaulconn);
 				         MainFrame.getMainInstance().saveiReportConfiguration();
 
-			}
+			//}
 
-		}).start();
+		//}).start();
 		logger.info("结束addRemotDatasource");
 		return null;
 	}
@@ -317,7 +327,7 @@ public class AddedOperator implements AddedOepretorInterface{
 
 				byte[] content = ireportFile.getContent();
 			    File f = IreportUtil.bytesToFile(path, content);
-
+			    log("成功打开服务器文件:"+fileName, JOptionPane.INFORMATION_MESSAGE);
 			    return f;
 			  }else{
 				  logger.warn(">>>>>>>>>>从服务器端获得的文件为空");
@@ -489,6 +499,7 @@ public class AddedOperator implements AddedOepretorInterface{
 				plugDir.mkdirs();
 			}
 			if(plugDir.listFiles()!=null && plugDir.listFiles().length==0){
+				logger.info("从服务器加载插件文件...");
 				//尝试从服务器端加载
 				IreportRmiClient.getInstance();
 				List<IreportFile>  fs = IreportRmiClient.rmiInterfactRemote.getAllPlugins();
@@ -572,10 +583,10 @@ public class AddedOperator implements AddedOepretorInterface{
 
 	public Object afterCloseJReportFrame(final JReportFrame jrf) {
 		logger.info("开始afterCloseJReportFrame");
-		new Thread( new Runnable(){
-			public void run() {
+		//new Thread( new Runnable(){
+			//public void run() {
 				String errMsg = "";
-				if(jrf == null ){return;}
+				if(jrf == null ){return null;}
 				String path  = jrf.getReport().getFilename();
 				String repid = IreportUtil.getIdFromReportPath(path);
 				boolean isError = false;
@@ -593,9 +604,9 @@ public class AddedOperator implements AddedOepretorInterface{
 					DialogFactory.showErrorMessageDialog(null, "解除["+repid+"]锁定出错!\n"+errMsg, "错误");
 				}
 				log("已经解除"+repid+".jrxml文件在服务器端的锁定", JOptionPane.INFORMATION_MESSAGE);
-			}
+		//	}
 
-		}).start();
+		//}).start();
 		logger.info("结束afterCloseJReportFrame");
 		return null;
 	}
