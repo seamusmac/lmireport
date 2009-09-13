@@ -17,8 +17,13 @@
  */
 package com.chinacreator.ireport;
 
+import it.businesslogic.ireport.gui.JReportFrame;
+import it.businesslogic.ireport.gui.MainFrame;
+
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.net.InetAddress;
 import java.text.SimpleDateFormat;
@@ -26,6 +31,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.swing.JInternalFrame;
 
 import com.chinacreator.ireport.rmi.ReportLock;
 
@@ -68,6 +75,30 @@ public class IreportUtil {
 
 	}
 
+	public static byte[] fileToBytes(String filePath){
+		try {
+			 File f = new File(filePath);
+			  if(!f.exists()){
+				  return null;
+			  }
+			  byte[] content = new byte[(int)f.length()];
+	          BufferedInputStream input = new BufferedInputStream(new FileInputStream(f));
+	          input.read(content);
+	          if(input != null ){
+		              try{
+		                  input.close();
+		                  input = null ;
+		              }catch(Exception ex){
+		              }
+		       }
+	          return content;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+		 
+         
+	}
 	public static boolean isBlank(String str){
 		return str==null?true:str.trim().equals("");
 	}
@@ -77,14 +108,22 @@ public class IreportUtil {
 	}
 
 	public static boolean isRemoteFile(String fileName){
-
+		
+		
 		if(IreportUtil.isBlank(fileName)){
 			return false;
 		}
+		
+		
 
 		if(fileName.toLowerCase().endsWith(".jrxml")){
 			fileName = fileName.split("\\.")[0];
 		}
+		
+		 String isLocal = MyReportProperties.getStringProperties(fileName+IreportConstant.LOCAL_TO_SERVER);
+		 if(!isBlank(isLocal)){
+			 return true;
+		 }
 		 Matcher m = p.matcher(fileName);
 		 boolean b = m.matches();
 		 return b;
@@ -125,8 +164,9 @@ public class IreportUtil {
 	}
 
 	//是不是你当前所锁定的记录
+	//在保持的时候会出判断
 	public static boolean isYourLock(ReportLock r){
-		System.out.println("RRRR:"+r);
+		
 		if(r==null){
 			return false;
 		}
@@ -135,7 +175,6 @@ public class IreportUtil {
 			return true;
 		}
 		return false;
-
 	}
 
 	public static ReportLock getReportLock(String repid){
@@ -170,7 +209,6 @@ public class IreportUtil {
 		return dateFormat("yyyy-MM-dd HH:mm:ss",date);
 
 	}
-
 	public static Date addDate(Date date,int hours){
 		Calendar c = Calendar.getInstance();
 		if(date == null){
@@ -183,9 +221,69 @@ public class IreportUtil {
 		return new Date(c.getTimeInMillis());
 	}
 
+	/**
+	 * 是不是从本地新建到服务器的文件
+	 * @param saveFilePath
+	 * @return
+	 */
+	
+	public static String isLocalNewToServerFile(String saveFilePath){
+		if(isBlank(saveFilePath)){
+			return null;
+		}
+		String key = getIdFromReportPath(saveFilePath)+IreportConstant.LOCAL_TO_SERVER;
+		return MyReportProperties.getStringProperties(key);
+	}
+	
+	/**
+	 * 移除本地内存所保持的对某新建的文件锁定的标记
+	 * @param pathOrName
+	 * @param isName
+	 */
+	public static void removeLocalToServerLock(String pathOrName,boolean isName){
+		String key = null;
+		if(isName){//文件
+		key = getIdFromReport(pathOrName)+IreportConstant.LOCAL_TO_SERVER;
+		}else{//路径
+		key = getIdFromReportPath(pathOrName)+IreportConstant.LOCAL_TO_SERVER;	
+		}
+		MyReportProperties.removeProperties(key);
+	}
+	
+	/**
+	 * 只要满足条件返回true时才能继续新建报表
+	 * @param reportName
+	 * @return
+	 */
+	public static boolean isAllowedNewReport(String reportName){
+		if(isBlank(reportName)){
+			return false;
+		}
+		if(isRemoteFile(reportName)){
+			return false;
+		}
+		JInternalFrame[] intfs = MainFrame.getMainInstance().getJMDIDesktopPane().getAllFrames();
+		
+		for (int i = 0; i < intfs.length; i++) {
+			if(intfs!=null && intfs[i] instanceof JReportFrame){
+				JReportFrame jf = (JReportFrame) intfs[i];
+				if(jf.getReport().getFilename() == null ||
+		                jf.getReport().getFilename().trim().equals("")){
+					continue;//文件是新建的，还未进行保存
+				}
+				String reportname = jf.getReport().getName();
+				if(reportname.equals(reportName)){
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 	public static void main(String[] args) {
 		System.out.println(getLocalIp());
 	}
+	
+	
 }
 
 //end IreportUtil.java

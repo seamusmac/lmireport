@@ -30,8 +30,15 @@ public class IreportFile implements Serializable {
 	private String fileName;
 	private byte[] content;
 	private String creator;
-
 	private String note;
+	private String ec_id;
+	
+	public String getEc_id() {
+		return ec_id;
+	}
+	public void setEc_id(String ec_id) {
+		this.ec_id = ec_id;
+	}
 	public String getFileName() {
 		return fileName;
 	}

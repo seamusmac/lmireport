@@ -51,7 +51,7 @@ public class NewServerFileOptionsPlugin extends it.businesslogic.ireport.plugin.
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
             	JFrame frame = null;
-            	frame = new JFrame("业务类别树");
+            	frame = new JFrame("新建本地文件到服务器");
             	frame.setLayout(new BorderLayout());
         		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 

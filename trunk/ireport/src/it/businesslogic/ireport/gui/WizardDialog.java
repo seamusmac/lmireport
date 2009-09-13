@@ -1,35 +1,3 @@
-/*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
- * http://www.jaspersoft.com.
- *
- * Unless you have purchased a commercial license agreement from JasperSoft,
- * the following license terms apply:
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as published by
- * the Free Software Foundation.
- *
- * This program is distributed WITHOUT ANY WARRANTY; and without the
- * implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see http://www.gnu.org/licenses/gpl.txt
- * or write to:
- *
- * Free Software Foundation, Inc.,
- * 59 Temple Place - Suite 330,
- * Boston, MA  USA  02111-1307
- *
- *
- *
- *
- * WizardDialog.java
- *
- * Created on 30 giugno 2003, 18.26
- *
- */
-
 package it.businesslogic.ireport.gui;
 import it.businesslogic.ireport.IReportConnection;
 import it.businesslogic.ireport.IReportTemplate;
@@ -68,7 +36,10 @@ import javax.swing.DefaultListModel;
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.ListSelectionEvent;
 
 import org.apache.xerces.parsers.DOMParser;
@@ -80,6 +51,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.chinacreator.ireport.IreportUtil;
+import com.chinacreator.ireport.component.DialogFactory;
+
 /**
  *
  * @author admin
@@ -90,7 +64,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
     Thread t = null;
     Vector templates = null;
     org.syntax.jedit.JEditTextArea jRSQLExpressionArea1 = null;
-
+    public javax.swing.JTextField reportname =null;
     UserChoicesWizardTemplate userTemplate = null;
     int maxStepVisited = 0;
 
@@ -546,7 +520,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         jPanelSteps.add(jLabelStep2, gridBagConstraints);
 
         jLabelStep3.setFont(new java.awt.Font("Dialog", 0, 11));
-        jLabelStep3.setText("3. Group by ...");
+        jLabelStep3.setText("3. 分组 ...");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 4;
@@ -632,7 +606,9 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
 
         jPanelStep1.setLayout(new java.awt.GridBagLayout());
 
-        jLabel13.setText("Use the following template...");
+        
+     
+        javax.swing.JLabel jname =  new JLabel("报表名称");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
@@ -640,7 +616,29 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
         gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.insets = new java.awt.Insets(74, 0, 0, 0);
+        gridBagConstraints.insets = new java.awt.Insets(50, 0, 0, 0);
+        jPanelStep1.add(jname, gridBagConstraints);
+        
+         reportname = new JTextField(50);
+        //reportname.setl
+        
+        javax.swing.JPanel myp = new JPanel();
+        myp.add(jname);
+        myp.add(reportname);
+        
+        jPanelStep1.add(myp, gridBagConstraints);
+        
+        
+        
+        jLabel13.setText("Use the following template...");
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.insets = new java.awt.Insets(10, 0, 0, 0);
         jPanelStep1.add(jLabel13, gridBagConstraints);
 
         jComboBoxTemplates.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -652,7 +650,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         });
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
+        gridBagConstraints.gridy = 3;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTHWEST;
@@ -1138,7 +1136,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         jPanelStep6.setLayout(new java.awt.GridBagLayout());
 
         jLabel4.setFont(new java.awt.Font("Tahoma", 0, 14));
-        jLabel4.setText("Congratulation!");
+        jLabel4.setText("Congratulations!");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
@@ -1690,6 +1688,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         }
 
         if (wzStep == 6) {
+        	//这里开始打开信件报表
             //javax.swing.JOptionPane.showMessageDialog(null, ((TemplateFile)jList3.getSelectedValue()).file.getAbsolutePath()+"" );
             String templateName = "";
             if (jCheckBoxSaveTemplate.isSelected() && jTextFieldTemplateName.getText().length() == 0)
@@ -1740,7 +1739,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 }
 
                 report =  ReportGenerator.createReport(ucwt);
-
+                report.setName(reportname.getText());
                 if (jCheckBoxSaveTemplate.isSelected())
                 {
                     MainFrame.getMainInstance().getUserChoicesWizardTemplates().add(ucwt);
@@ -1881,6 +1880,15 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
     private int dialogResult;
 
     public void nextStep() {
+    	//LIMAO : 新增添加文件名，且必须满足条件
+    	if(IreportUtil.isBlank(reportname.getText())){
+    		DialogFactory.showErrorMessageDialog(this, "未填写报表名称", "错误");
+    		return;
+    	}
+    	if(!IreportUtil.isAllowedNewReport(reportname.getText())){
+    		DialogFactory.showErrorMessageDialog(this, "填写的名称不合法或者名称已经在打开的保存文件中存在", "错误");
+    		return;
+    	}
         this.setStep( wzStep+1, wzStep);
     }
 
@@ -2037,7 +2045,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
                 break;
             case 6:
                 jButtonNext.setEnabled( false );
-                jButtonCancel.setText(it.businesslogic.ireport.util.I18n.getString("finish", "Finish"));
+                jButtonCancel.setText(it.businesslogic.ireport.util.I18n.getString("finish", "finish"));
                 setViewedPanel(6);
                 break;
         }
@@ -2447,7 +2455,7 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         jLabelG2.setText(it.businesslogic.ireport.util.I18n.getString("group","Group")+" 2");
         jLabelG3.setText(it.businesslogic.ireport.util.I18n.getString("group","Group")+" 3");
         jLabelG4.setText(it.businesslogic.ireport.util.I18n.getString("group","Group")+" 4");
-        jLabel4.setText(it.businesslogic.ireport.util.I18n.getString("congratulation","Congratulation!"));
+       // jLabel4.setText(it.businesslogic.ireport.util.I18n.getString("congratulation","Congratulation!"));
         jLabel10.setText(it.businesslogic.ireport.util.I18n.getString("wizardSuccess","You have succesfully created a new report."));
         jLabel11.setText(it.businesslogic.ireport.util.I18n.getString("wizardFinished","Press 'Finish' to generate it."));
         jLabel12.setText(it.businesslogic.ireport.util.I18n.getString("connectionsDatasources", "Connection / Datasource"));

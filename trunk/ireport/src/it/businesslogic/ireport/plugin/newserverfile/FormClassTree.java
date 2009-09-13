@@ -50,11 +50,9 @@ import com.chinacreator.ireport.rmi.ReportFormClass;
  */
 // begin FormClassTree.java
 public class FormClassTree extends JPanel implements TreeSelectionListener {
-	private JPanel treePanel = null;
-
 	private JPanel buttonPanel = null;
 	private JTree tree;
-	private static boolean DEBUG = false;
+
 
 	private static JFrame frame = null;
 	// Optionally play with line styles. Possible values are
@@ -64,7 +62,7 @@ public class FormClassTree extends JPanel implements TreeSelectionListener {
 
 	private static NewServerFileOptions nfo=null;
 	// Optionally set the look and feel.
-	private static boolean useSystemLookAndFeel = false;
+
 
 	public FormClassTree(NewServerFileOptions f) {
 		super(new BorderLayout());
@@ -104,7 +102,7 @@ public class FormClassTree extends JPanel implements TreeSelectionListener {
 		add.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
 				if(IreportConstant.EFORM_TREE_SELECT.equals(MyReportProperties.getStringProperties(IreportConstant.EFORM_TREE_SELECT))){
-					DialogFactory.showWarnMessageDialog(null, "你未选择业务类别", "错误");
+					DialogFactory.showWarnMessageDialog(frame, "你未选择业务类别", "错误");
 				}else{
 					nfo.ectext.setText(MyReportProperties.getStringProperties(IreportConstant.EFORM_TREE_SELECT).split("#")[1]);
 					nfo.setVisible(true);

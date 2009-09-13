@@ -37,6 +37,7 @@ import it.businesslogic.ireport.gui.MainFrame;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -45,15 +46,17 @@ import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
+import com.chinacreator.ireport.AddedOperator;
 import com.chinacreator.ireport.IreportConstant;
 import com.chinacreator.ireport.IreportUtil;
 import com.chinacreator.ireport.MyReportProperties;
+import com.chinacreator.ireport.component.DialogFactory;
 import com.chinacreator.ireport.rmi.IreportFile;
 import com.chinacreator.ireport.rmi.IreportRmiClient;
 
 /**
  *
- * @author  Administrator
+ * @author  Limao
  */
 public class NewServerFileOptions extends javax.swing.JPanel {
 
@@ -109,6 +112,7 @@ public class NewServerFileOptions extends javax.swing.JPanel {
 				String path = jf.getReport().getFilename();
 				repid = IreportUtil.getIdFromReportPath(path);
 				if(!IreportUtil.isRemoteFile(repid)){
+					//这里将文件名与文件全路径创建一个映射
 					MyReportProperties.setProperties(repid+"TEMP-ME", path);
 					currentNewReport.addItem(repid);
 					if(jf.isSelected()){
@@ -295,11 +299,72 @@ public class NewServerFileOptions extends javax.swing.JPanel {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
     	//保存
-    	IreportRmiClient.getInstance();
-    	IreportFile ifi = new IreportFile();
-    	ifi.setContent()
-    	IreportRmiClient.getRmiRemoteInterface().addNewReport();
-    	this.setVisible(true);
+    	father.setVisible(false);
+    		//new Thread( new Runnable() {
+    			//public void run() {
+    				try {
+    				IreportRmiClient.getInstance();
+    		    	IreportFile ifi = new IreportFile();
+    		    	String selectFilePath = MyReportProperties.getStringProperties((currentNewReport.getSelectedItem()+"TEMP-ME"));
+    		    	if(IreportUtil.isBlank(selectFilePath)){
+    		    		DialogFactory.alert("你未选择报表文件");
+    		    		father.setVisible(true);
+    		    		return;
+    		    	}
+    		    	ifi.setContent(IreportUtil.fileToBytes(selectFilePath));
+    		    	String username = MyReportProperties.getStringProperties(IreportConstant.USERNAME);
+    		    	if(IreportUtil.isBlank(username)){
+    		    		DialogFactory.alert("你未登录");
+    		    		father.setVisible(true);
+    		    		return;
+    		    	}
+    		    	ifi.setCreator(username);
+    		    	String reportname = reportName.getText();
+    		    	if(IreportUtil.isBlank(reportname)){
+    		    		DialogFactory.alert("你未填写报表名称");
+    		    		father.setVisible(true);
+    		    		return;
+    		    	}
+    		    	ifi.setFileName(reportname);
+    		    	String note = reportNote.getText();
+    		    	ifi.setNote(note);
+    		    	String ecid= MyReportProperties.getStringProperties(IreportConstant.EFORM_TREE_SELECT);
+    		    	/*if(IreportUtil.isBlank(ecid)){
+    		    		DialogFactory.alert("你未选择业务类别");
+    		    		father.setVisible(true);
+    		    		return;
+    		    	}*/
+    		    	System.out.println(ifi.getContent().length+username+note+reportname);
+    		    	//ecid = ecid.split("#")[0];
+    		    	ifi.setEc_id(ecid);
+    		    	
+    		    	String returnid = "111111111111111111111";
+    		    	//IreportRmiClient.getRmiRemoteInterface().addNewReport(ifi);
+    		    	
+    		    	//这样打开的文件也必须是锁定的
+    		    	IreportRmiClient.getInstance();
+    		        //boolean b = IreportRmiClient.getRmiRemoteInterface().lockReport(IreportUtil.getReportLock(returnid));
+			          //if(!b){
+			        	//  AddedOperator.log("锁定服务器端文件出错，你的后续修改将对服务器文件无效", IreportConstant.ERROR_);
+			        	//  DialogFactory.showErrorMessageDialog(null, "锁定服务器端文件出错，你的后续修改将对服务器文件无效", "锁定错误");
+			       // }
+			          
+			        //文件锁定后需要存储信息到内存，以备能成功保存以及解锁
+			        String localName = IreportUtil.getIdFromReportPath(selectFilePath);
+			        MyReportProperties.setProperties(localName+IreportConstant.LOCAL_TO_SERVER, returnid); 
+    		    	AddedOperator.log("成功将本地文件"+selectFilePath+"保存到服务器,在服务器端得ID为["+returnid+"]", IreportConstant.RIGHT_);
+    				father.dispose();
+    				} catch (Exception e) {
+    					
+    					e.printStackTrace();
+    					DialogFactory.showErrorMessageDialog(null, "新建服务器文件时出错:\n"+e.getMessage(), "错误");
+    					father.setVisible(true);
+    				}
+    				
+    			//}
+    		//});
+    
+    	//this.setVisible(true);
 
     }//GEN-LAST:event_jButton1ActionPerformed
 

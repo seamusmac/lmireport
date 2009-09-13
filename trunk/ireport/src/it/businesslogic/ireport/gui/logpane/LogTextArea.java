@@ -32,6 +32,10 @@
 
 package it.businesslogic.ireport.gui.logpane;
 import javax.swing.*;
+
+import com.chinacreator.ireport.IreportConstant;
+import com.chinacreator.ireport.IreportUtil;
+
 import it.businesslogic.ireport.util.Misc;
 import it.businesslogic.ireport.gui.*;
 import it.businesslogic.ireport.*;
@@ -195,7 +199,7 @@ public class LogTextArea extends javax.swing.JPanel implements LanguageChangedLi
         jScrollPaneOutput = new javax.swing.JScrollPane();
         jEditorPaneOutput = new javax.swing.JEditorPane();
 
-        jMenuItemClearLog.setText("Clear log");
+        jMenuItemClearLog.setText("清除日志");
         jMenuItemClearLog.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItemClearLogActionPerformed(evt);
@@ -204,7 +208,7 @@ public class LogTextArea extends javax.swing.JPanel implements LanguageChangedLi
 
         jPopupMenuLog.add(jMenuItemClearLog);
 
-        jMenuItemCloseLog.setText("Close log");
+        jMenuItemCloseLog.setText("关闭日志");
         jMenuItemCloseLog.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItemCloseLogActionPerformed(evt);
@@ -215,7 +219,7 @@ public class LogTextArea extends javax.swing.JPanel implements LanguageChangedLi
 
         jPopupMenuLog.add(jSeparator1);
 
-        jMenuItemCopy.setText("Copy");
+        jMenuItemCopy.setText("复制");
         jMenuItemCopy.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItemCopyActionPerformed(evt);
@@ -224,7 +228,7 @@ public class LogTextArea extends javax.swing.JPanel implements LanguageChangedLi
 
         jPopupMenuLog.add(jMenuItemCopy);
 
-        jMenuItemSelectAll.setText("Select all");
+        jMenuItemSelectAll.setText("全选");
         jMenuItemSelectAll.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jMenuItemSelectAllActionPerformed(evt);
@@ -323,21 +327,41 @@ public class LogTextArea extends javax.swing.JPanel implements LanguageChangedLi
         }
         
         URL img_url = null;
-        
+        String MSGTYPE = "";
         try {
         switch (messageType)
         {
             case JOptionPane.INFORMATION_MESSAGE:
+            	MSGTYPE = "信息";
                 img_url = this.getClass().getResource("/it/businesslogic/ireport/icons/log/information.png");
                 break;
             case JOptionPane.WARNING_MESSAGE:
+            	MSGTYPE = "警告";
                 img_url = this.getClass().getResource("/it/businesslogic/ireport/icons/log/warning.png");
                 break;
             case JOptionPane.ERROR_MESSAGE:
+            	MSGTYPE = "错误";
                 img_url = this.getClass().getResource("/it/businesslogic/ireport/icons/log/error.png");
                 break;
             case JOptionPane.QUESTION_MESSAGE:
+            	MSGTYPE = "询问";
                 img_url = this.getClass().getResource("/it/businesslogic/ireport/icons/log/question.png");
+                break;
+            case IreportConstant.ERROR_:
+            	MSGTYPE = "错误";
+                img_url = this.getClass().getResource("/it/businesslogic/ireport/icons/log/fail.gif");
+                break;
+            case IreportConstant.RIGHT_:
+            	MSGTYPE = "成功";
+                img_url = this.getClass().getResource("/it/businesslogic/ireport/icons/log/suc.gif");
+                break;
+            case IreportConstant.WARN_:
+            	MSGTYPE = "警告";
+                img_url = this.getClass().getResource("/it/businesslogic/ireport/icons/log/warning.gif");
+                break;
+            case IreportConstant.INFO_:
+            	MSGTYPE = "信息";
+                img_url = this.getClass().getResource("/it/businesslogic/ireport/icons/log/information.png");
                 break;
             case JOptionPane.PLAIN_MESSAGE:
             default: 
@@ -350,7 +374,11 @@ public class LogTextArea extends javax.swing.JPanel implements LanguageChangedLi
         
         if (img_url != null)
         {
-            text = "<img align=\"right\" src=\""+  img_url  +"\">" + text;
+        	MSGTYPE ="<font face=\"SansSerif\" size=\"3\" color=\"#000000\">"+ MSGTYPE + "["+IreportUtil.defaultDateFormat(new Date())+"]：</font>";
+            text = "<img align=\"right\" src=\""+  img_url  +"\">" + MSGTYPE+text;
+            if(messageType==JOptionPane.ERROR_MESSAGE || messageType == IreportConstant.ERROR_){
+            	text = text.replaceAll("#000000", "red");
+            }
         }
 
         logOnConsole(text,true);
@@ -410,8 +438,11 @@ public class LogTextArea extends javax.swing.JPanel implements LanguageChangedLi
                 //    this.jEditorPaneOutput.setText("<body top=0><p align=\"left\" id=\"inserthere\">"+ s + "</p></body>");
                 //}
 
-
-                logPane.setActiveLog( this );
+                    //LIMAO:控制台自动下滑到低端
+                    javax.swing.text.Document doccc = jEditorPaneOutput.getDocument();  
+                    jEditorPaneOutput.setCaretPosition(doccc.getLength());  
+                    
+                    logPane.setActiveLog( this );
             }
             //this.jEditorPaneOutput.getDocument().insertString(this.jEditorPaneOutput.getDocument().getLength(), s ,  null);
 

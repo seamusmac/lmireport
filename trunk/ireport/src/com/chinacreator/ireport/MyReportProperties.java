@@ -83,6 +83,14 @@ public class MyReportProperties {
 		}
 		return -999;
 	}
+	
+	public static void removeProperties(String key){
+		if(!myProperties.containsKey(key)){
+			return;
+		}
+		myProperties.remove(key);
+	}
+	
 
 }
 

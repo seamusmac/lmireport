@@ -34,6 +34,12 @@ package it.businesslogic.ireport.gui;
 import it.businesslogic.ireport.gui.sheet.Tag;
 import it.businesslogic.ireport.util.*;
 import javax.swing.*;
+
+import com.chinacreator.ireport.AddedOperator;
+import com.chinacreator.ireport.IreportConstant;
+import com.chinacreator.ireport.IreportUtil;
+import com.chinacreator.ireport.component.DialogFactory;
+
 import java.awt.Point;
 
 /**
@@ -1301,7 +1307,15 @@ public class ReportPropertiesFrame extends javax.swing.JDialog  {
     }//GEN-LAST:event_jCheckBoxTitleOnNewPageActionPerformed
 
     private void jButtonOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonOKActionPerformed
-        this.reportName = jTextFieldName.getText();
+          //LIMAO : 在新建时对文件名的控制
+    	  this.reportName = jTextFieldName.getText();
+    	  
+    	  if(!IreportUtil.isAllowedNewReport(reportName)){
+    		AddedOperator.log("新建文件名["+this.reportName+"]不合法(文件名不能为20位数字)或者已经在打开的文件中存在", IreportConstant.ERROR_);
+          	DialogFactory.showErrorMessageDialog(this, "新建文件名["+this.reportName+"]不合法或者已经在打开的文件中存在", "错误");
+          	return;
+    	  }
+    	  
         this.scriptletClass = jTextFieldScriptletClass.getText();
                 this.setResourceBundleBaseName(jTextFieldResourceBundleBaseName.getText());
 

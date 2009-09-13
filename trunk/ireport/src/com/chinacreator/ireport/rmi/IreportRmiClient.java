@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.rmi.Naming;
 
+import com.chinacreator.ireport.AddedOperator;
 import com.chinacreator.ireport.IreportConstant;
 import com.chinacreator.ireport.IreportUtil;
 import com.chinacreator.ireport.MyReportProperties;
@@ -57,6 +58,7 @@ public class IreportRmiClient {
 			client = new IreportRmiClient();
 		}
 		} catch (Exception e) {
+			AddedOperator.log("创建于服务器的RMI连接[IP:"+ip+",PORT:"+port+"]失败，你的所有远程操作将不能进行,由于："+e.getMessage(), IreportConstant.ERROR_);
 			e.printStackTrace();
 		}
 		return client;
@@ -65,21 +67,6 @@ public class IreportRmiClient {
 	public static IreportRmiInterface getRmiRemoteInterface(){
 		getInstance();
 		return rmiInterfactRemote;
-
-	}
-
-	public static void main(String[] args) throws Exception{
-		BufferedInputStream input = null ;
-		IreportFile ireportFile = new IreportFile();
-		File f = new File("F:\\2\\123.txt");
-		ireportFile.setFileName("aaaa.txt");
-		byte[] content = new byte[(int)f.length()];
-		input = new BufferedInputStream(new FileInputStream(f));
-	    input.read(content);
-		ireportFile.setContent(content);
-		getRmiRemoteInterface().save(ireportFile);
-		System.out.println("OVER.....");
-
 
 	}
 

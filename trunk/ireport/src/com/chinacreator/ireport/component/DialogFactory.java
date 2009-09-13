@@ -21,6 +21,8 @@ import java.awt.Component;
 
 import javax.swing.JOptionPane;
 
+import com.chinacreator.ireport.IreportUtil;
+
 /**
  * @author 川誰
  * @since 3.0
@@ -63,6 +65,16 @@ public class DialogFactory {
 		}
 		JOptionPane.showMessageDialog(parentComponent, message, title, JOptionPane.INFORMATION_MESSAGE);
 	}
+	
+	public static void alert(String message){
+		showWarnMessageDialog(null, message, "少御");
+	}
+	public static void alertIfNull(String checkStr,String message){
+		if(IreportUtil.isBlank(checkStr)){
+		showWarnMessageDialog(null, message, "少御");
+		}
+	}
+	
 }
 
 //end DialogFactory.java
