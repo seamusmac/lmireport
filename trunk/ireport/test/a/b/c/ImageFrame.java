@@ -7,7 +7,9 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
+import java.io.File;
 
+import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
@@ -41,7 +43,11 @@ public class ImageFrame extends javax.swing.JFrame {
    getContentPane().setLayout(null);
    {
     Toolkit tk=getToolkit();
-    image=tk.getImage("d:\t\tree.jpg");
+    
+    image=Toolkit.getDefaultToolkit().createImage("d:\t\tree.png");
+    //image = ImageIO.read(new File("d:\t\tree.png"));
+    
+    
     System.out.println(image);
     //这里的地址填上你图片的位置
    }
