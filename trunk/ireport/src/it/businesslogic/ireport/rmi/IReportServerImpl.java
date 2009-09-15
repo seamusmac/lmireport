@@ -91,6 +91,10 @@ public class IReportServerImpl extends UnicastRemoteObject
         int port = Integer.parseInt(IreportConstant.CLIENT_RMI_PORT);
 
         try {
+
+    		System.setProperty("java.rmi.server.hostname",IreportUtil.getLocalIp()); //perhaps the problem
+    		System.setProperty("java.security.policy", "java.policy"); // should be no problem
+
         	ClientRmiServerInterface ireportRemote = ClientRmiServerInterfaceImpl.getInstance();
    		    LocateRegistry.createRegistry(port);
             Naming.bind("rmi://"+IreportUtil.getLocalIp()+":"+port+"/ireportClientRmiServer", ireportRemote);

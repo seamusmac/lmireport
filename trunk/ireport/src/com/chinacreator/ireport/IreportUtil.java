@@ -44,8 +44,8 @@ import com.chinacreator.ireport.rmi.ReportLock;
  */
 //begin IreportUtil.java
 public class IreportUtil {
-	private static Pattern  p = Pattern.compile("\\d{20}");
-
+	private static Pattern  p = Pattern.compile("_\\d{20}");
+	private static Pattern  p1 = Pattern.compile("\\d{1}");
 	public static File bytesToFile(String filePath,byte[] content){
 		try {
 			if(isBlank(filePath)){
@@ -96,8 +96,8 @@ public class IreportUtil {
 			e.printStackTrace();
 			return null;
 		}
-		 
-         
+
+
 	}
 	public static boolean isBlank(String str){
 		return str==null?true:str.trim().equals("");
@@ -108,18 +108,18 @@ public class IreportUtil {
 	}
 
 	public static boolean isRemoteFile(String fileName){
-		
-		
+
+
 		if(IreportUtil.isBlank(fileName)){
 			return false;
 		}
-		
-		
+
+
 
 		if(fileName.toLowerCase().endsWith(".jrxml")){
 			fileName = fileName.split("\\.")[0];
 		}
-		
+
 		 String isLocal = MyReportProperties.getStringProperties(fileName+IreportConstant.LOCAL_TO_SERVER);
 		 if(!isBlank(isLocal)){
 			 return true;
@@ -166,7 +166,7 @@ public class IreportUtil {
 	//是不是你当前所锁定的记录
 	//在保持的时候会出判断
 	public static boolean isYourLock(ReportLock r){
-		
+
 		if(r==null){
 			return false;
 		}
@@ -226,7 +226,7 @@ public class IreportUtil {
 	 * @param saveFilePath
 	 * @return
 	 */
-	
+
 	public static String isLocalNewToServerFile(String saveFilePath){
 		if(isBlank(saveFilePath)){
 			return null;
@@ -234,7 +234,7 @@ public class IreportUtil {
 		String key = getIdFromReportPath(saveFilePath)+IreportConstant.LOCAL_TO_SERVER;
 		return MyReportProperties.getStringProperties(key);
 	}
-	
+
 	/**
 	 * 移除本地内存所保持的对某新建的文件锁定的标记
 	 * @param pathOrName
@@ -245,11 +245,11 @@ public class IreportUtil {
 		if(isName){//文件
 		key = getIdFromReport(pathOrName)+IreportConstant.LOCAL_TO_SERVER;
 		}else{//路径
-		key = getIdFromReportPath(pathOrName)+IreportConstant.LOCAL_TO_SERVER;	
+		key = getIdFromReportPath(pathOrName)+IreportConstant.LOCAL_TO_SERVER;
 		}
 		MyReportProperties.removeProperties(key);
 	}
-	
+
 	/**
 	 * 只要满足条件返回true时才能继续新建报表
 	 * @param reportName
@@ -262,8 +262,15 @@ public class IreportUtil {
 		if(isRemoteFile(reportName)){
 			return false;
 		}
+
+		 Matcher m = p1.matcher(reportName.substring(0, 1));
+		 boolean b = m.matches();
+		 if(b){
+			 return !b;
+		 }
+
 		JInternalFrame[] intfs = MainFrame.getMainInstance().getJMDIDesktopPane().getAllFrames();
-		
+
 		for (int i = 0; i < intfs.length; i++) {
 			if(intfs!=null && intfs[i] instanceof JReportFrame){
 				JReportFrame jf = (JReportFrame) intfs[i];
@@ -279,11 +286,22 @@ public class IreportUtil {
 		}
 		return true;
 	}
-	public static void main(String[] args) {
-		System.out.println(getLocalIp());
+
+
+	public static String removeNameSuffix(String name){
+		if(isBlank(name)){
+			return"";
+		}
+		if(name.indexOf("_")!=-1){
+			name = name.substring(1);
+		}
+		return name;
 	}
-	
-	
+	public static void main(String[] args) {
+		System.out.println(isAllowedNewReport("_12345678901234567890"));
+	}
+
+
 }
 
 //end IreportUtil.java

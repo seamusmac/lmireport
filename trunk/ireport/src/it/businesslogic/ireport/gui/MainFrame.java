@@ -137,7 +137,6 @@ import org.xml.sax.SAXException;
 import com.chinacreator.ireport.AddedOperator;
 import com.chinacreator.ireport.IreportConstant;
 import com.chinacreator.ireport.IreportUtil;
-import com.chinacreator.ireport.MyReportProperties;
 import com.chinacreator.ireport.component.DialogFactory;
 /**
  * This class is the core of the GUI of iReport. From this class we control all
@@ -6896,21 +6895,21 @@ public class MainFrame extends javax.swing.JFrame
                 // then the ask whether the file must be overwritten.
 
                 //file exists?
-                
+
                 //---------------------
-               
+
                 String filename1 = jfc.getSelectedFile().getName();
                 if (filename1.lastIndexOf(".") > 0)
                 {
                     filename1 = filename1.substring(0, filename1.lastIndexOf(".")  );
                 }
                 if(!IreportUtil.isAllowedNewReport(filename1)){
-                	
+
                     	DialogFactory.showErrorMessageDialog(this,"["+reportName+"]文件名不合法或者在已经打开的报表文件中已经存在" , "错误");
                     	return;
-                    
+
                 }
-                
+
                 if(jfc.getSelectedFile().exists()) {
 
                     //confirm overwrite
@@ -7525,7 +7524,7 @@ public class MainFrame extends javax.swing.JFrame
      */
     public Report newReport(File template)
     {
-    	
+
         try {
             Report report = new Report(template.getPath());
             report.setFilename( null );
@@ -7548,7 +7547,7 @@ public class MainFrame extends javax.swing.JFrame
      */
     public Report newReport()
     {
-    	
+
         // Get info about the new report....
         // 1. Display the ReportProperties frame in dialog mode.
         //    Will be proposed default values...
@@ -7558,7 +7557,7 @@ public class MainFrame extends javax.swing.JFrame
         String name = getFirstNameFree();
         rpf.setReportName( name);
         rpf.setVisible(true);
-      
+
         System.out.println(rpf.getReportName());
         if (rpf.getDialogResult() == javax.swing.JOptionPane.OK_OPTION) {
         	System.out.println("111"+rpf.getReportName());
@@ -7981,11 +7980,6 @@ public class MainFrame extends javax.swing.JFrame
         MainFrame.reportClassLoader.rescanLibDirectory();
         Thread.currentThread().setContextClassLoader( MainFrame.reportClassLoader );
         final MainFrame _mainFrame = new MainFrame(map);
-        if(IreportUtil.isBlank(MyReportProperties.getStringProperties(IreportConstant.USERNAME))){
-        AddedOperator.log("远程登录异常",IreportConstant.ERROR_);
-        }else{
-        AddedOperator.log("["+MyReportProperties.getStringProperties(IreportConstant.USERNAME)+"]成功登陆到"+MyReportProperties.getStringProperties(IreportConstant.RMI_IP), IreportConstant.RIGHT_);
-        }
         // LIMAO ：重设数据源，移除配置文件已有“远程”数据源再添加“远程数据源”
         AddedOperator.getInstance().addRemotDatasource();
         SwingUtilities.invokeLater( new Runnable()
@@ -7995,8 +7989,8 @@ public class MainFrame extends javax.swing.JFrame
                 _mainFrame.setVisible(true);
             }
         });
-        
-        
+
+
 
         // LIMAO : 在远程启动的时候打开当前选择文件 modify by li.mao since 3.0 [2009-8-20 下午04:36:47]
 
@@ -8008,6 +8002,8 @@ public class MainFrame extends javax.swing.JFrame
 
         //LIMAO : 异步初始模板信息
         AddedOperator.getInstance().initTemplate();
+
+        AddedOperator.getInstance().initLibJarFiles();
 
     }
 
@@ -9867,6 +9863,8 @@ public class MainFrame extends javax.swing.JFrame
         else {
             ret = this.getDefaultCompilationDirectory();
         }
+
+        System.out.println("编译目录:"+ret);
         return ret;
     }
 

@@ -17,9 +17,6 @@
  */
 package com.chinacreator.ireport.rmi;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.rmi.Naming;
 
 import com.chinacreator.ireport.AddedOperator;
@@ -40,36 +37,67 @@ public class IreportRmiClient {
 	private static String ip = null;
 	private static String port = null;
 
+	private static boolean flag = true;
+
 	public static synchronized IreportRmiClient getInstance (){
 		try {
-		if(client == null){
+		if(
+				//true ||
+			 client == null){ //永远执行
 			 ip = MyReportProperties.getStringProperties(IreportConstant.RMI_IP);//由外部传入
 			 port =  MyReportProperties.getStringProperties(IreportConstant.RMI_PORT); //由外部传入
 			 if(IreportUtil.isBlank(ip)){
 				 ip="127.0.0.1";
+
 				 System.out.println("初始化未找到IP，使用本地IP：127.0.0.1");
 			 }
 			 if(IreportUtil.isBlank(port)){
 				 port="10086";
 				 System.out.println("初始化未找到PORT，使用PORT：10086");
 			 }
-			System.out.println("创建客户端RMI连接，IP："+ip+"端口："+port);
 			rmiInterfactRemote = (IreportRmiInterface) Naming.lookup("rmi://"+ip+":"+port+"/ireportRmiServer");
 			client = new IreportRmiClient();
+			if(client!=null){
+				System.out.println("》》》》》》创建客户端RMI连接，IP："+ip+"端口："+port);
+			}
+			if(flag){
+				AddedOperator.log("创建于服务器的RMI连接[IP:"+ip+",PORT:"+port+"]成功", IreportConstant.RIGHT_);
+				flag = false;
+			}
 		}
 		} catch (Exception e) {
 			AddedOperator.log("创建于服务器的RMI连接[IP:"+ip+",PORT:"+port+"]失败，你的所有远程操作将不能进行,由于："+e.getMessage(), IreportConstant.ERROR_);
 			e.printStackTrace();
+			flag = true;
 		}
 		return client;
 	}
 
 	public static IreportRmiInterface getRmiRemoteInterface(){
+
+
 		getInstance();
 		return rmiInterfactRemote;
 
 	}
 
+	public static void main(String[] args) {
+/*		System.getProperties().put("proxySet","true");
+		System.getProperties().put("proxyHost","192.168.11.110");
+		System.getProperties().put("proxyPort","1070");*/
+
+	try {
+		MyReportProperties.setProperties(IreportConstant.RMI_IP, "192.168.11.118");
+		MyReportProperties.setProperties(IreportConstant.RMI_PORT, "10086");
+
+		int i = getRmiRemoteInterface().add(1, 2);
+
+		System.out.println(i);
+	} catch (Exception e) {
+		e.printStackTrace();
+	}
+
+	}
 
 }
 

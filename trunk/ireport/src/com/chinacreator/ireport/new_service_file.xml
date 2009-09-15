@@ -1,4 +1,4 @@
-<iReportPlugin 	name="新建报表文件到服务器" class="it.businesslogic.ireport.plugin.oracle.OracleOptionsPlugin">
+<iReportPlugin 	name="新建报表文件到服务器" class="it.businesslogic.ireport.plugin.newserverfile.NewServerFileOptionsPlugin">
 	<IconFile>/it/businesslogic/ireport/icons/oracle_options.png</IconFile>
-	<Description>Set terriotry and language options for Oracle database performing an ALTER SESSION</Description>
+	<Description>new server report</Description>
 </iReportPlugin>

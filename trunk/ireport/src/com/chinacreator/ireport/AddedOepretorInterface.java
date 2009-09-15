@@ -140,6 +140,12 @@ public interface AddedOepretorInterface {
 	 * @return
 	 */
 	Object afterCloseJReportFrame(JReportFrame jrf);
+
+	/**
+	 * 需要从服务器同步Lib目录jar文件
+	 * @return
+	 */
+	Object initLibJarFiles();
 }
 
 //end AddedOepretorInterface.java

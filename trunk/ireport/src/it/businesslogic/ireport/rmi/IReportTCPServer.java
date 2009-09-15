@@ -105,13 +105,10 @@ public class IReportTCPServer implements Runnable {
         }*/
 
         try {
-
             serverSocket = new ServerSocket( port );
             MainFrame.getMainInstance().logOnConsole("Demone listening on port: " + serverSocket.getLocalPort() );
-
         } catch (IOException e) {
-
-               MainFrame.getMainInstance().logOnConsole("Error opening the socket : " + e.getMessage());
+           MainFrame.getMainInstance().logOnConsole("Error opening the socket : " + e.getMessage());
 	       return;
         }
 

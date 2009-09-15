@@ -85,6 +85,22 @@ public interface IreportRmiInterface extends Remote{
 	 * @return
 	 */
 	Object invokeServerMethod(int businessCode,Object... obj)throws RemoteException;
+
+	/**
+	 * 一些需要的同步到客户端的jar包
+	 * @return
+	 * @throws RemoteException
+	 */
+	Object synchronizationLibJar()throws RemoteException;
+
+	/**
+	 *
+	 * @param ifi
+	 * @param cilentPath
+	 * @return
+	 * @throws RemoteException
+	 */
+	Object sendFileToClient(String serverFileNamePath)throws RemoteException;
 }
 
 //end IreportRmiInterface.java

@@ -32,7 +32,8 @@ public class IreportFile implements Serializable {
 	private String creator;
 	private String note;
 	private String ec_id;
-	
+
+
 	public String getEc_id() {
 		return ec_id;
 	}

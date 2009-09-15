@@ -22,7 +22,6 @@ import it.businesslogic.ireport.Report;
 import it.businesslogic.ireport.gui.JReportFrame;
 import it.businesslogic.ireport.gui.MainFrame;
 import it.businesslogic.ireport.util.I18n;
-import it.businesslogic.ireport.util.ReportUtils;
 
 import java.awt.Font;
 import java.io.BufferedInputStream;
@@ -33,7 +32,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Vector;
 
 import javax.swing.JInternalFrame;
@@ -73,26 +71,26 @@ public class AddedOperator implements AddedOepretorInterface{
 		try {
 			//判断是不是由本地新建的文件
 			 String localRealFileId = IreportUtil.isLocalNewToServerFile(closeFilePath);
-			 
+
 			 IreportRmiClient.getInstance();
 			 File f = new File(closeFilePath);
 			 String repid = IreportUtil.getIdFromReport(f.getName());
-			 
+
 			 realId = repid;
 			 if(IreportUtil.isBlank(repid)){
 				 log("关闭时取到的报表ID为空", IreportConstant.ERROR_);
 				 DialogFactory.showErrorMessageDialog(null, "关闭时取到的报表ID为空！", "错误");
 			 }
-			
-			 
+
+
 			 if(!IreportUtil.isBlank(localRealFileId)){
 				//满足条件判断为由本地新建的文件
 				 realId = localRealFileId;
 			 }
 
 			  id = repid;//这是本地看到名字
-	          IreportRmiClient.rmiInterfactRemote.unLockReport(IreportUtil.getLocalIp(),realId);
-	          
+	          IreportRmiClient.rmiInterfactRemote.unLockReport(IreportUtil.getLocalIp(),IreportUtil.removeNameSuffix(realId));
+
 	          //清除本地锁定信息
 	         IreportUtil.removeLocalToServerLock(closeFilePath, false);
 		} catch (Exception e) {
@@ -119,8 +117,8 @@ public class AddedOperator implements AddedOepretorInterface{
 			   String repid = IreportUtil.getIdFromReportPath(saveFilePath);
 			   String localRealFileId = IreportUtil.isLocalNewToServerFile(saveFilePath);
 			   if(IreportUtil.isBlank(localRealFileId)){//不是本地新建的文件
-			   ReportLock r = IreportRmiClient.rmiInterfactRemote.getCurrentLock(repid);
-			   
+			   ReportLock r = IreportRmiClient.rmiInterfactRemote.getCurrentLock(IreportUtil.removeNameSuffix(repid));
+
 			   //若当前该报表的锁不是你的，你是不允许保存操作的
 			   if(!IreportUtil.isYourLock(r)){
 				   log("服务器该文件锁不属于你控制，你不能进行服务器保存操作", IreportConstant.ERROR_);
@@ -131,7 +129,7 @@ public class AddedOperator implements AddedOepretorInterface{
 	           String filePath =  saveFilePath;
 	           File f = new File(filePath);
 	           IreportFile rf = new IreportFile();
-	           rf.setFileName(f.getName());
+	           rf.setFileName(IreportUtil.removeNameSuffix(f.getName()));
 
 	           byte[] content = new byte[(int)f.length()];
 	           BufferedInputStream input = new BufferedInputStream(new FileInputStream(f));
@@ -344,7 +342,7 @@ public class AddedOperator implements AddedOepretorInterface{
 				if(!tmp_file.exists()){
 					tmp_file.mkdirs();
 				}
-				String path = MainFrame.getMainInstance().IREPORT_TMP_FILE_DIR+"/"+ireportFile.getFileName();
+				String path = MainFrame.getMainInstance().IREPORT_TMP_FILE_DIR+"/"+IreportConstant.NAME_SUFFIX+ireportFile.getFileName();
 				logger.info("报表文件夹存放于："+path);
 				File oldFile = new File(path);
 				if(oldFile.exists()){
@@ -445,9 +443,9 @@ public class AddedOperator implements AddedOepretorInterface{
 
 	public Object initTemplate() {
 		logger.info("开始initTemplate");
-		try {
 			Thread initT = new Thread(new Runnable(){
 				public void run() {
+					try {
 					System.out.println("开始加载模板文件夹："+MainFrame.getMainInstance().IREPORT_TMP_TEMPLATE_DIR);
 					File tmplateDir = new File(MainFrame.getMainInstance().IREPORT_TMP_TEMPLATE_DIR);
 					if(!tmplateDir.exists()){
@@ -455,6 +453,7 @@ public class AddedOperator implements AddedOepretorInterface{
 					}
 					File[] fs = tmplateDir.listFiles();
 					if(fs==null || fs.length==0){
+
 						System.out.println("开始从服务器获取模板文件...");
 						//删除本地模板文件
 						for (int i = 0; i < fs.length; i++) {
@@ -462,26 +461,36 @@ public class AddedOperator implements AddedOepretorInterface{
 								fs[i].delete();
 							}
 						}
-						//------
-						//加载服务器端模板
-						//从服务器端获取文件列表
-						//循环添加
+						IreportRmiClient.getInstance();
+						List<IreportFile> templates = IreportRmiClient.getRmiRemoteInterface().getAllTemplates();
+
+						for (int i = 0; i < templates.size(); i++) {
+							IreportUtil.bytesToFile(tmplateDir+"/"+templates.get(i).getFileName(), templates.get(i).getContent());
+						}
+						if(templates.size()==0){
+							AddedOperator.log("未找到模板信息.", IreportConstant.WARN_);
+						}else{
+						AddedOperator.log("加载模板结束.", IreportConstant.INFO_);
+						}
 					}else{
 						System.out.println("探测到本地已经存在模板文件，若需要同步服务器模板信息，需要手动操作！");
+					}
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
 				}
 			});
 			initT.setDaemon(true);
 			initT.start();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+
 		logger.info("结束initTemplate");
 		return null;
 	}
 
 	public Object initRemoteArgs(String[] args) {
 		logger.info("开始initRemoteArgs");
+
+		System.out.println("args..............."+args.length);
 		if(args!=null && args.length>0){
 			for (int i = 0; i < args.length; i++) {
 				System.out.println("********参数"+(i+1)+":["+args[i]+"]********");
@@ -531,7 +540,7 @@ public class AddedOperator implements AddedOepretorInterface{
 				IreportRmiClient.getInstance();
 				List<IreportFile>  fs = IreportRmiClient.rmiInterfactRemote.getAllPlugins();
 		        if(fs==null){
-		        	return null; 
+		        	return null;
 		        }
 				for (int i = 0; i < fs.size(); i++) {
 		        	IreportFile irf= fs.get(i);
@@ -582,7 +591,7 @@ public class AddedOperator implements AddedOepretorInterface{
 		boolean isError = false;
 		String realId = null;
 		String repid = null;
-		
+
 		for (int i = 0; i < jif.length; i++) {
 			if(jif[i]!=null && jif[i] instanceof JReportFrame){
 
@@ -593,17 +602,17 @@ public class AddedOperator implements AddedOepretorInterface{
 
 				if(IreportUtil.isRemoteFile(repid)){
 				try {
-					
+
 					 String isLocal = MyReportProperties.getStringProperties(repid+IreportConstant.LOCAL_TO_SERVER);
-					 if(IreportUtil.isBlank(isLocal)){
+					 if(!IreportUtil.isBlank(isLocal)){
 						 realId = isLocal;
 					 }else{
 						 realId = repid;
 					 }
-					 
-					 String id = IreportRmiClient.rmiInterfactRemote.unLockReport(IreportUtil.getLocalIp(),realId);
+
+					 String id = IreportRmiClient.rmiInterfactRemote.unLockReport(IreportUtil.getLocalIp(),IreportUtil.removeNameSuffix(realId));
 					 IreportUtil.removeLocalToServerLock(repid,true);
-					 
+
 					 if(IreportUtil.isBlank(id)){isError = true;}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -618,10 +627,10 @@ public class AddedOperator implements AddedOepretorInterface{
 				log("已经解除"+repid+".jrxml文件在服务器端的锁定", IreportConstant.RIGHT_);
 			}
 		}
-		
+
 		if(isError){
 			DialogFactory.showErrorMessageDialog(null, "解除锁定文件出错!", "错误");
-			
+
 		}
 		logger.info("结束beforeCloseApplication");
 		return null;
@@ -639,14 +648,14 @@ public class AddedOperator implements AddedOepretorInterface{
 				boolean isError = false;
 				if(IreportUtil.isRemoteFile(repid)){
 					try {
-						
+
 						 String isLocal = MyReportProperties.getStringProperties(repid+IreportConstant.LOCAL_TO_SERVER);
-						 if(IreportUtil.isBlank(isLocal)){
+						 if(!IreportUtil.isBlank(isLocal)){
 							 realId = isLocal;
 						 }else{
 							 realId = repid;
 						 }
-						 String id = IreportRmiClient.rmiInterfactRemote.unLockReport(IreportUtil.getLocalIp(),realId);
+						 String id = IreportRmiClient.rmiInterfactRemote.unLockReport(IreportUtil.getLocalIp(),IreportUtil.removeNameSuffix(realId));
 						 IreportUtil.removeLocalToServerLock(realId, true);
 						 if(IreportUtil.isBlank(id)){isError = true;}
 					} catch (Exception e) {
@@ -658,7 +667,7 @@ public class AddedOperator implements AddedOepretorInterface{
 				if(isError){
 					log("解除["+repid+"]锁定出错!\n"+errMsg,IreportConstant.ERROR_);
 					DialogFactory.showErrorMessageDialog(null, "解除["+repid+"]锁定出错!\n"+errMsg, "错误");
-					
+
 				}else{
 					if(IreportUtil.isRemoteFile(repid)){
 					log("已经解除"+repid+".jrxml文件在服务器端的锁定", IreportConstant.RIGHT_);
@@ -678,6 +687,42 @@ public class AddedOperator implements AddedOepretorInterface{
 			type = IreportConstant.ERROR_;
 		}
 		MainFrame.getMainInstance().getLogPane().getMainLogTextArea().logOnConsole(text, type);
+	}
+
+	public Object initLibJarFiles() {
+		new Thread(new Runnable(){
+
+			public void run() {
+				try {
+					String lib = MainFrame.IREPORT_USER_HOME_DIR+"/lib";
+					File libDir = new File(lib);
+					if(!libDir.exists()){
+						libDir.mkdirs();
+					}
+					if(libDir!=null && libDir.isDirectory() && libDir.listFiles().length!=0){
+						AddedOperator.log("探测到本地已经存在jar文件，不进行jar包服务器端同步", IreportConstant.INFO_);
+						return;
+					}
+					IreportRmiClient.getInstance();
+					List<IreportFile> list = (List<IreportFile>) IreportRmiClient.getRmiRemoteInterface().synchronizationLibJar();
+
+					for (int i = 0; i < list.size(); i++) {
+						File f = new File(lib,list.get(i).getFileName());
+						if(!f.exists()){
+						IreportUtil.bytesToFile(f.getPath(), list.get(i).getContent());
+						AddedOperator.log("同步服务器jar包"+list.get(i).getFileName()+"到本地目录"+lib, IreportConstant.INFO_);
+						}
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					AddedOperator.log("同步服务器lib目录文件出错",IreportConstant.ERROR_);
+				}
+
+			}
+
+		}).start();
+
+		return null;
 	}
 }
 

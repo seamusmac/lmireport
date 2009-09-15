@@ -319,9 +319,9 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
        String classpath = net.sf.jasperreports.engine.util.JRProperties.getProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_CLASSPATH);
 
 
-
        if(classpath != null){
             classpath += File.pathSeparator + reportDirectory;
+
             //System.setProperty("jasper.reports.compile.class.path", classpath);
             net.sf.jasperreports.engine.util.JRProperties.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_CLASSPATH, classpath);
       } else if (System.getProperty("java.class.path") != null){
@@ -336,6 +336,7 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
        if(!reportDirectory.startsWith("/")){
             reportDirectory = "/" + reportDirectory;//it's important to JVM 1.4.2 especially if contains windows drive letter
        }
+
        ReportClassLoader reportClassLoader = new ReportClassLoader(mainFrame.getReportClassLoader());
        reportClassLoader.setRelodablePaths( reportDirectory );
        reportClassLoader.rescanLibDirectory();
@@ -363,7 +364,7 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
 
          // Compile the scriptlet class...
 
-         //String tempDirStr = System.getProperty("jasper.reports.compile.temp");
+         System.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_TEMP_DIR,MainFrame.IREPORT_TMP_FILE_DIR);
          String tempDirStr = net.sf.jasperreports.engine.util.JRProperties.getProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_TEMP_DIR);
 
          String oldCompileTemp  = tempDirStr;
@@ -499,19 +500,22 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
          }
 
 
-         //System.setProperty("jasper.reports.compile.temp", "C:\\");
+         net.sf.jasperreports.engine.util.JRProperties.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_TEMP_DIR, MainFrame.IREPORT_TMP_FILE_DIR);
          // Compile report....
+
          javaFile = this.jrf.getReport().getName()+".java";
 
          //String tempDirStr = System.getProperty("jasper.reports.compile.temp");
          String tempDirStr = net.sf.jasperreports.engine.util.JRProperties.getProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_TEMP_DIR);
-
          String oldCompileTemp  = tempDirStr;
          if (tempDirStr == null || tempDirStr.length() == 0 || mainFrame.isUsingCurrentFilesDirectoryForCompiles())
          {
             tempDirStr = mainFrame.getTranslatedCompileDirectory();
          }
+         tempDirStr = MainFrame.IREPORT_TMP_FILE_DIR;
          File tempDirFile = new File(tempDirStr);
+
+
          javaFile = (new File(tempDirFile,javaFile)).getPath();
 
          URL img_url_comp = this.getClass().getResource("/it/businesslogic/ireport/icons/comp1_mini.jpg");
@@ -523,6 +527,8 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
                 JOptionPane.WARNING_MESSAGE);
         }
 
+
+
          getLogTextArea().logOnConsole("<font face=\"SansSerif\" size=\"3\" color=\"#000000\"><img align=\"right\" src=\""+  img_url_comp  +"\"> &nbsp;" +
                          I18n.getFormattedString("iReportCompiler.compilingToFile", "Compiling to file... {0} -> {1}",
                                 new Object[]{fileName, javaFile}) + "</font>",true);
@@ -530,14 +536,15 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
          //String old_jr_classpath = Misc.nvl( System.getProperty("jasper.reports.compile.class.path"), "");
          //String old_defaul_compiler = Misc.nvl( System.getProperty("jasper.reports.compiler.class"), "");
          String old_jr_classpath = Misc.nvl(net.sf.jasperreports.engine.util.JRProperties.getProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_CLASSPATH), "");
+         old_jr_classpath = MainFrame.IREPORT_TMP_FILE_DIR;
          String old_defaul_compiler = Misc.nvl(net.sf.jasperreports.engine.util.JRProperties.getProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_CLASS), "");
-
+         old_defaul_compiler= MainFrame.IREPORT_TMP_FILE_DIR;
          try
          {
             if( mainFrame.isUsingCurrentFilesDirectoryForCompiles() )
             {
-               //System.setProperty("jasper.reports.compile.temp", tempDirStr);
-               net.sf.jasperreports.engine.util.JRProperties.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_TEMP_DIR, tempDirStr);
+            	//System.setProperty("jasper.reports.compile.temp", tempDirStr);
+               net.sf.jasperreports.engine.util.JRProperties.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_TEMP_DIR, MainFrame.IREPORT_TMP_FILE_DIR);
 
             }
 
@@ -612,12 +619,15 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
             digester = IReportCompiler.createDigester();
             JasperDesign jd = IReportCompiler.loadJasperDesign( new FileInputStream(srcFileName) , digester);
 
+
             if (jdtCompiler != null)
             {
                 ((ExtendedJRJdtCompiler)jdtCompiler).setDigester(digester);
                 ((ExtendedJRJdtCompiler)jdtCompiler).setErrorHandler(errorsCollector);
 
+
                 JasperReport finalJR = jdtCompiler.compileReport( jd  );
+
 
                 if (errorsCollector.getProblemItems().size() > 0 || finalJR == null)
                 {
@@ -745,13 +755,13 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
             {
                if( oldCompileTemp != null )
                {
-                  System.setProperty("jasper.reports.compile.temp", oldCompileTemp);
-                  net.sf.jasperreports.engine.util.JRProperties.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_TEMP_DIR, oldCompileTemp );
+                  System.setProperty("jasper.reports.compile.temp", MainFrame.IREPORT_TMP_FILE_DIR);
+                  net.sf.jasperreports.engine.util.JRProperties.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_TEMP_DIR, MainFrame.IREPORT_TMP_FILE_DIR );
                }
                else
                {
-                  System.setProperty("jasper.reports.compile.temp", "");
-                  net.sf.jasperreports.engine.util.JRProperties.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_TEMP_DIR, "" );
+                  System.setProperty("jasper.reports.compile.temp", MainFrame.IREPORT_TMP_FILE_DIR);
+                  net.sf.jasperreports.engine.util.JRProperties.setProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_TEMP_DIR, MainFrame.IREPORT_TMP_FILE_DIR );
                }
 
                File javaSrcFile = new File(javaFile);
@@ -1820,11 +1830,10 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
 	//using the report directory to load classes and resources
 	try{
 		  String reportDirectory = new File(jrf.getReport().getFilename()).getParent();
-
+		  reportDirectory = MainFrame.IREPORT_TMP_FILE_DIR;
 		  //set classpath
 		  //String classpath = System.getProperty("jasper.reports.compile.class.path");
                   String classpath = net.sf.jasperreports.engine.util.JRProperties.getProperty(net.sf.jasperreports.engine.util.JRProperties.COMPILER_CLASSPATH );
-
 
 		  if(classpath != null){
 
@@ -1836,6 +1845,7 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
 
 			  classpath = System.getProperty("java.class.path");
 			  classpath += File.pathSeparator + reportDirectory;
+
 			  System.setProperty("java.class.path", classpath);
 		  }
 
@@ -1898,7 +1908,6 @@ public class IReportCompiler implements Runnable, JRExportProgressMonitor
 		  thread.setContextClassLoader(new URLClassLoader(new URL[]{
 		  	  new URL("file://"+reportDirectory)
 		  }, MainFrame.getMainInstance().getReportClassLoader()));
-
 	 } catch (MalformedURLException mue){
 	  mue.printStackTrace();
 	}

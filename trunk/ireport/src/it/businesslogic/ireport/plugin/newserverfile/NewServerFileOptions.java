@@ -37,7 +37,6 @@ import it.businesslogic.ireport.gui.MainFrame;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -329,41 +328,45 @@ public class NewServerFileOptions extends javax.swing.JPanel {
     		    	String note = reportNote.getText();
     		    	ifi.setNote(note);
     		    	String ecid= MyReportProperties.getStringProperties(IreportConstant.EFORM_TREE_SELECT);
-    		    	/*if(IreportUtil.isBlank(ecid)){
+    		    	if(IreportUtil.isBlank(ecid)){
     		    		DialogFactory.alert("你未选择业务类别");
     		    		father.setVisible(true);
     		    		return;
-    		    	}*/
+    		    	}
     		    	System.out.println(ifi.getContent().length+username+note+reportname);
-    		    	//ecid = ecid.split("#")[0];
+    		    	ecid = ecid.split("#")[0];
     		    	ifi.setEc_id(ecid);
-    		    	
-    		    	String returnid = "111111111111111111111";
-    		    	//IreportRmiClient.getRmiRemoteInterface().addNewReport(ifi);
-    		    	
+
+    		    	String returnid = null;
+    		    	returnid = IreportRmiClient.getRmiRemoteInterface().addNewReport(ifi);
+    		    	if(IreportUtil.isBlank(returnid)){
+    		    		AddedOperator.log("新建文件"+reportname+"到服务器失败", IreportConstant.ERROR_);
+    		    		DialogFactory.showErrorMessageDialog(this,"新建文件"+reportname+"到服务器失败","新建错误");
+    		    		return;
+    		    	}
     		    	//这样打开的文件也必须是锁定的
     		    	IreportRmiClient.getInstance();
-    		        //boolean b = IreportRmiClient.getRmiRemoteInterface().lockReport(IreportUtil.getReportLock(returnid));
-			          //if(!b){
-			        	//  AddedOperator.log("锁定服务器端文件出错，你的后续修改将对服务器文件无效", IreportConstant.ERROR_);
-			        	//  DialogFactory.showErrorMessageDialog(null, "锁定服务器端文件出错，你的后续修改将对服务器文件无效", "锁定错误");
-			       // }
-			          
+    		        boolean b = IreportRmiClient.getRmiRemoteInterface().lockReport(IreportUtil.getReportLock(returnid));
+			          if(!b){
+			        	  AddedOperator.log("锁定服务器端文件出错，你的后续修改将对服务器文件无效", IreportConstant.ERROR_);
+			        	  DialogFactory.showErrorMessageDialog(null, "锁定服务器端文件出错，你的后续修改将对服务器文件无效", "锁定错误");
+			        }
+
 			        //文件锁定后需要存储信息到内存，以备能成功保存以及解锁
 			        String localName = IreportUtil.getIdFromReportPath(selectFilePath);
-			        MyReportProperties.setProperties(localName+IreportConstant.LOCAL_TO_SERVER, returnid); 
+			        MyReportProperties.setProperties(localName+IreportConstant.LOCAL_TO_SERVER, returnid);
     		    	AddedOperator.log("成功将本地文件"+selectFilePath+"保存到服务器,在服务器端得ID为["+returnid+"]", IreportConstant.RIGHT_);
     				father.dispose();
     				} catch (Exception e) {
-    					
+
     					e.printStackTrace();
     					DialogFactory.showErrorMessageDialog(null, "新建服务器文件时出错:\n"+e.getMessage(), "错误");
     					father.setVisible(true);
     				}
-    				
+
     			//}
     		//});
-    
+
     	//this.setVisible(true);
 
     }//GEN-LAST:event_jButton1ActionPerformed
