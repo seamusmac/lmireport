@@ -137,6 +137,7 @@ import org.xml.sax.SAXException;
 import com.chinacreator.ireport.AddedOperator;
 import com.chinacreator.ireport.IreportConstant;
 import com.chinacreator.ireport.IreportUtil;
+import com.chinacreator.ireport.MyReportProperties;
 import com.chinacreator.ireport.component.DialogFactory;
 /**
  * This class is the core of the GUI of iReport. From this class we control all
@@ -415,6 +416,10 @@ public class MainFrame extends javax.swing.JFrame
          }
          if(IreportUtil.isBlank(IREPORT_TMP_FILE_DIR)){
         	 IREPORT_TMP_FILE_DIR = System.getProperty("user.home") + File.separator + ".ireport" +File.separator+"remoteFiles";
+        	 File f = new File(IREPORT_TMP_FILE_DIR);
+        	 if(!f.exists()){
+        		 f.mkdirs();
+        	 }
         	 System.out.println("报表临时存储文件为："+IREPORT_TMP_FILE_DIR);
          }
 
@@ -6854,7 +6859,8 @@ public class MainFrame extends javax.swing.JFrame
                 // whether or not the (future) option to keep report name and file name equal
 
                 if(!IreportUtil.isAllowedNewReport(reportName)){
-                	DialogFactory.showErrorMessageDialog(this,"["+reportName+"]文件名不合法或者在已经打开的报表文件中已经存在" , "错误");
+
+                	DialogFactory.showErrorMessageDialog(this,"["+reportName+"]文件名不合法,"+MyReportProperties.getStringProperties(IreportConstant.NEW_FILE_LIMIT) , "错误");
                 	return;
                 }
                 File file = new java.io.File( reportName + ".jrxml");

@@ -694,7 +694,7 @@ public class AddedOperator implements AddedOepretorInterface{
 
 			public void run() {
 				try {
-					String lib = MainFrame.IREPORT_USER_HOME_DIR+"/lib";
+					String lib = MainFrame.IREPORT_USER_HOME_DIR+File.separator+"lib";
 					File libDir = new File(lib);
 					if(!libDir.exists()){
 						libDir.mkdirs();
@@ -714,8 +714,9 @@ public class AddedOperator implements AddedOepretorInterface{
 						}
 					}
 				} catch (Exception e) {
+
 					e.printStackTrace();
-					AddedOperator.log("同步服务器lib目录文件出错",IreportConstant.ERROR_);
+					AddedOperator.log("同步服务器lib目录文件出错\n"+e.getMessage()+"\n"+e.getLocalizedMessage()+"\n"+e.getCause(),IreportConstant.ERROR_);
 				}
 
 			}

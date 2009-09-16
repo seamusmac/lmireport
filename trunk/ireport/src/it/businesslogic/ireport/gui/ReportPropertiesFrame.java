@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,22 +25,28 @@
  *
  *
  * ReportPropertiesFrame.java
- * 
+ *
  * Created on 8 febbraio 2003, 16.25
  *
  */
 
 package it.businesslogic.ireport.gui;
 import it.businesslogic.ireport.gui.sheet.Tag;
-import it.businesslogic.ireport.util.*;
-import javax.swing.*;
+import it.businesslogic.ireport.util.I18n;
+import it.businesslogic.ireport.util.LanguageChangedEvent;
+import it.businesslogic.ireport.util.Misc;
+import it.businesslogic.ireport.util.PageSize;
+import it.businesslogic.ireport.util.Unit;
+
+import java.awt.Point;
+
+import javax.swing.JOptionPane;
 
 import com.chinacreator.ireport.AddedOperator;
 import com.chinacreator.ireport.IreportConstant;
 import com.chinacreator.ireport.IreportUtil;
+import com.chinacreator.ireport.MyReportProperties;
 import com.chinacreator.ireport.component.DialogFactory;
-
-import java.awt.Point;
 
 /**
  *
@@ -82,7 +88,7 @@ public class ReportPropertiesFrame extends javax.swing.JDialog  {
     private String whenResourceMissingType = "Null";
 
     private boolean ignorePagination = false;
-    
+
     private String formatFactoryClass = "";
 
     /** Creates new form ReportPropertiesFrame */
@@ -164,9 +170,9 @@ public class ReportPropertiesFrame extends javax.swing.JDialog  {
         this.jComboBoxWhenNoData.addItem(new Tag("BlankPage", it.businesslogic.ireport.util.I18n.getString("whenNoData.BlankPage","Blank page")));
         this.jComboBoxWhenNoData.addItem(new Tag("AllSectionsNoDetail", it.businesslogic.ireport.util.I18n.getString("whenNoData.AllSectionsNoDetail","All sections, no detail")));
         this.jComboBoxWhenNoData.addItem(new Tag("NoDataSection", it.businesslogic.ireport.util.I18n.getString("whenNoData.NoDataSection","No-data section")));
-        
-        
-        
+
+
+
         this.jComboBoxXMLEncoding.addItem("UTF-8");
         this.jComboBoxXMLEncoding.addItem("ISO-8859-1");
 
@@ -208,22 +214,22 @@ public class ReportPropertiesFrame extends javax.swing.JDialog  {
         this.setLanguage( it.businesslogic.ireport.gui.MainFrame.getMainInstance().getProperties().getProperty("DefaultScriptingLanguage","java") );
         applyI18n();
         pack();
-        
-        
+
+
         javax.swing.KeyStroke escape =  javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0, false);
         javax.swing.Action escapeAction = new javax.swing.AbstractAction() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 jButtonCANCELActionPerformed(e);
             }
         };
-       
+
         getRootPane().getInputMap(javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW).put(escape, "ESCAPE");
         getRootPane().getActionMap().put("ESCAPE", escapeAction);
 
 
         //to make the default button ...
         this.getRootPane().setDefaultButton(this.jButtonOK);
-        
+
     }
 
     /** This method is called from within the constructor to
@@ -1150,8 +1156,8 @@ public class ReportPropertiesFrame extends javax.swing.JDialog  {
     }//GEN-LAST:event_jCheckBoxSummaryOnNewPageActionPerformed
 
     private void jComboBoxOrientationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxOrientationActionPerformed
-        
-        
+
+
         orientation = (String)Misc.getComboboxSelectedValue(jComboBoxOrientation);
         int reportSwitch = 0;
         adjustSizes();
@@ -1197,7 +1203,7 @@ public class ReportPropertiesFrame extends javax.swing.JDialog  {
 
         // calculate space...
         if ((this.columnsSpacing*(getColumns()-1)) > avail) {
-            javax.swing.JOptionPane.showMessageDialog(this, 
+            javax.swing.JOptionPane.showMessageDialog(this,
                     I18n.getString("messages.reportPropertiesFrame.invalidColumnSpacing",
                     "Column spacing too big!"), I18n.getString("message.title.error","Error"),
                     javax.swing.JOptionPane.WARNING_MESSAGE );
@@ -1214,7 +1220,7 @@ public class ReportPropertiesFrame extends javax.swing.JDialog  {
         int total =  (newColumnsWidth * (int)jNumberFieldColumns.getValue()) + ((int)Unit.convertToPixels(this.jNumberFieldColumnsSpacing.getValue(),this.getConversionUnit(jComboBoxColumnsWidthUnit)) * ((int)jNumberFieldColumnsSpacing.getValue()-1));
         if (total > this.getReportWidth() - this.getLeftMargin() - this.getRightMargin())
         {
-            javax.swing.JOptionPane.showMessageDialog(this, 
+            javax.swing.JOptionPane.showMessageDialog(this,
                     I18n.getString("messages.reportPropertiesFrame.invalidColumnSize",
                     "The column size is too big. Enlarge the report width first.") );
             recalcColumnWidth();
@@ -1309,20 +1315,20 @@ public class ReportPropertiesFrame extends javax.swing.JDialog  {
     private void jButtonOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonOKActionPerformed
           //LIMAO : 在新建时对文件名的控制
     	  this.reportName = jTextFieldName.getText();
-    	  
+
     	  if(!IreportUtil.isAllowedNewReport(reportName)){
-    		AddedOperator.log("新建文件名["+this.reportName+"]不合法(文件名不能为20位数字)或者已经在打开的文件中存在", IreportConstant.ERROR_);
-          	DialogFactory.showErrorMessageDialog(this, "新建文件名["+this.reportName+"]不合法或者已经在打开的文件中存在", "错误");
+    		AddedOperator.log("新建文件名["+this.reportName+"]不合法:"+MyReportProperties.getStringProperties(IreportConstant.NEW_FILE_LIMIT), IreportConstant.ERROR_);
+          	DialogFactory.showErrorMessageDialog(this, "新建文件名["+this.reportName+"]不合法,"+MyReportProperties.getStringProperties(IreportConstant.NEW_FILE_LIMIT), "错误");
           	return;
     	  }
-    	  
+
         this.scriptletClass = jTextFieldScriptletClass.getText();
                 this.setResourceBundleBaseName(jTextFieldResourceBundleBaseName.getText());
 
         this.language = this.jComboBoxLanguage.getSelectedItem() + "";
         this.whenResourceMissingType = ((Tag)jComboBoxWhenResourceMissingType.getSelectedItem()).getValue()+"";
         this.setFormatFactoryClass(jTextFieldFormatFactoryClass.getText());
-        
+
         //System.out.println("Il nome :"+this.getReportName());
         this.setDialogResult( JOptionPane.OK_OPTION );
         this.setVisible(false);
@@ -1521,7 +1527,7 @@ public class ReportPropertiesFrame extends javax.swing.JDialog  {
      *
      */
     public void setOrientation(java.lang.String orientation) {
-        
+
         Misc.setComboboxSelectedTagValue(jComboBoxOrientation,orientation);
         this.orientation = orientation;
     }
@@ -1793,20 +1799,20 @@ public class ReportPropertiesFrame extends javax.swing.JDialog  {
         jLabelWhenResourceMissingType.setText(it.businesslogic.ireport.util.I18n.getString("whenResourceMissingType","When resource missing type"));
         jCheckBoxIgnorePagination.setText(it.businesslogic.ireport.util.I18n.getString("ignorePagination", "Ignore pagination"));
         jLabelFormatFactoryClass.setText(it.businesslogic.ireport.util.I18n.getString("formatFactoryClass","Format factory class"));
-    
-    
+
+
         this.jTabbedPane1.setTitleAt(0,it.businesslogic.ireport.util.I18n.getString("pageMargin", "Page Margin"));
         this.jTabbedPane1.setTitleAt(1,it.businesslogic.ireport.util.I18n.getString("columns", "Columns"));
         this.jTabbedPane1.setTitleAt(2,it.businesslogic.ireport.util.I18n.getString("scriptlet", "Scriptlet"));
         this.jTabbedPane1.setTitleAt(3, it.businesslogic.ireport.util.I18n.getString("more", "More..."));
-        
+
         ((javax.swing.border.TitledBorder)jPanel1.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("reportPropertiesFrame.panelBorder.PageSize","Page size") );
         ((javax.swing.border.TitledBorder)jPanel6.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("reportPropertiesFrame.panelBorder.PageMargin","Page margin") );
         ((javax.swing.border.TitledBorder)jPanel7.getBorder()).setTitle( it.businesslogic.ireport.util.I18n.getString("reportPropertiesFrame.panelBorder.ReportColumns","Report columns") );
         this.setTitle(I18n.getString("reportPropertiesFrame.title","Report properties"));
         jButtonCANCEL.setMnemonic(I18n.getString("reportPropertiesFrame.buttonCANCELMnemonic","c").charAt(0));
         jButtonOK.setMnemonic(I18n.getString("reportPropertiesFrame.buttonOKMnemonic","o").charAt(0));
-        
+
     }
     public void languageChanged(LanguageChangedEvent evt) {
 
@@ -2009,7 +2015,7 @@ public class ReportPropertiesFrame extends javax.swing.JDialog  {
         this.formatFactoryClass = formatFactoryClass;
         jTextFieldFormatFactoryClass.setText(formatFactoryClass);
     }
-    
-    
+
+
 
 }

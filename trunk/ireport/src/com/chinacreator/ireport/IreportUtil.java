@@ -134,9 +134,11 @@ public class IreportUtil {
 		if(isBlank(reportName)){
 			return "";
 		}
+
 		if(reportName.toLowerCase().endsWith(".jrxml")){
 			return reportName.split("\\.")[0];
 		}
+
 		return reportName;
 	}
 
@@ -256,16 +258,24 @@ public class IreportUtil {
 	 * @return
 	 */
 	public static boolean isAllowedNewReport(String reportName){
+		MyReportProperties.setProperties(IreportConstant.NEW_FILE_LIMIT, "");
+		String error = "";
 		if(isBlank(reportName)){
+			error = "文件名不能为空";
+			MyReportProperties.setProperties(IreportConstant.NEW_FILE_LIMIT, error);
 			return false;
 		}
 		if(isRemoteFile(reportName)){
+			error = "文件名不合法，不能使用远程文件名类型新建";
+			MyReportProperties.setProperties(IreportConstant.NEW_FILE_LIMIT, error);
 			return false;
 		}
 
 		 Matcher m = p1.matcher(reportName.substring(0, 1));
 		 boolean b = m.matches();
 		 if(b){
+			 error = "文件名不能以数字开始";
+			 MyReportProperties.setProperties(IreportConstant.NEW_FILE_LIMIT, error);
 			 return !b;
 		 }
 
@@ -280,10 +290,13 @@ public class IreportUtil {
 				}
 				String reportname = jf.getReport().getName();
 				if(reportname.equals(reportName)){
+					error = "文件名在已经打开的文件中存在";
+					 MyReportProperties.setProperties(IreportConstant.NEW_FILE_LIMIT, error);
 					return false;
 				}
 			}
 		}
+
 		return true;
 	}
 

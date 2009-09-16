@@ -63,6 +63,8 @@ public final class IreportConstant {
 	public final static String LOCAL_TO_SERVER = "LOCAL_TO_SERVER";
 
 	public final static String NAME_SUFFIX = "_";
+
+	public final static String NEW_FILE_LIMIT="NEW_FILE_LIMIT";
 	//LOG
 	public final static int ERROR_ = -50;
 	public final static int RIGHT_ = -49;

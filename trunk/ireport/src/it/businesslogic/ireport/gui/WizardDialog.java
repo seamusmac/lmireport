@@ -51,7 +51,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.chinacreator.ireport.IreportConstant;
 import com.chinacreator.ireport.IreportUtil;
+import com.chinacreator.ireport.MyReportProperties;
 import com.chinacreator.ireport.component.DialogFactory;
 
 /**
@@ -606,8 +608,8 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
 
         jPanelStep1.setLayout(new java.awt.GridBagLayout());
 
-        
-     
+
+
         javax.swing.JLabel jname =  new JLabel("报表名称");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -618,18 +620,18 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.insets = new java.awt.Insets(50, 0, 0, 0);
         jPanelStep1.add(jname, gridBagConstraints);
-        
+
          reportname = new JTextField(50);
         //reportname.setl
-        
+
         javax.swing.JPanel myp = new JPanel();
         myp.add(jname);
         myp.add(reportname);
-        
+
         jPanelStep1.add(myp, gridBagConstraints);
-        
-        
-        
+
+
+
         jLabel13.setText("Use the following template...");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
@@ -1886,7 +1888,8 @@ public class WizardDialog extends javax.swing.JDialog implements Runnable, Langu
     		return;
     	}
     	if(!IreportUtil.isAllowedNewReport(reportname.getText())){
-    		DialogFactory.showErrorMessageDialog(this, "填写的名称不合法或者名称已经在打开的保存文件中存在", "错误");
+
+    		DialogFactory.showErrorMessageDialog(this, "新建文件名["+reportname.getText()+"]不合法,"+MyReportProperties.getStringProperties(IreportConstant.NEW_FILE_LIMIT), "错误");
     		return;
     	}
         this.setStep( wzStep+1, wzStep);
