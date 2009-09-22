@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,15 +25,12 @@
  *
  *
  * ExpressionEditor.java
- * 
+ *
  * Created on 17 novembre 2003, 22.03
  *
  */
 
 package it.businesslogic.ireport.gui;
-import bsh.EvalError;
-import bsh.ParseException;
-import bsh.TargetError;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import it.businesslogic.ireport.CrosstabReportElement;
@@ -52,56 +49,71 @@ import it.businesslogic.ireport.gui.expbuilder.ExpObjectCellRenderer;
 import it.businesslogic.ireport.util.I18n;
 import it.businesslogic.ireport.util.JRFakeObject;
 import it.businesslogic.ireport.util.Misc;
+
 import java.awt.Color;
 import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.StringTokenizer;
+import java.util.Vector;
+
+import javax.swing.DefaultListModel;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
-import javax.swing.tree.*;
-import javax.swing.*;
-import java.util.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
+
 import net.sf.jasperreports.engine.JRExpression;
 import net.sf.jasperreports.engine.JRExpressionChunk;
 import net.sf.jasperreports.engine.design.JRDesignExpression;
 import net.sf.jasperreports.engine.util.JRStringUtil;
+
 import org.codehaus.groovy.control.CompilationFailedException;
-import javax.swing.text.DefaultStyledDocument;
+
+import bsh.EvalError;
+import bsh.ParseException;
+import bsh.TargetError;
 /**
  *
  * @author  Administrator
  */
 public class ExpressionEditor extends javax.swing.JDialog implements CaretListener
 {
-   
+
     //public final static int CONTEXT_REPORT_DATASET = 0;
     //public final static int CONTEXT_BUCKET_MEASURE = 1;
     //public final static int CONTEXT_DATASET_RUN = 2;
     //public final static int CONTEXT_STYLE = 3;
-    
+
     public static final int VARIABLE = 1;
     public static final int PARAMETER = 2;
     public static final int FIELD = 3;
-    
-    
+
+
     private SubDataset subDataset = null;
     private Vector crosstabElements = new Vector();
-    
+
     public static Vector defaultExpressions = null;
     public boolean init = false;
-    
+
     public static Vector recentExpressions = new Vector();
-    
-    
+
+
     Style errorStyle = null;
     Style okStyle = null;
     DefaultStyledDocument doc = null;
 
-    
+
     static {
         defaultExpressions = new Vector();
         defaultExpressions.add("( <condition> ? exp1 : exp2 )");
@@ -112,37 +124,37 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
         defaultExpressions.add("((net.sf.jasperreports.engine.data.JRXmlDataSource)$P{REPORT_DATA_SOURCE}).subDataSource(<select expression>)");
         defaultExpressions.add("((net.sf.jasperreports.engine.data.JRXmlDataSource)$P{REPORT_DATA_SOURCE}).dataSource(<select expression>)");
     }
-        
+
    /** Creates new form ExpressionEditor */
    public ExpressionEditor()
    {
       super( MainFrame.getMainInstance(), true);
       initComponents();
       this.setSize(750, 450);
-      
+
       this.setModal(true);
       //this.setModal(true);
       org.syntax.jedit.SyntaxDocument sd = new org.syntax.jedit.SyntaxDocument();
       sd.setTokenMarker(new org.syntax.jedit.tokenmarker.JavaTokenMarker() );
-      
+
       this.jEditTextArea1.setDocument( sd );
       this.jEditTextArea1.getPainter().setEOLMarkersPainted(false);
       this.jEditTextArea1.getPainter().setInvalidLinesPainted(false);
       this.jEditTextArea1.getPainter().setLineHighlightEnabled(false);
-        
-      
+
+
       DefaultMutableTreeNode dmtn = new DefaultMutableTreeNode("root");
-      
+
       this.jTree1.setCellRenderer(new DocumentExpressionEditorTreeCellRenderer());
       this.jTree1.setModel(new javax.swing.tree.DefaultTreeModel(dmtn));
-      
+
       it.businesslogic.ireport.util.Misc.centerFrame(this);
-      
+
       jList1.setModel(new DefaultListModel());
       jList2.setModel(new DefaultListModel());
 
       jEditTextArea1.requestFocusInWindow();
-      
+
       jEditTextArea1.getDocument().addDocumentListener( new javax.swing.event.DocumentListener() {
             public void changedUpdate(javax.swing.event.DocumentEvent evt) {
                 jRTextExpressionAreaTextChanged();
@@ -154,37 +166,37 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                 jRTextExpressionAreaTextChanged();
             }
         });
-        
+
         jEditTextArea1.addCaretListener( this );
-        
-      
+
+
         javax.swing.KeyStroke escape =  javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0, false);
         javax.swing.Action escapeAction = new javax.swing.AbstractAction() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 setVisible(false);
             }
         };
-       
+
         getRootPane().getInputMap(javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW).put(escape, "ESCAPE");
         getRootPane().getActionMap().put("ESCAPE", escapeAction);
 
         jList1.getSelectionModel().setSelectionMode( jList1.getSelectionModel().SINGLE_SELECTION );
         jList1.setCellRenderer(new ExpObjectCellRenderer(jList1));
         jList2.setCellRenderer(new TextAreaCellRenderer(jList2));
-        
+
         //to make the default button ...
         //this.getRootPane().setDefaultButton(this.jButtonOK);
         jSplitPane3.updateUI();
         applyI18n();
         caretUpdate(null);
-        
+
         jTabbedPane1.addChangeListener( new ChangeListener() {
-            public void stateChanged(ChangeEvent e) 
+            public void stateChanged(ChangeEvent e)
             {
                 if (jTabbedPane1.getSelectedIndex() == 1)
                 {
                     SwingUtilities.invokeLater( new Runnable() {
-                    
+
                         public void run()
                         {
                             try {
@@ -198,20 +210,20 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                 }
             }
         });
-        
+
         doc = new DefaultStyledDocument();
-        
+
         jTextPaneErrors.setDocument( doc );
         errorStyle = doc.addStyle("errorStyle", null);
         StyleConstants.setForeground(errorStyle, Color.red);
         okStyle = doc.addStyle("okStyle", null);
         StyleConstants.setForeground(okStyle, Color.blue);
-        
+
         this.pack();
    }
-   
-   
-   
+
+
+
    /** This method is called from within the constructor to
     * initialize the form.
     * WARNING: Do NOT modify this code. The content of this method is
@@ -464,7 +476,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
     private void jButtonCheckExpressionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCheckExpressionActionPerformed
 
         SwingUtilities.invokeLater( new Runnable() {
-                    
+
                         public void run()
                         {
                             try {
@@ -483,7 +495,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
 
     private void jButtonLoadExpressionActionPerformed1(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonLoadExpressionActionPerformed1
         String expression = Misc.loadExpression(this);
-        
+
         if (expression != null) {
             jEditTextArea1.setText(expression);
         }
@@ -510,11 +522,11 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                 }
             }
         });
-        
+
     }
     private void jEditTextArea1InputMethodTextChanged(java.awt.event.InputMethodEvent evt) {//GEN-FIRST:event_jEditTextArea1InputMethodTextChanged
 
-        
+
     }//GEN-LAST:event_jEditTextArea1InputMethodTextChanged
 
     private void jList2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jList2MouseClicked
@@ -524,7 +536,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
             if (jList1.getSelectedValue() != null && jList2.getSelectedValue() != null)
             {
                 try {
-                    
+
                     String objName = "";
                     if (jList1.getSelectedValue() instanceof ExpObject)
                     {
@@ -534,11 +546,11 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                     {
                         objName = ""+jList1.getSelectedValue();
                     }
-                    
+
                     String method = (jList2.getSelectedValue()+"");
                     method = method.substring(0, method.lastIndexOf(")")+1);
-                    jEditTextArea1.getDocument().replace(jEditTextArea1.getSelectionStart(), 
-                                             jEditTextArea1.getSelectionEnd()-jEditTextArea1.getSelectionStart(), 
+                    jEditTextArea1.getDocument().replace(jEditTextArea1.getSelectionStart(),
+                                             jEditTextArea1.getSelectionEnd()-jEditTextArea1.getSelectionStart(),
                                              objName+"."+method, null);
             } catch (Exception ex){}
             }
@@ -546,7 +558,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
     }//GEN-LAST:event_jList2MouseClicked
 
     private void jList1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jList1MouseClicked
-        
+
         if (evt.getButton() == evt.BUTTON1 && evt.getClickCount() == 2)
         {
             DefaultMutableTreeNode dmtn = (DefaultMutableTreeNode)jTree1.getSelectionPath().getLastPathComponent();
@@ -555,7 +567,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                 ArithmeticOperationHelper aoe = new ArithmeticOperationHelper();
 
                 aoe.setLanguage( MainFrame.getMainInstance().getActiveReportFrame().getReport().getLanguage() );
-                
+
                 if ((jList1.getSelectedValue()+"").equals( I18n.getString("Addition","Addition (+)")))
                 {
                     aoe.setOperation("+");
@@ -572,17 +584,17 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                 {
                     aoe.setOperation("*");
                 }
-                
+
                 // Collect all objects...
                 aoe.setValues( getAllObjects() );
-                
+
                 if ( aoe.showDialog(this) == JOptionPane.OK_OPTION)
                 {
 
                     String exp = aoe.getExpression();
                     try {
-                    jEditTextArea1.getDocument().replace(jEditTextArea1.getSelectionStart(), 
-                                                 jEditTextArea1.getSelectionEnd()-jEditTextArea1.getSelectionStart(), 
+                    jEditTextArea1.getDocument().replace(jEditTextArea1.getSelectionStart(),
+                                                 jEditTextArea1.getSelectionEnd()-jEditTextArea1.getSelectionStart(),
                                                  exp, null);
                     } catch (Exception ex){}
                 }
@@ -599,9 +611,9 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                     {
                         objName = ""+jList1.getSelectedValue();
                     }
-                    
-                    jEditTextArea1.getDocument().replace(jEditTextArea1.getSelectionStart(), 
-                                                     jEditTextArea1.getSelectionEnd()-jEditTextArea1.getSelectionStart(), 
+
+                    jEditTextArea1.getDocument().replace(jEditTextArea1.getSelectionStart(),
+                                                     jEditTextArea1.getSelectionEnd()-jEditTextArea1.getSelectionStart(),
                                                      objName+"", null);
                     } catch (Exception ex){}
             }
@@ -609,36 +621,36 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
     }//GEN-LAST:event_jList1MouseClicked
 
     private void jList1ValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jList1ValueChanged
-        
+
         DefaultListModel dlm = (DefaultListModel)jList2.getModel();
         dlm.removeAllElements();
-        
+
         Class clazz = null; //getSelectedObjectClass();
-        
+
         if (jList1.getSelectedValue() instanceof ExpObject)
         {
             try {
                 clazz = this.getClass().getClassLoader().loadClass( ((ExpObject)jList1.getSelectedValue()).getClassType());
-        
+
             } catch (Throwable ex)
             {
-                
+
             }
         }
-        
-        
-        
+
+
+
         if (clazz != null)
         {
             java.lang.reflect.Method[] methods = clazz.getMethods();
-            
+
             Arrays.sort(methods, new Comparator<Method>() {
 
                 public int compare(Method m1, Method m2) {
                     return m1.getName().compareTo(m2.getName());
                 }
             });
-            
+
             for (int i=0; i<methods.length; ++i)
             {
                 if ((methods[i].getModifiers() & java.lang.reflect.Modifier.PUBLIC) != 0 )
@@ -648,7 +660,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                     int j=0;
                     for (j=0; j<params.length; ++j)
                     {
-                        
+
                         if (j > 0) method_firm +=", ";
                         else method_firm +=" ";
                         method_firm +=  getPrintableTypeName( params[j].getName() );
@@ -663,16 +675,16 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                 }
             }
         }
-        
-        
+
+
     }//GEN-LAST:event_jList1ValueChanged
-        
+
     public String getPrintableTypeName( String type )
     {
             if (type == null) return "void";
 
             if (type.endsWith(";")) type = type.substring(0,type.length()-1);
-    
+
             while (type.startsWith("["))
             {
                 type = type.substring(1) + "[]";
@@ -687,7 +699,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                 if (type.startsWith("J")) type = "long" + type.substring(1);
                 if (type.startsWith("S")) type = "short" + type.substring(1);
             }
-            
+
             if (type.startsWith("java.lang."))
             {
                 type = type.substring("java.lang.".length());
@@ -699,9 +711,9 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
             return type;
     }
     private void jTree1ValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_jTree1ValueChanged
-       
+
        ( (DefaultListModel)jList1.getModel()).removeAllElements();
-       
+
        //if (getSubDataset() == null) return;
        DefaultMutableTreeNode dmtn = (DefaultMutableTreeNode)jTree1.getSelectionPath().getLastPathComponent();
        if (dmtn.getUserObject() instanceof CrosstabReportElementWrapper)
@@ -713,7 +725,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
              Measure measure = (Measure)e.nextElement();
              //( (DefaultListModel)jList1.getModel()).addElement( "$V{"+measure+"}" );
              ( (DefaultListModel)jList1.getModel()).addElement( new ExpObject(measure.getName(), ExpObject.TYPE_VARIABLE, measure.getClassType() ));
-             
+
              for (int j=0; j<cr.getRowGroups().size(); ++j)
              {
                 CrosstabGroup group = (CrosstabGroup)cr.getRowGroups().elementAt(j);
@@ -727,21 +739,21 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                 ((DefaultListModel)jList1.getModel()).addElement( new ExpObject(measure.getName() + "_"+group.getName()+"_"+"ALL", ExpObject.TYPE_VARIABLE, group.getBucketExpressionClass() ));
              }
            }
-           
+
            for (int i=0; i<cr.getRowGroups().size(); ++i)
            {
                 CrosstabGroup group = (CrosstabGroup)cr.getRowGroups().elementAt(i);
                 //( (DefaultListModel)jList1.getModel()).addElement( "$V{"+group +"}" );
                 ((DefaultListModel)jList1.getModel()).addElement( new ExpObject(group.getName(), ExpObject.TYPE_VARIABLE, group.getBucketExpressionClass() ));
            }
-            
+
            for (int i=0; i<cr.getColumnGroups().size(); ++i)
            {
                 CrosstabGroup group = (CrosstabGroup)cr.getColumnGroups().elementAt(i);
                 //( (DefaultListModel)jList1.getModel()).addElement( "$V{"+group +"}" );
                 ((DefaultListModel)jList1.getModel()).addElement( new ExpObject(group.getName(), ExpObject.TYPE_VARIABLE, group.getBucketExpressionClass() ));
            }
-           
+
 
            for (int i=0; i<cr.getCrosstabParameters().size(); ++i)
            {
@@ -769,7 +781,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
               JRParameter parameter = (JRParameter)e.nextElement();
              //( (DefaultListModel)jList1.getModel()).addElement( "$P{"+ e.nextElement()+"}" );
              ((DefaultListModel)jList1.getModel()).addElement( new ExpObject(parameter.getName(), ExpObject.TYPE_PARAM, parameter.getClassType() ));
-             
+
           }
        }
        else if ((""+dmtn.getUserObject()).equalsIgnoreCase("Variables") && getSubDataset() != null)
@@ -788,7 +800,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
            {
                ( (DefaultListModel)jList1.getModel()).addElement(defaultExpressions.elementAt(i));
            }
-       } 
+       }
        else if ((""+dmtn.getUserObject()).equalsIgnoreCase(I18n.getString("RecentExpressions","Recent expressions")))
        {
            for (int i=0; i<recentExpressions.size(); ++i)
@@ -805,36 +817,36 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
            ( (DefaultListModel)jList1.getModel()).addElement(I18n.getString("Multiplication","Multiplication (*)"));
        }
     }//GEN-LAST:event_jTree1ValueChanged
-    
+
     private void jButtonCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCancelActionPerformed
        //this.setExpression( this.jEditTextArea1.getText() );
        this.setDialogResult( javax.swing.JOptionPane.NO_OPTION );
        this.dispose();
     }//GEN-LAST:event_jButtonCancelActionPerformed
-    
+
     private void jButtonApplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonApplyActionPerformed
        this.setExpression( this.jEditTextArea1.getText() );
-       
+
        recentExpressions.add( this.jEditTextArea1.getText() );
-       
+
        this.setDialogResult( javax.swing.JOptionPane.OK_OPTION );
        this.dispose();
     }//GEN-LAST:event_jButtonApplyActionPerformed
-    
+
     private void jEditTextArea1ComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_jEditTextArea1ComponentResized
        // Add your handling code here:
     }//GEN-LAST:event_jEditTextArea1ComponentResized
-    
+
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
        //this.jEditTextArea1.recalculateVisibleLines();
        this.jEditTextArea1.updateScrollBars();
     }//GEN-LAST:event_formComponentResized
-    
+
     /** Exit the Application */
     private void exitForm(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_exitForm
-       
+
     }//GEN-LAST:event_exitForm
-    
+
     /**
      * @param args the command line arguments
      */
@@ -842,7 +854,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
     {
        new ExpressionEditor().setVisible(true);
     }
-    
+
 
     /** Getter for property Expression.
      * @return Value of property Expression.
@@ -852,7 +864,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
     {
        return Expression;
     }
-    
+
     /** Setter for property Expression.
      * @param Expression New value of property Expression.
      *
@@ -864,7 +876,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
        this.Expression = Expression;
        init = false;
     }
-    
+
     /** Getter for property dialogResult.
      * @return Value of property dialogResult.
      *
@@ -873,7 +885,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
     {
        return dialogResult;
     }
-    
+
     /** Setter for property dialogResult.
      * @param dialogResult New value of property dialogResult.
      *
@@ -882,7 +894,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
     {
        this.dialogResult = dialogResult;
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButtonApply;
     private javax.swing.JButton jButtonCancel;
@@ -911,10 +923,10 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
     private javax.swing.JTextPane jTextPaneErrors;
     private javax.swing.JTree jTree1;
     // End of variables declaration//GEN-END:variables
-    
-   
+
+
     private String Expression;
-    
+
     private int dialogResult;
 
     public SubDataset getSubDataset() {
@@ -923,42 +935,42 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
 
     public void setSubDataset(SubDataset subDataset) {
         this.subDataset = subDataset;
-        
+
         // Selezioniamo il campo fields....
         if (subDataset != null)
         {
             jEditTextArea1.getTokenMarker().setKeywordLookup(subDataset.getKeywordLookup());
         }
         updateTreeEntries();
-        
+
     }
-    
+
     public void updateTreeEntries() {
-        
-        
+
+
         DefaultMutableTreeNode root = (DefaultMutableTreeNode)jTree1.getModel().getRoot();
-        
+
         root.removeAllChildren();
-        
+
         if (getSubDataset() != null)
         {
             root.add( new DefaultMutableTreeNode("Fields"));
             root.add( new DefaultMutableTreeNode("Variables"));
             root.add( new DefaultMutableTreeNode("Parameters"));
         }
-        
+
         for (int i=0; i<getCrosstabElements().size(); ++i)
         {
             root.add( new DefaultMutableTreeNode( new CrosstabReportElementWrapper( (CrosstabReportElement)getCrosstabElements().get(i))));
-        }        
+        }
         root.add( new DefaultMutableTreeNode(I18n.getString("Formulas","Formulas" )));
-        
+
         root.add( new DefaultMutableTreeNode(I18n.getString("RecentExpressions","Recent expressions")));
-        
+
         root.add( new DefaultMutableTreeNode(new IconedString(I18n.getString("Wizards","Wizards"),"/it/businesslogic/ireport/icons/wand.png" )));
-        
+
         jTree1.expandPath(new TreePath(root));
-        jTree1.updateUI();    
+        jTree1.updateUI();
         jTree1.setSelectionRow(0);
     }
 
@@ -969,8 +981,8 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
     public void setCrosstabElements(Vector crosstabElements) {
         this.crosstabElements = crosstabElements;
     }
-    
-    
+
+
     public void addCrosstabReportElement(CrosstabReportElement re)
     {
         if (!this.getCrosstabElements().contains(re))
@@ -979,7 +991,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
             updateTreeEntries();
         }
     }
-    
+
     /**
      * Set an expression contex. If the passes expression context is null,
      * nothing is done...
@@ -989,10 +1001,10 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
     {
         if ( ec == null) return;
         setCrosstabElements(ec.getCrosstabReportElements());
-        
+
         setSubDataset(ec.getSubDataset());
     }
-    
+
     /*
     private Class getSelectedObjectClass()
     {
@@ -1105,36 +1117,36 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                     }
               }
            }
-        
+
         } catch (Throwable ex)
         {
             ex.printStackTrace();
             return null;
         }
-        
+
         return null;
     }
  */
     public void caretUpdate(CaretEvent e) {
-        
+
        MessageFormat formatter = new MessageFormat("");
-       formatter.applyPattern( I18n.getString("LineColumn","Line {0,number,integer}, Column {1,number,integer}" ));
+       //formatter.applyPattern( I18n.getString("LineColumn","Line {0,number,integer}, Column {1,number,integer}" ));
 
        if (jEditTextArea1.getCaretLine() < 0)
        {
            jLabelCaretPosition.setText(formatter.format(new Object[]{new Integer(0), new Integer(0)}));
        }
        String s = jEditTextArea1.getText();
-       
+
        int pos = jEditTextArea1.getCaretPosition();
        int newLineStart = s.substring(0,jEditTextArea1.getCaretPosition()).lastIndexOf('\n')+1;
        pos = pos - newLineStart;
        pos++;
-       
+
        jLabelCaretPosition.setText(formatter.format(new Object[]{new Integer((jEditTextArea1.getCaretLine()+1)), new Integer(pos)}));
     }
-   
-    
+
+
     public void applyI18n()
     {
                 // Start autogenerated code ----------------------
@@ -1147,30 +1159,30 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
         jButtonCancel.setText(it.businesslogic.ireport.util.I18n.getString("gui.OptionsDialog.ButtonCancel", "Cancel"));
         jTabbedPane1.setTitleAt(0,it.businesslogic.ireport.util.I18n.getString("ObjectsAndExpressions", "Objects and expressions") );
         jTabbedPane1.setTitleAt(1,it.businesslogic.ireport.util.I18n.getString("ValidationErrors", "Validation errors") );
-    
-    
+
+
         jTabbedPane1.setTitleAt(0, it.businesslogic.ireport.util.I18n.getString("expressionEditor.tab.ObjectsAndExpressions","Objects and expressions"));
         jTabbedPane1.setTitleAt(1, it.businesslogic.ireport.util.I18n.getString("expressionEditor.tab.ValidationErrors","Validation errors"));
                 this.setTitle(I18n.getString("expressionEditor.title","Expression editor..."));
                 jButtonCancel.setMnemonic(I18n.getString("expressionEditor.buttonCancelMnemonic","c").charAt(0));
-                jButtonApply.setMnemonic(I18n.getString("expressionEditor.buttonApplyMnemonic","a").charAt(0));                  
-    }    
-    
+                jButtonApply.setMnemonic(I18n.getString("expressionEditor.buttonApplyMnemonic","a").charAt(0));
+    }
+
     public void validateExpression()
     {
         String expression_to_validate = jEditTextArea1.getText();
-        
-        // 1. replace all $Parameters, $Variables, $Fields and $R expressions 
+
+        // 1. replace all $Parameters, $Variables, $Fields and $R expressions
         JRDesignExpression jrExpression = new JRDesignExpression();
         jrExpression.setText( expression_to_validate );
         jTextPaneErrors.setText("");
-        
+
         try {
-            
+
             java.util.List paramsObjects = new java.util.ArrayList();
             java.util.List varsObjects = new java.util.ArrayList();
             java.util.List fieldsObjects = new java.util.ArrayList();
-            
+
             String final_espression = generateExpression(jrExpression, paramsObjects, fieldsObjects, varsObjects);
 
             if ( MainFrame.getMainInstance().getActiveReportFrame().getReport().getLanguage().equals("groovy"))
@@ -1192,14 +1204,14 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                     binding.setVariable(name, new JRFakeObject());
                 }
                 GroovyShell shell = new GroovyShell(binding);
-                
+
                 shell.parse(final_espression);
 
             }
             else if ( MainFrame.getMainInstance().getActiveReportFrame().getReport().getLanguage().equals("java"))
             {
                 bsh.Interpreter interpreter = new bsh.Interpreter();
-            
+
                 StringTokenizer  st = new StringTokenizer( MainFrame.getMainInstance().getProperties().getProperty("classpath",""),"\n");
                 interpreter.eval("String tmp;");
                 while (st.hasMoreTokens())
@@ -1210,7 +1222,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                         interpreter.set("tmp", token.trim());
                         interpreter.eval("addClassPath(tmp);");
                     }
-                }        
+                }
 
                 // Add report import directives to the bsh interpreter
                 Enumeration imps = MainFrame.getMainInstance().getActiveReportFrame().getReport().getImports().elements();
@@ -1246,20 +1258,20 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                 interpreter.eval(final_espression);
             }
             setErrorText(it.businesslogic.ireport.util.I18n.getString("ValidationOK", "Expression successfully validated."),false);
-        
-        
+
+
         } catch (CompilationFailedException ex)
         {
             setErrorText( ex.getMessage() , true);
         } catch (ParseException ex)
         {
             setErrorText(ex.getMessage() + "\n" + ex.getErrorText() + "\nLine: " + ex.getErrorLineNumber(), true );
-            
+
         } catch (TargetError ex)
         {
             // What to say... we tried!
             setErrorText(it.businesslogic.ireport.util.I18n.getString("ValidationOK", "Expression successfully validated."), true);
-        
+
         } catch (EvalError ex)
         {
             setErrorText(ex.getMessage() + "\n" + ex.getErrorText() + "\nLine: " + ex.getErrorLineNumber(), true );
@@ -1281,13 +1293,13 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
             setErrorText(ex.getMessage(), true);
             ex.printStackTrace();
         }
-        
+
         jTabbedPane1.setSelectedIndex(1);
     }
-    
-    private String generateExpression(JRExpression expression, 
-                                      java.util.List paramsObjects, 
-                                      java.util.List fieldsObjects, 
+
+    private String generateExpression(JRExpression expression,
+                                      java.util.List paramsObjects,
+                                      java.util.List fieldsObjects,
                                       java.util.List varsObjects) throws IRParsingException
 	{
 		net.sf.jasperreports.engine.JRParameter jrParameter = null;
@@ -1310,7 +1322,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
 				{
 					chunkText = "";
 				}
-				
+
 				switch (chunk.getType())
 				{
 					case JRExpressionChunk.TYPE_TEXT :
@@ -1322,7 +1334,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
 					{
                                                 // Look for the given parameter...
 						JRParameter param = (JRParameter)getExpressionObject(chunkText, PARAMETER);
-	
+
 						sb.append("((");
 						sb.append(param.getClassType());
 						sb.append(")");
@@ -1330,13 +1342,13 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
 						sb.append(vname);
                                                 paramsObjects.add(vname);
 						sb.append(".getValue())");
-	
+
 						break;
 					}
 					case JRExpressionChunk.TYPE_FIELD :
 					{
                                                 JRField field = (JRField)getExpressionObject(chunkText, FIELD);
-						
+
 						sb.append("((");
 						sb.append(field.getClassType());
 						sb.append(")");
@@ -1344,25 +1356,25 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
 						sb.append(vname);
                                                 fieldsObjects.add(vname);
 						sb.append(".get");
-						//sb.append((String)fieldPrefixMap.get(new Byte(evaluationType))); 
+						//sb.append((String)fieldPrefixMap.get(new Byte(evaluationType)));
 						sb.append("Value())");
-	
+
 						break;
 					}
 					case JRExpressionChunk.TYPE_VARIABLE :
 					{
 						JRVariable variable = (JRVariable)getExpressionObject(chunkText, VARIABLE);
-	
+
 						sb.append("((");
 						sb.append(variable.getClassType());
-						sb.append(")"); 
+						sb.append(")");
 						String vname = "variable_" + JRStringUtil.getLiteral(chunkText);
 						sb.append(vname);
                                                 varsObjects.add(vname);
 						sb.append(".get");
-						//sb.append((String)variablePrefixMap.get(new Byte(evaluationType))); 
+						//sb.append((String)variablePrefixMap.get(new Byte(evaluationType)));
 						sb.append("Value())");
-	
+
 						break;
 					}
 					case JRExpressionChunk.TYPE_RESOURCE :
@@ -1370,13 +1382,13 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
 						sb.append("str(\"");
 						sb.append(chunkText);
 						sb.append("\")");
-	
+
 						break;
 					}
 				}
 			}
 		}
-		
+
 		if (sb.length() == 0)
 		{
 			sb.append("null");
@@ -1384,17 +1396,17 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
 
 		return sb.toString();
 	}
-        
+
     private Object getExpressionObject(String name, int type) throws IRParsingException
     {
         if (name == null)  throw new IRParsingException("Object not found!");
-        
+
         SubDataset subDataset = getSubDataset();
         if (getSubDataset() == null && getCrosstabElements().size() == 0)
         {
             subDataset = MainFrame.getMainInstance().getActiveReportFrame().getReport();
         }
-        
+
         if (type == PARAMETER)
         {
             if (subDataset != null)
@@ -1406,13 +1418,13 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                     if (p.getName().equals(name)) return p;
                 }
             }
-            
+
             // Try to look in some crosstab...
             for (int k=0; k<crosstabElements.size(); ++k)
             {
                 //----------------------------------------------
                 CrosstabReportElement cr = (CrosstabReportElement)crosstabElements.get(k);
-   
+
                    for (int i=0; i<cr.getCrosstabParameters().size(); ++i)
                    {
                        CrosstabParameter parameter = (CrosstabParameter)cr.getCrosstabParameters().elementAt(i);
@@ -1422,11 +1434,11 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                            return new JRParameter(parameter.getName(), parameter.getClassType());
                        }
                    }
-            //-----------------------------------------------------    
-       
+            //-----------------------------------------------------
+
             }
             // Parameter not found!!!
-            
+
             throw new IRParsingException("Parameter " + name + " not found!", "$P{" + name + "}");
         }
         else if (type == FIELD)
@@ -1454,7 +1466,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                     if (p.getName().equals(name)) return p;
                 }
             }
-            
+
             // Try to look in some crosstab...
             for (int k=0; k<crosstabElements.size(); ++k)
             {
@@ -1509,17 +1521,17 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                         }
                    }
 
-                   
-            //-----------------------------------------------------    
-       
+
+            //-----------------------------------------------------
+
             }
             // Parameter not found!!!
             throw new IRParsingException("Variable " + name + " not found!", "$F{" + name + "}");
         }
-        
+
         throw new IRParsingException("Object " + name + " not found!", name);
     }
-    
+
     public void setErrorText(String msg, boolean isError)
     {
         jTextPaneErrors.setText("");
@@ -1527,8 +1539,8 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
         doc.insertString(doc.getLength(), msg, (isError) ? errorStyle : okStyle);
         } catch (Exception ex){}
     }
-    
-    
+
+
     public java.util.List getAllObjects()
     {
         java.util.List list = new java.util.ArrayList();
@@ -1540,14 +1552,14 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                 JRField f = (JRField)e.nextElement();
                 list.add(new ExpObject(f.getName(), ExpObject.TYPE_FIELD, f.getClassType() ));
             }
-            
+
             e = getSubDataset().getVariables().elements();
             while (e.hasMoreElements())
             {
                 JRVariable f = (JRVariable)e.nextElement();
                 list.add(new ExpObject(f.getName(), ExpObject.TYPE_VARIABLE, f.getClassType() ));
             }
-            
+
             e = getSubDataset().getParameters().elements();
             while (e.hasMoreElements())
             {
@@ -1563,7 +1575,7 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
              {
                 Measure measure = (Measure)e.nextElement();
                 list.add(new ExpObject(measure.getName(), ExpObject.TYPE_VARIABLE, measure.getClassType() ));
-                
+
                 for (int j=0; j<cr.getRowGroups().size(); ++j)
                 {
                     CrosstabGroup group = (CrosstabGroup)cr.getRowGroups().elementAt(j);
@@ -1575,19 +1587,19 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                     list.add(new ExpObject(measure.getName()+"_"+group.getName()+"_"+"ALL", ExpObject.TYPE_VARIABLE, measure.getClassType() ));
                 }
             }
-             
+
             for (int i=0; i<cr.getRowGroups().size(); ++i)
            {
                 CrosstabGroup group = (CrosstabGroup)cr.getRowGroups().elementAt(i);
                 list.add(new ExpObject(group.getName(), ExpObject.TYPE_VARIABLE, group.getBucketExpressionClass() ));
            }
-            
+
            for (int i=0; i<cr.getColumnGroups().size(); ++i)
            {
                 CrosstabGroup group = (CrosstabGroup)cr.getColumnGroups().elementAt(i);
                 list.add(new ExpObject(group.getName(), ExpObject.TYPE_VARIABLE, group.getBucketExpressionClass() ));
            }
-           
+
 
            for (int i=0; i<cr.getCrosstabParameters().size(); ++i)
            {
@@ -1595,9 +1607,9 @@ public class ExpressionEditor extends javax.swing.JDialog implements CaretListen
                list.add(new ExpObject(parameter.getName(), ExpObject.TYPE_PARAM, parameter.getClassType() ));
            }
         }
-        
+
         return list;
     }
-    
+
 }
 
