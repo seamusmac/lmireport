@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,12 +25,13 @@
  *
  *
  * JRField.java
- * 
+ *
  */
 
 package it.businesslogic.ireport;
 
 import it.businesslogic.ireport.util.Misc;
+
 import java.util.Iterator;
 
 public class JRField
@@ -38,29 +39,32 @@ public class JRField
 	private String name;
 	private String description="";
 	private String classType;
-        
+
         private java.util.List properties = new java.util.ArrayList();
-        
-	
+
+
 	public  JRField(String name, String classType)
 	{
 		this.name = name;
 		this.classType = classType;
 	}
-	
+
 	public String toString()
 	{
             return name;
 	}
-        
+
         /** Getter for property classType.
          * @return Value of property classType.
          *
          */
         public java.lang.String getClassType() {
+        	if(classType!=null && classType.equals("oracle.sql.CLOB")){
+        		return "java.lang.String";
+        	}
             return classType;
         }
-        
+
         /** Setter for property classType.
          * @param classType New value of property classType.
          *
@@ -68,7 +72,7 @@ public class JRField
         public void setClassType(java.lang.String classType) {
             this.classType = Misc.getJRFieldType( classType );
         }
-        
+
         /** Getter for property description.
          * @return Value of property description.
          *
@@ -76,7 +80,7 @@ public class JRField
         public java.lang.String getDescription() {
             return description;
         }
-        
+
         /** Setter for property description.
          * @param description New value of property description.
          *
@@ -84,7 +88,7 @@ public class JRField
         public void setDescription(java.lang.String description) {
             this.description = description;
         }
-        
+
         /** Getter for property name.
          * @return Value of property name.
          *
@@ -92,7 +96,7 @@ public class JRField
         public java.lang.String getName() {
             return name;
         }
-        
+
         /** Setter for property name.
          * @param name New value of property name.
          *
@@ -100,21 +104,21 @@ public class JRField
         public void setName(java.lang.String name) {
             this.name = name;
         }
-        
+
         public JRField cloneMe()
         {
         	JRField jrf = new JRField(name, classType);
-        	
+
         	jrf.setDescription( description );
-        	
+
                 Iterator iter = getProperties().iterator();
                 while (iter.hasNext())
                 {
                     JRProperty p = (JRProperty)iter.next();
                     jrf.getProperties().add( p.cloneMe() );
                 }
-            
-        	return jrf;	
+
+        	return jrf;
         }
 
     public java.util.List getProperties() {
@@ -125,5 +129,5 @@ public class JRField
         this.properties = properties;
     }
 
-        
+
 }
