@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved. 
+ * Copyright (C) 2005 - 2008 JasperSoft Corporation.  All rights reserved.
  * http://www.jaspersoft.com.
  *
  * Unless you have purchased a commercial license agreement from JasperSoft,
@@ -25,50 +25,72 @@
  *
  *
  * ReportQueryDialog.java
- * 
+ *
  * Created on 27 maggio 2003, 19.47
  *
  */
 
 package it.businesslogic.ireport.gui;
-import bsh.EvalError;
-import it.businesslogic.ireport.*;
+import it.businesslogic.ireport.FieldsProvider;
+import it.businesslogic.ireport.FieldsProviderEditor;
+import it.businesslogic.ireport.IReportConnection;
+import it.businesslogic.ireport.JRField;
 import it.businesslogic.ireport.JRParameter;
+import it.businesslogic.ireport.JRProperty;
+import it.businesslogic.ireport.Report;
+import it.businesslogic.ireport.SubDataset;
 import it.businesslogic.ireport.data.BeanInspectorPanel;
 import it.businesslogic.ireport.data.CincomMDXFieldsProvider;
 import it.businesslogic.ireport.data.EJBQLFieldsProvider;
 import it.businesslogic.ireport.data.HQLFieldsProvider;
 import it.businesslogic.ireport.data.MDXFieldsProvider;
 import it.businesslogic.ireport.data.SQLFieldsProvider;
-import it.businesslogic.ireport.gui.queryexecuters.QueryExecuterDef;
-import it.businesslogic.ireport.gui.subdataset.FilterExpressionDialog;
-import it.businesslogic.ireport.gui.subdataset.SortFieldsDialog;
-import it.businesslogic.ireport.util.*;
-import it.businesslogic.ireport.util.LanguageChangedEvent;
-import it.businesslogic.ireport.util.LanguageChangedListener;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import javax.swing.table.*;
-import javax.swing.*;
-import java.util.*;
-import java.sql.*;
-import bsh.Interpreter;
 import it.businesslogic.ireport.data.XMLFieldsProvider;
 import it.businesslogic.ireport.gui.dnd.FieldsContainer;
 import it.businesslogic.ireport.gui.dnd.FieldsContainerTransferHandler;
+import it.businesslogic.ireport.gui.queryexecuters.QueryExecuterDef;
 import it.businesslogic.ireport.gui.sheet.Tag;
+import it.businesslogic.ireport.gui.subdataset.FilterExpressionDialog;
+import it.businesslogic.ireport.gui.subdataset.SortFieldsDialog;
 import it.businesslogic.ireport.gui.table.CustomColumnControlButton;
+import it.businesslogic.ireport.util.I18n;
+import it.businesslogic.ireport.util.LanguageChangedEvent;
+import it.businesslogic.ireport.util.LanguageChangedListener;
+import it.businesslogic.ireport.util.Misc;
 
-import javax.swing.event.*;
-import javax.swing.tree.*;
-import java.awt.datatransfer.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.ClipboardOwner;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.Vector;
+
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
+
 import net.sf.jasperreports.engine.design.JRDesignExpression;
 import net.sf.jasperreports.engine.design.JRDesignQuery;
+
 import org.jdesktop.swingx.JXBusyLabel;
 import org.jdesktop.swingx.icon.ColumnControlIcon;
-import org.jdesktop.swingx.table.ColumnControlButton;
 
-/** 
+import bsh.EvalError;
+import bsh.Interpreter;
+
+/**
  * A dialog which allows the user to enter a SQL query and then choose the
  * fields to use in the report.
  *
@@ -76,12 +98,12 @@ import org.jdesktop.swingx.table.ColumnControlButton;
  * @author <a href="mailto:phenderson@users.sourceforge.net">Peter Henderson</a>
  */
 public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardOwner, FieldsContainer {
-    
+
     private BeanInspectorPanel bip1 = null;
-    
+
     private FieldsProvider fieldsProvider = null;
     private boolean init = false;
-        
+
     protected static String standard_types[]= new String[]{
         "java.lang.String",
 	"java.lang.Object",
@@ -96,31 +118,31 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
 	"java.io.InputStream",
 	"java.lang.Long",
 	"java.lang.Short",
-	"java.math.BigDecimal"    
+	"java.math.BigDecimal"
     };
-    
+
     public FieldReader readerThread = null;
     public static int num = 1;
-    
+
     public JLabel getJLabelStatusSQL()
     {
         return this.jLabelStatusSQL;
     }
-    
+
     public void updateQueryLanguages()
     {
         boolean oldInit = setInit(true);
-        
+
         Object oldItem = jComboBoxQueryType.getSelectedItem();
-        
+
         jComboBoxQueryType.removeAllItems();
         jComboBoxQueryType.addItem( new Tag("sql","SQL"));
-        jComboBoxQueryType.addItem( new Tag("hql","Hibernate Query Language (HQL)"));
-        jComboBoxQueryType.addItem( new Tag("xPath","XPath"));
-        jComboBoxQueryType.addItem( new Tag("ejbql","EJBQL"));
-        jComboBoxQueryType.addItem( new Tag("mdx","MDX"));
-        jComboBoxQueryType.addItem( new Tag("xmla-mdx","XMLA-MDX"));
-        
+       // jComboBoxQueryType.addItem( new Tag("hql","Hibernate Query Language (HQL)"));
+        //jComboBoxQueryType.addItem( new Tag("xPath","XPath"));
+        //jComboBoxQueryType.addItem( new Tag("ejbql","EJBQL"));
+       // jComboBoxQueryType.addItem( new Tag("mdx","MDX"));
+        //jComboBoxQueryType.addItem( new Tag("xmla-mdx","XMLA-MDX"));
+
         Enumeration e = MainFrame.getMainInstance().getQueryExecuters().elements();
         while (e.hasMoreElements())
         {
@@ -133,18 +155,18 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
         }
         setInit(oldInit);
     }
-    
-    
+
+
     /** Creates new form ReportQueryFrame */
     public ReportQueryDialog(java.awt.Frame parent, boolean modal) {
-        
+
         super(parent, modal);
         initComponents();
         this.setSize(800, 550);
         Misc.centerFrame(this);
-        
+
         stoppedChanging.setRepeats(false);
-        
+
         jRSQLExpressionArea1.getDocument().addDocumentListener( new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {
                 if(isSettingSQLExpression)return;
@@ -162,36 +184,36 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
                 stoppedChanging.restart();
             }
         } );
-        
+
         setColumnsError( "Please open a report." );
         if (MainFrame.getMainInstance().getProperties().getProperty("beanClass") != null)
         {
             jTextFieldBeanClass1.setText( MainFrame.getMainInstance().getProperties().getProperty("beanClass") +"");
         }
-        
+
         updateQueryLanguages();
-        
+
         okButton.setEnabled(false);
-        
+
         bip1 = new BeanInspectorPanel();
         bip1.setComboVisible(false);
         bip1.setJTableFields( jTableFields );
         bip1.setPathOnDescription(true);
         jPanel11.add(bip1, BorderLayout.CENTER);
-                
+
         javax.swing.KeyStroke escape =  javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0, false);
         javax.swing.Action escapeAction = new javax.swing.AbstractAction() {
             public void actionPerformed(java.awt.event.ActionEvent e) {
                 cancelButtonActionPerformed(e);
             }
         };
-       
+
         getRootPane().getInputMap(javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW).put(escape, "ESCAPE");
         getRootPane().getActionMap().put("ESCAPE", escapeAction);
 
-        
+
         applyI18n();
-        
+
         I18n.addOnLanguageChangedListener( new LanguageChangedListener() {
             public void languageChanged(LanguageChangedEvent evt) {
                 applyI18n();
@@ -205,13 +227,13 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
         columnsErrorScrollPane.setTransferHandler( fcth);
         //to make the default button ...
         //this.getRootPane().setDefaultButton(this.jButtonOK);
-        
-        
+
+
         jTableFields.setColumnControl(new CustomColumnControlButton(jTableFields, new ColumnControlIcon() ));
-        
-        
+
+
     }
-    
+
     /**
      * A timer to detect when the SQL expression area has not been changed, for
      * a short moment. This is to prevent the database being hit with every
@@ -224,45 +246,45 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
             }
         }
     } );
-    
-    
+
+
     /**
      * Given a database query string, extract the database columns, then display
      * them. If there was a problem loading the list of columns, show an error
      * panel which contains the reason why.
      *
-     * @param query The SQL query string, which can contain JasperReports parameters. 
+     * @param query The SQL query string, which can contain JasperReports parameters.
      */
     private void processQueryChanged( String query ) {
-        
+
         if (isSettingSQLExpression) return;
-        
+
         //System.out.println("processQueryChanged");
         //Thread.currentThread().dumpStack();
-        
+
         if (subDataset == null) {
             setColumnsError( "Please open a report." );
             return;
         }
-        
+
         if (query.length() == 0) {
             setColumnsError( "You must insert a valid query first" );
             return;
         }
 
         IReportConnection conn = (IReportConnection)MainFrame.getMainInstance().getProperties().get("DefaultConnection");
-        
+
         Object obj = jComboBoxQueryType.getSelectedItem();
         String queryLanguage = "sql";
-        if (obj != null && obj instanceof Tag) 
+        if (obj != null && obj instanceof Tag)
         {
             queryLanguage = ""+((Tag)obj).getValue();
         }
         else
         {
             queryLanguage = ""+obj;
-        }      
-        
+        }
+
         try {
             // Run the query in the backgroud as it is not quick.
             if (readerThread != null && readerThread.isAlive())
@@ -277,7 +299,7 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
         readerThread = new FieldReader(query, conn, queryLanguage);
         readerThread.start();
     }
-    
+
     public static int elaborationSequence = 0;
 
     public boolean isInit() {
@@ -289,7 +311,7 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
         this.init = init;
         return oldValue;
     }
-    
+
     /**
      * A Thread class to extract field names from a SQL query.
      *
@@ -298,9 +320,9 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
         String src_query;
         String src_query_language = "sql";
         IReportConnection conn;
-       
+
         int elaborationID = 0;
-        
+
         /**
          * ctor.
          * @param query The query to read the field from
@@ -309,7 +331,7 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
         public FieldReader(String query, IReportConnection conn) {
             this(query, conn, "sql");
         }
-        
+
         /**
          * ctor.
          * @param query The query to read the field from
@@ -322,22 +344,22 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
             ReportQueryDialog.elaborationSequence++;
             elaborationID = ReportQueryDialog.elaborationSequence;
         }
-        
-        
-        
+
+
+
         /**
          * Set the fields table data to the supplied data.
          * This is called from a none swing thread, hence all the invoke and
          * wait magic. If the current thread is the AWT Event Dispacher, no
          * invoke and wait is call.
-         * The columns are only set if the query string matches the one the 
+         * The columns are only set if the query string matches the one the
          * results are for.
          *
          * @param columns The list of columns to set.
          */
         public void setColumnsFromWorker( final List columns ) {
             try {
-                
+
                 Runnable r = new Runnable() {
                         public void run() {
                             String str = jRSQLExpressionArea1.getText().trim();
@@ -346,7 +368,7 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
                             }
                         }
                     };
-                    
+
                 if (!SwingUtilities.isEventDispatchThread())
                 {
                     SwingUtilities.invokeAndWait( r );
@@ -355,24 +377,24 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
                 {
                         r.run();
                 }
-                    
+
             } catch(Exception e) {
                 // oh well we got interrupted.
             }
         }
-        
+
         /**
          * Set the columns error message.
          * This is called from a none swing thread, hence all the invoke and
          * wait magic.
-         * The message is only set if the query string matches the one the 
+         * The message is only set if the query string matches the one the
          * error message is for.
          *
          * @param columns The list of columns to set.
          */
         public void setColumnErrorFromWork( final String error_msg ) {
             try {
-                
+
                 Runnable r = new Runnable() {
                     public void run() {
                         String str = jRSQLExpressionArea1.getText().trim();
@@ -380,10 +402,10 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
                             setColumnsError( error_msg );
                             jRSQLExpressionArea1.requestFocusInWindow();
                         }
-                        
+
                     }
                 };
-                
+
                 if (SwingUtilities.isEventDispatchThread())
                 {
                     r.run();
@@ -396,18 +418,18 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
                 // oh well we got interrupted.
             }
         }
-        
+
         public String interpretQuery()
         {
-            
+
             String query = this.src_query;
             try {
                 Interpreter interpreter = prepareExpressionEvaluator();
 
                 // look for parameters in the query and replace them with default values.
-                // parameters look something like 
+                // parameters look something like
                 // $P{QuoteGroupID}
-                // or 
+                // or
                 // $P!{OrderByClause}
                 java.util.List queryParams = new ArrayList();
                 Enumeration enumParams = subDataset.getParameters().elements();
@@ -418,9 +440,9 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
                     String p2 = "$P!{" + parameter.getName() + "}";
 
                     // evaluate the Default expression value
-                    
+
                     // Integer expID = (Integer)parameterNameToExpressionID.get(parameter.getName());
-                    
+
                     Object defValue;
                     if(  parameter.getDefaultValueExpression() != null &&  !parameter.getDefaultValueExpression().equals("") ) {
                         defValue = recursiveInterpreter( interpreter, parameter.getDefaultValueExpression(), subDataset.getParameters(),0,parameter.getName());
@@ -434,10 +456,10 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
                     int ip1 = query.indexOf(p1);
                     while( ip1!=-1 ) {
                         // String replacement, Altering the SQL statement.
-                        
+
                         //if( defValue==null ) {
                         //    throw new IllegalArgumentException("Please set a " +
-                        //        "default value for the parameter '" 
+                        //        "default value for the parameter '"
                         //        + parameter.getName() + "'" );
                         //}
 
@@ -450,7 +472,7 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
                             query = before + "'" + stt + "'" + after;
                         }
                         else query = before + "" + defValue.toString() + "" + after;
-                        
+
                         ip1 = query.indexOf(p1);
                     }
 
@@ -459,10 +481,10 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
                         // String replacement, Altering the SQL statement.
                         if( defValue==null ) {
                             //throw new IllegalArgumentException("Please set a " +
-                            //    "default value for the parameter '" 
+                            //    "default value for the parameter '"
                             //    + parameter.getName() + "'" );
                             defValue = "NULL";
-                        
+
                         }
 
                         String before = query.substring(0, ip2);
@@ -471,7 +493,7 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
                         ip2 = query.indexOf(p2);
                     }
                 }
-            
+
                 return query;
             } catch (Exception ex)
             {
@@ -479,11 +501,11 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
                 return "";
             }
         }
-        
+
         public void run() {
-            
+
             ((JXBusyLabel)ReportQueryDialog.this.getJLabelStatusSQL()).setBusy(true);
-            
+
             try {
                 String error_msg = "";
                 num++;
@@ -529,7 +551,7 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
                             // The parameter could be already there...
                             // check for duplicated parameters....
                             if (report.getParametersMap().containsKey(ireportParam.getName())) continue;
-                            
+
                             net.sf.jasperreports.engine.design.JRDesignParameter  param = new net.sf.jasperreports.engine.design.JRDesignParameter();
                             param.setName(  ireportParam.getName() );
                             JRDesignExpression de = new JRDesignExpression();
@@ -597,10 +619,10 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
             }
         }
     } // Class end
-    
-    
-    
-     
+
+
+
+
     /**
      * Shows the list of columns.
      * If the column error message label is visible remove it first.
@@ -608,28 +630,28 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
      * @param cols A List Object[], for the fields.
      */
     public void setColumns( final List cols ) {
-        
+
         columnsErrorMsgLabel.setText( "" );
         jPanel2.remove( columnsErrorScrollPane );
         jPanel2.add( columnsScrollPane, java.awt.BorderLayout.CENTER );
         jPanel2.revalidate();
-        
-        
+
+
         javax.swing.table.DefaultTableModel dtm =  (javax.swing.table.DefaultTableModel)jTableFields.getModel();
         dtm.getDataVector().clear();
         for(int i=0; i<cols.size(); i++) {
             Object [] row = (Object[])cols.get(i);
             dtm.addRow( row );
         }
-        
+
         // Select all the fields so the new user does not get confused, when
         // they press OK. As only the selected fields are actually saved to the
         // report
         jTableFields.selectAll();
-        
+
         okButton.setEnabled( true );
     }
-    
+
     /**
      * Replace the columns list with a label that contains the reason why
      * columns cannot be loaded.
@@ -642,7 +664,7 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
         jPanel2.add( columnsErrorScrollPane, java.awt.BorderLayout.CENTER );
         jPanel2.revalidate();
         columnsErrorMsgLabel.repaint();
-        
+
         //okButton.setEnabled(false);
     }
 
@@ -653,9 +675,9 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
     private void setFieldsProvider(FieldsProvider fieldsProvider) {
         this.fieldsProvider = fieldsProvider;
     }
-    
-    
-    
+
+
+
     /** This method is called from within the constructor to
      * initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is
@@ -843,7 +865,7 @@ public class ReportQueryDialog extends javax.swing.JDialog implements ClipboardO
         gridBagConstraints.insets = new java.awt.Insets(2, 10, 2, 0);
         jPanel7.add(readFieldsButton, gridBagConstraints);
 
-        jButtonOpenDesigner.setText("Query designer");
+        jButtonOpenDesigner.setText("²éÑ¯Éè¼ÆÆ÷");
         jButtonOpenDesigner.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButtonOpenDesignerActionPerformed(evt);
@@ -1089,14 +1111,14 @@ private void jTableFieldsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRS
         if (this.jTableFields.getSelectedRow() >= 0)
         {
             JRField field = (JRField)this.jTableFields.getValueAt( this.jTableFields.getSelectedRow(), 0);
-            
+
             JRFieldDialog jrpd = new JRFieldDialog(MainFrame.getMainInstance(), true);
             jrpd.setSubDataset( this.getSubDataset() );
             jrpd.setField(field);
             jrpd.setVisible(true);
-            
-            
-            
+
+
+
             if (jrpd.getDialogResult() == JOptionPane.OK_OPTION)
             {
                 field = jrpd.getField();
@@ -1117,7 +1139,7 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
         {
              javax.swing.table.DefaultTableModel dtm =  (javax.swing.table.DefaultTableModel)jTableFields.getModel();
              //int[] selectedRows = jTableFields.getSelectedRows();
-             //for (int i= selectedRows.length-1; i>=0; --i) 
+             //for (int i= selectedRows.length-1; i>=0; --i)
              //{
              //    it.businesslogic.ireport.JRField field = (it.businesslogic.ireport.JRField)this.jTableFields.getValueAt( i, 0);
                  //this.subDataset.removeField(field);
@@ -1132,7 +1154,7 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
 
     private void jButtonOpenDesignerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonOpenDesignerActionPerformed
 
-        if (getFieldsProvider() != null && 
+        if (getFieldsProvider() != null &&
             getFieldsProvider().hasQueryDesigner())
         {
             try {
@@ -1147,8 +1169,8 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                 javax.swing.JOptionPane.showMessageDialog(null, ex.getMessage());
             }
         }
-        
-        
+
+
     }//GEN-LAST:event_jButtonOpenDesignerActionPerformed
 
     private void jButton1ActionPerformed1(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed1
@@ -1156,42 +1178,42 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
         SortFieldsDialog sfd = new SortFieldsDialog( this, true);
         sfd.setSubDataset( this.getSubDataset() );
         sfd.setVisible(true);
-        
+
     }//GEN-LAST:event_jButton1ActionPerformed1
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
 
-        openFilterExpressionDialog(false);    
+        openFilterExpressionDialog(false);
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButtonSaveQueryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSaveQueryActionPerformed
 
        Misc.saveSQLQuery( jRSQLExpressionArea1.getText(), this );
-        
+
     }//GEN-LAST:event_jButtonSaveQueryActionPerformed
 
     private void jButtonLoadQueryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonLoadQueryActionPerformed
 
-        
+
             String query = Misc.loadSQLQuery(this);
-            
+
             if (query != null)
             {
                 jRSQLExpressionArea1.setText(query);
             }
-            
+
     }//GEN-LAST:event_jButtonLoadQueryActionPerformed
 
     private void jComboBoxQueryTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxQueryTypeActionPerformed
 // TODO add your handling code here:
         boolean autoReadFields = automaticlyReadFieldsCheckBox.isSelected();
-        
+
         readFieldsButton.setEnabled(false);
         automaticlyReadFieldsCheckBox.setSelected(false);
         readFieldsButton.setEnabled(false);
-        
+
         String language = "sql";
-        
+
         if (jComboBoxQueryType.getSelectedItem() != null &&
             jComboBoxQueryType.getSelectedItem() instanceof Tag)
         {
@@ -1201,13 +1223,13 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
         {
             language = "" + jComboBoxQueryType.getSelectedItem();
         }
-        
-        
+
+
         // 1. Look for a special FieldsProvider....
         getJLabelStatusSQL().setText("Looking for a valid Fields provider for "  +  language + " queries....");
         /////////////////////////////
         setFieldsProvider(null);
-            
+
         Enumeration enum_qe = MainFrame.getMainInstance().getQueryExecuters().elements();
         while (enum_qe.hasMoreElements())
         {
@@ -1225,9 +1247,9 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                 }
             }
         }
-        
+
         exportQueryButton.setEnabled(language.equals("sql"));
-        
+
         if (getFieldsProvider() == null && language.equals("sql"))
         {
             setFieldsProvider( new SQLFieldsProvider());
@@ -1252,10 +1274,10 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
         {
             setFieldsProvider( new CincomMDXFieldsProvider());
         }
-        
+
         boolean isSettingSQLExpressionOldValue = isSettingSQLExpression;
         isSettingSQLExpression = true;
-        
+
         if (getFieldsProvider() == null)
         {
             setSpecialLanguageComponent( null );
@@ -1286,10 +1308,10 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
             getJLabelStatusSQL().setText("Fields provider for "  +  language + " queries ready.");
         }
         isSettingSQLExpression = isSettingSQLExpressionOldValue;
-        
+
     }//GEN-LAST:event_jComboBoxQueryTypeActionPerformed
 
-    
+
     public void setSpecialLanguageComponent(Component c)
     {
         if (c == null)
@@ -1302,7 +1324,7 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
         }
         else
         {
-         
+
             if (jPanelQueryArea.getComponent(0) != jSplitPane2 ||
                 jSplitPane2.getRightComponent() != c)
             {
@@ -1316,8 +1338,8 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
         jRSQLExpressionArea1.requestFocusInWindow();
         jRSQLExpressionArea1.requestFocus();
     }
-    
-    
+
+
     private void jButton2ActionPerformed1(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed1
         IReportConnection conn = (IReportConnection)MainFrame.getMainInstance().getProperties().get("DefaultConnection");
         if (conn == null || !(conn instanceof it.businesslogic.ireport.connection.JRCSVDataSourceConnection)) {
@@ -1331,12 +1353,12 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                 Vector names = ic.getColumnNames();
                 DefaultTableModel dtm = (DefaultTableModel)jTableFields.getModel();
                 dtm.setRowCount(0);
-            
+
                 for (int nd =0; nd < names.size(); ++nd) {
                     String fieldName = ""+names.elementAt(nd);
                     it.businesslogic.ireport.JRField field = new it.businesslogic.ireport.JRField(fieldName, "java.lang.String");
                     field.setDescription(""); //Field returned by " +methods[i].getName() + " (real type: "+ returnType +")");
-                    
+
                     Vector row = new Vector();
                     row.addElement(field);
                     row.addElement(field.getClassType());
@@ -1347,7 +1369,7 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
             } catch (Exception ex)
             {
                 setColumnsError( "" + ex.getMessage() );
-            
+
             }
         }
     }//GEN-LAST:event_jButton2ActionPerformed1
@@ -1357,7 +1379,7 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
     }//GEN-LAST:event_formWindowOpened
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-       
+
         IReportConnection conn = (IReportConnection)MainFrame.getMainInstance().getProperties().get("DefaultConnection");
         if (conn == null || !(conn instanceof it.businesslogic.ireport.connection.JRDataSourceProviderConnection)) {
             setColumnsError( "The active connection is not a JasperReports DataSource provider." );
@@ -1368,29 +1390,29 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
             it.businesslogic.ireport.connection.JRDataSourceProviderConnection ic = (it.businesslogic.ireport.connection.JRDataSourceProviderConnection)conn;
             try {
                 Report rep = MainFrame.getMainInstance().getActiveReportFrame().getReport();
-                
+
                 net.sf.jasperreports.engine.design.JasperDesign report = new net.sf.jasperreports.engine.design.JasperDesign();
                 JRDesignQuery queryDes = new JRDesignQuery();
                 queryDes.setText(jRSQLExpressionArea1.getText());
                  String queryLanguage = "sql";
                  Object obj = jComboBoxQueryType.getSelectedItem();
-                if (obj != null && obj instanceof Tag) 
+                if (obj != null && obj instanceof Tag)
                 {
                     queryLanguage = ""+((Tag)obj).getValue();
                 }
                 else
                 {
                     queryLanguage = ""+obj;
-                }     
+                }
                 queryDes.setLanguage( queryLanguage );
                 report.setQuery( queryDes);
-                
+
                 for (int i=0; i< rep.getJRproperties().size(); ++i)
                 {
                     JRProperty property = (JRProperty)rep.getJRproperties().elementAt(i);
                     report.setProperty(property.getName(), property.getValue());
                 }
-                
+
                 for (int i=0; i< rep.getParameters().size(); ++i)
                 {
                     JRParameter ireportParam = (JRParameter)rep.getParameters().elementAt(i);
@@ -1405,18 +1427,18 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                     param.setValueClassName(  ireportParam.getClassType() );
                     report.addParameter( param );
                 }
-                
+
                 try {
-                    
+
                     report.setName(rep.getName());
                 } catch (Exception ex)
                 {
-                    
+
                 }
-                
+
                 // Create a temporary JasperReports object...
                 net.sf.jasperreports.engine.JasperReport jr = new net.sf.jasperreports.engine.JasperReport(report,"",null,null,"");
-                
+
             net.sf.jasperreports.engine.JRField[] jrfields = ic.getDataSourceProvider().getFields( jr );
             DefaultTableModel dtm = (DefaultTableModel)jTableFields.getModel();
             dtm.setRowCount(0);
@@ -1433,48 +1455,48 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
             } catch (Exception ex)
             {
                 setColumnsError( "" + ex.getMessage() );
-            
+
             }
         }
-        
+
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void exportQueryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportQueryButtonActionPerformed
-       
+
         FieldReader fr = new FieldReader(jRSQLExpressionArea1.getText(), null);
         String query = fr.interpretQuery();
-        
+
         java.awt.datatransfer.Clipboard clipboard = java.awt.Toolkit.getDefaultToolkit().getSystemClipboard();
         StringSelection fieldContent = new StringSelection (query);
-        
+
      	clipboard.setContents (fieldContent, this);
 
-        
+
         // TODO add your handling code here:
     }//GEN-LAST:event_exportQueryButtonActionPerformed
 
     private void jButtonReadBeanAttributes3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonReadBeanAttributes3ActionPerformed
-              
+
         bip1.setClassName(jTextFieldBeanClass1.getText().trim());
     }//GEN-LAST:event_jButtonReadBeanAttributes3ActionPerformed
 
     protected void getFieldsFromClass(Class clazz, String path) throws Exception
     {
          DefaultTableModel dtm = (DefaultTableModel)jTableFields.getModel();
-            
+
          java.lang.reflect.Method[] methods = clazz.getMethods();
          java.lang.reflect.Field[] fields = clazz.getFields();
          // for any method, looking for get<FieldName> ....
-            
-            
+
+
          for (int i=0; i<methods.length; ++i)
          {
-               
+
                 if ( java.lang.reflect.Modifier.isPublic( methods[i].getModifiers() ) &&
                      methods[i].getDeclaringClass().getName().equals(clazz.getName() ) &&
-                     !java.lang.reflect.Modifier.isNative( methods[i].getModifiers() )     
+                     !java.lang.reflect.Modifier.isNative( methods[i].getModifiers() )
                      && methods[i].getName().startsWith("get")
-                        && !methods[i].getReturnType().isPrimitive() 
+                        && !methods[i].getReturnType().isPrimitive()
                         && !methods[i].getReturnType().isArray())
                 {
                    String fieldName = methods[i].getName().substring(3);
@@ -1483,18 +1505,18 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                    {
                        if (fields[f].getName().equalsIgnoreCase( fieldName ))
                        {
-                           
+
                            fieldName = fields[f].getName();
                            break;
                        }
                    }
-                   
+
                    String returnType =  methods[i].getReturnType().getName();
                    boolean found = false;
                    for (int cc=0; cc<standard_types.length; ++cc)
                    {
                         if ( returnType.equalsIgnoreCase(standard_types[cc]))
-                        {                       
+                        {
                             it.businesslogic.ireport.JRField field = new it.businesslogic.ireport.JRField(fieldName, returnType);
                             field.setDescription(path + "" + fieldName);
                             Vector row = new Vector();
@@ -1519,15 +1541,15 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                         getFieldsFromClass( subClazz , path + fieldName + ".");
                   }
                 }
-            }                    
+            }
     }
-    
 
 
-    
+
+
     private void automaticlyReadFieldsCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_automaticlyReadFieldsCheckBoxActionPerformed
-        
-        
+
+
         if( automaticlyReadFieldsCheckBox.isSelected() ) {
             // Automagically get quiery fields.
             // User has just enabled this so get field list.
@@ -1537,7 +1559,7 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                 processQueryChanged( jRSQLExpressionArea1.getText().trim() );
             }
         } else {
-            // Turn off automagic field reading. User will have to press the 
+            // Turn off automagic field reading. User will have to press the
             // Read Fields button
             //okButton.setEnabled(false);
             readFieldsButton.setEnabled(true);
@@ -1546,9 +1568,9 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
             this.jLabelStatusSQL.setText("Enter your query above. Then use the Read " +
                     "Fields button to retrieve the list of fields." );
         }
-        
+
         MainFrame.getMainInstance().getProperties().setProperty("UseAutoRegiesterFields", "" + automaticlyReadFieldsCheckBox.isSelected());
-        
+
     }//GEN-LAST:event_automaticlyReadFieldsCheckBoxActionPerformed
 
     private void readFieldsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_readFieldsButtonActionPerformed
@@ -1562,16 +1584,16 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        
+
         try {
         if (stoppedChanging != null) stoppedChanging.stop();
-  
+
         if ( this.getSubDataset() != null)
-        {       
+        {
             num++; // avoid syncronization problems....
-            
+
             Object obj = jComboBoxQueryType.getSelectedItem();
-            if (obj != null && obj instanceof Tag) 
+            if (obj != null && obj instanceof Tag)
             {
                 this.subDataset.setQueryLanguage(""+((Tag)obj).getValue());
             }
@@ -1580,13 +1602,13 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                 this.subDataset.setQueryLanguage(""+obj);
             }
             // save the query to the report.
-            this.subDataset.setQuery( jRSQLExpressionArea1.getText());                
-            
+            this.subDataset.setQuery( jRSQLExpressionArea1.getText());
+
             if ( jTableFields.getRowCount() > 0)
             {
                 // Clear all the existing fields.
                 this.subDataset.getFields().clear();
-    
+
                 // Add the new fields.
 
                 //int[] selectedRows = jTableFields.getSelectedRows();
@@ -1614,46 +1636,46 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                 {
                     MainFrame.getMainInstance().getValuesDialog().getValuesPanel().updateFields();
                 }
-            } 
+            }
        }
-       
+
        } catch (Throwable ex)
             {
                 ex.printStackTrace();
             }
-       
+
        this.setVisible(false);
-        
+
     }//GEN-LAST:event_okButtonActionPerformed
-    
-    
-    
-    
-    
+
+
+
+
+
     /** Closes the dialog */
     private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
         setVisible(false);
         dispose();
     }//GEN-LAST:event_closeDialog
-    
+
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
         new ReportQueryDialog(new javax.swing.JFrame(), true).setVisible(true);
     }
-        
+
     Map parameterNameToExpressionID = null;
-    
+
     /**
      * Create an expression evaluator for report parameters.
      *
      */
     private Interpreter prepareExpressionEvaluator() throws bsh.EvalError {
-        
+
         Interpreter interpreter = new Interpreter();
         interpreter.setClassLoader(interpreter.getClass().getClassLoader());
-        
+
         // Staring patch from rp4
         StringTokenizer  st = new StringTokenizer( MainFrame.getMainInstance().getProperties().getProperty("classpath",""),"\n");
         interpreter.eval("String tmp;");
@@ -1665,8 +1687,8 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                 interpreter.set("tmp", token.trim());
                 interpreter.eval("addClassPath(tmp);");
             }
-        }        
-       
+        }
+
         // Add report import directives to the bsh interpreter
         interpreter.eval("import net.sf.jasperreports.engine.*;");
         interpreter.eval("import net.sf.jasperreports.engine.fill.*;");
@@ -1678,7 +1700,7 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
         interpreter.eval("import java.util.*;");
         interpreter.eval("import net.sf.jasperreports.engine.*;");
         interpreter.eval("import net.sf.jasperreports.engine.data.*;");
-        
+
         Enumeration imps = MainFrame.getMainInstance().getActiveReportFrame().getReport().getImports().elements();
         while ( imps.hasMoreElements() )
         {
@@ -1692,7 +1714,7 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
         interpreter.eval("bshCalculator = createBshCalculator()");
         */
         return interpreter;
-         
+
         // return null;
     }
 
@@ -1704,8 +1726,8 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
      */
     private Class classStringToClass(String classType) {
         Class c = null;
-        
-        
+
+
         if ( classType.equals("java.lang.String") ) {
             c = java.lang.String.class;
         } else if ( classType.equals("java.lang.Integer") ) {
@@ -1731,11 +1753,11 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
         } else if ( classType.equals("java.math.BigDecimal") ) {
             c = java.math.BigDecimal.class;
         }
-        
+
         return c;
     }
-    
-    
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox automaticlyReadFieldsCheckBox;
     private javax.swing.JButton cancelButton;
@@ -1779,29 +1801,29 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
     private javax.swing.JButton okButton;
     private javax.swing.JButton readFieldsButton;
     // End of variables declaration//GEN-END:variables
-    
+
     private boolean isSettingSQLExpression = false;
-    
-    
-    
+
+
+
     public void lostOwnership (Clipboard parClipboard, Transferable parTransferable) { }
 
     public static Object recursiveInterpreter(Interpreter interpreter, String expression, Vector parameters) throws EvalError
     {
         return recursiveInterpreter(interpreter, expression, parameters, 0);
     }
-    
+
     public static  Object recursiveInterpreter(Interpreter interpreter, String expression, Vector parameters, int recursion_level) throws EvalError
     {
         return recursiveInterpreter(interpreter, expression, parameters, 0, null);
     }
-    
+
     public static  Object recursiveInterpreter(Interpreter interpreter, String expression, Vector parameters, int recursion_level, String this_param_name) throws EvalError
     {
         ++recursion_level;
-        
+
         if (expression == null || expression.length() == 0) return null;
-        
+
         //System.out.println("Valuto ["+ recursion_level +"]: " + expression);
         if (recursion_level > 100) return null;
         if (expression != null && expression.trim().length() > 0)
@@ -1821,12 +1843,12 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                         break;
                     }
                 }
-                
-                String param_name_literal = "param_" + net.sf.jasperreports.engine.util.JRStringUtil.getLiteral(param_name); 
-                
+
+                String param_name_literal = "param_" + net.sf.jasperreports.engine.util.JRStringUtil.getLiteral(param_name);
+
                 expression = Misc.string_replace( param_name_literal, "$P{"+param_name+"}", expression);
                 //interpreter.set( param_name_literal, recursiveInterpreter(interpreter, param_expression, parameters, recursion_level));
-            
+
                 // If the parameter was never evaluated before, that can happen is some cases,
                 // evaluate it now!
                 if (interpreter.get(param_name_literal) == null)
@@ -1835,13 +1857,13 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                     interpreter.set(param_name_literal, paramValue);
                 }
             }
-            
+
             String this_param_name_literal = "param_unknow";
-            
-            if (this_param_name!= null) 
+
+            if (this_param_name!= null)
             {
                 this_param_name_literal = "param_" + net.sf.jasperreports.engine.util.JRStringUtil.getLiteral(this_param_name);
-            } 
+            }
             //System.out.println("interpreto ["+ recursion_level +"]: " + expression);
             //System.out.flush();
             Object res = interpreter.eval(expression);
@@ -1860,13 +1882,13 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
     }
 
     public void setSubDataset(SubDataset subDataset) {
-        
+
         isSettingSQLExpression = true;
         try { // Used only to perform a finally op
             this.subDataset = subDataset;
 
             DefaultTableModel dtm = (DefaultTableModel)jTableFields.getModel();
-            dtm.setRowCount(0); 
+            dtm.setRowCount(0);
 
             num++;
             jLabelStatusSQL.setText( "" );
@@ -1923,15 +1945,15 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                 }
 
                 jLabelStatusSQL.setText("");
- 
+
             }
-        
+
         } finally {
-            
+
             isSettingSQLExpression = false;
         }
     }
-    
+
     public void applyI18n(){
                 // Start autogenerated code ----------------------
                 automaticlyReadFieldsCheckBox.setText(I18n.getString("reportQueryDialog.utomaticlyReadFieldsCheckBox","Automatically Retrieve Fields"));
@@ -1951,22 +1973,22 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
                 okButton.setText(I18n.getString("reportQueryDialog.kButton","OK"));
                 readFieldsButton.setText(I18n.getString("reportQueryDialog.eadFieldsButton","Read Fields"));
                 // End autogenerated code ----------------------
-                
+
                 jTableFields.getColumnModel().getColumn(0).setHeaderValue( I18n.getString("reportQueryDialog.tablecolumn.fieldName","Field name") );
                 jTableFields.getColumnModel().getColumn(1).setHeaderValue( I18n.getString("reportQueryDialog.tablecolumn.fieldType","Field type") );
                 jTableFields.getColumnModel().getColumn(2).setHeaderValue( I18n.getString("reportQueryDialog.tablecolumn.description","Description") );
-    
+
                 jTabbedPane1.setTitleAt(0,it.businesslogic.ireport.util.I18n.getString("reportQueryDialog.tab.ReportQuery", "Report query"));
                 jTabbedPane1.setTitleAt(1,it.businesslogic.ireport.util.I18n.getString("reportQueryDialog.tab.JavaBeanDatasource", "JavaBean Datasource"));
                 jTabbedPane1.setTitleAt(2,it.businesslogic.ireport.util.I18n.getString("reportQueryDialog.tab.DataSourceProvider", "DataSource Provider"));
                 jTabbedPane1.setTitleAt(3,it.businesslogic.ireport.util.I18n.getString("reportQueryDialog.tab.CSVDatasource", "CSV Datasource"));
-    
+
                 this.setTitle(I18n.getString("reportQueryDialog.title","Report query"));
                 cancelButton.setMnemonic(I18n.getString("reportQueryDialog.cancelButtonMnemonic","c").charAt(0));
                 okButton.setMnemonic(I18n.getString("reportQueryDialog.okButtonMnemonic","o").charAt(0));
     }
-    
-    
+
+
     /**
      * Thie method can be useful for a CustomQueryEditor
      */
@@ -1974,7 +1996,7 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
     {
         return jRSQLExpressionArea1;
     }
-    
+
     /**
      * Thie method can be useful for a CustomQueryEditor
      * Return the table containing all the fields.
@@ -1995,7 +2017,7 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
         {
             fed.setFocusedExpression( FilterExpressionDialog.COMPONENT_EXPRESSION);
         }
-        
+
         fed.setVisible(true);
         if (fed.getDialogResult() == JOptionPane.OK_OPTION)
         {
@@ -2005,10 +2027,10 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
     }
 
     public void addField(JRField field) {
-        
+
         // Add the field if there is not already a fiels with the same name...
         if (field == null) return;
-        
+
         if (columnsErrorMsgLabel.isVisible())
         {
             columnsErrorMsgLabel.setText( "" );
@@ -2016,7 +2038,7 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
             jPanel2.add( columnsScrollPane, java.awt.BorderLayout.CENTER );
             jPanel2.revalidate();
         }
-        
+
         DefaultTableModel dtm = (DefaultTableModel)jTableFields.getModel();
         for (int i=0; i<dtm.getRowCount(); ++i)
         {
@@ -2028,16 +2050,16 @@ private void jTableFieldsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:e
         row.addElement(field.getClassType());
         row.addElement(field.getDescription());
         dtm.addRow(row);
-        
+
         jTableFields.addRowSelectionInterval(jTableFields.getRowCount()-1, jTableFields.getRowCount()-1);
-  
+
         jTableFields.updateUI();
-        
-        
+
+
     }
-    
-    
-   
+
+
+
 }
 
 
