@@ -1,3 +1,0 @@
-É¾³ý it.businesslogic.ireport.data.ejbql.*
-É¾³ý it.businesslogic.ireport.data.hibernate.*
-É¾³ý it.businesslogic.ireport.data.olap.*
